@@ -1,0 +1,49 @@
+syntax = "proto3";
+package service;
+
+option go_package = "github.com/atye/wikitable-api/service/pb";
+
+import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+    info: {
+        title: "WikiTable API";
+    };
+};
+
+message Row {
+    map<int64, string> columns = 1;
+}
+
+message Table {
+    string caption = 1;
+    map<int64, Row> rows = 2;
+}
+
+message GetTablesRequest {
+    string page = 1;
+}
+
+message GetTableRequest {
+    string page = 1;
+    string n = 2;
+}
+
+message GetTablesResponse {
+    repeated Table tables = 1;
+}
+
+service WikiTable {
+    rpc GetTables(GetTablesRequest) returns (GetTablesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/{page}"
+        };
+    }
+
+    rpc GetTable(GetTableRequest) returns (Table) {
+        option (google.api.http) = {
+            get: "/api/v1/{page}/{n}"
+        };
+    }
+}
