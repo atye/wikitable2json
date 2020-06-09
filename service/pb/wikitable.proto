@@ -26,11 +26,6 @@ message GetTablesRequest {
     repeated string n = 2;
 }
 
-message GetTableRequest {
-    string page = 1;
-    string n = 2;
-}
-
 message GetTablesResponse {
     repeated Table tables = 1;
 }
