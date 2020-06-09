@@ -19,8 +19,14 @@ test:
 
 deploy:
 	docker build -t wikitable-api .
-	docker run --name wikitable-api-container -p 8080:8080 wikitable-api
+	docker run --name wikitable-api-container -p 8080:8080 -e PORT=8080 wikitable-api
 
 down:
 	docker stop wikitable-api-container
 	docker rm wikitable-api-container
+
+cover-profile:
+
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
+	rm -f coverage.out

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <style>
+         h1, h2, h3, h4, h5, h6{
+         font-family: 'Roboto', sans-serif;
+         font-weight: 100;
+         }
+         a{
+         color:white;
+         }
+         a:hover{
+         color:#eee;
+         }
+         .images{
+         text-align: center;
+         }
+         pre {
+         font-family: 'Source Code Pro', monospace;
+         font-size: 18px;
+         background-color:gray;
+         color: #fff;
+         border: none;
+         border-radius: 10px;
+         padding: 20px;
+         }
+         body, p {
+         font-weight: 100;
+         margin: 0;
+         }
+         p {
+         letter-spacing: 1px;
+         font-size: 130%;
+         }
+         .head{
+         padding:40px;
+         text-align:center;
+         }
+         .page{
+         margin:0;
+         padding: 20px 20%;
+         background-color:lightseagreen;
+         color:#fff;
+         }
+         .footer{
+         text-align:center;
+         padding-bottom: 40px;
+         }
+         .section-header{
+        padding-top: 20px;
+        padding-bottom:20px;
+    }
+      </style>
+   </head>
+   <body>
+      <body>
+         <div class="page">
+            <div class="head">
+               <h1 class="title"><a href="https://github.com/atye/wikitable-api" target="_blank">WikiTable API</a> - Get Wikipedia table data in JSON form</h1>
+               <h2><a href="/swagger-ui">Swagger UI</h2>
+               </a>
+            </div>
+            <div class="container">
+               <h2 class="section-header">Get all tables on page <a href="https://en.wikipedia.org/wiki/Arhaan_Khan" target="_blank">Arhaan_Khan</a>:</h2>
+               <pre>https://wikitableapi.com/api/v1/page/Arhaan_Khan</pre>
+               <br>
+               <div class="images">
+                  <div>
+                     <img src="assets/images/table_1.png">
+                  </div>
+                  <div>
+                     <img src="assets/images/table_2.png">
+                  </div>
+               </div>
+               <h3>Response:</h3>
+               <pre>
+            {
+                "tables": [
+                  {
+                    "rows": {
+                      "0": {
+                        "columns": {
+                          "0": "Year",
+                          "1": "Title",
+                          "2": "Role",
+                          "3": "Notes"
+                        }
+                      },
+                      "1": {
+                        "columns": {
+                          "0": "2017",
+                          "1": "SriValli",
+                          "2": "Majnu",
+                          "3": "Telugu film"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "rows": {
+                      "0": {
+                        "columns": {
+                          "0": "Year",
+                          "1": "Title",
+                          "2": "Role",
+                          "3": "Channel",
+                          "4": "Notes"
+                        }
+                      },
+                      "1": {
+                        "columns": {
+                          "0": "2016-2018",
+                          "1": "Badho Bahu",
+                          "2": "Rana Ahlawat",
+                          "3": "&TV",
+                          "4": "Lead"
+                        }
+                      },
+                      "2": {
+                        "columns": {
+                          "0": "2017-2018",
+                          "1": "Glamx Mr and Miss India Youth Icon",
+                          "2": "Himself",
+                          "3": "GlamX Entertainment",
+                          "4": "Judge"
+                        }
+                      },
+                      "3": {
+                        "columns": {
+                          "0": "2019",
+                          "1": "Bigg Boss 13",
+                          "2": "Contestant",
+                          "3": "Colors TV",
+                          "4": "Evicted on Day 92"
+                        }
+                      }
+                    }
+                  }
+                ]
+            }
+            </pre>
+               <h2 class="section-header">Get nth table (starts at 0):</h2>
+               <pre>https://wikitableapi.com/api/v1/page/Arhaan_Khan?n=0</pre>
+               <p>You can specify multiple, individual tables via ?n=0&n=1.</p>
+               <br>
+               <h3>Response:</h3>
+               <pre>
+            {
+                "tables": [
+                  {
+                    "rows": {
+                      "0": {
+                        "columns": {
+                          "0": "Year",
+                          "1": "Title",
+                          "2": "Role",
+                          "3": "Notes"
+                        }
+                      },
+                      "1": {
+                        "columns": {
+                          "0": "2017",
+                          "1": "SriValli",
+                          "2": "Majnu",
+                          "3": "Telugu film"
+                        }
+                      }
+                    }
+                  }
+                ]
+            }
+            </pre>
+               <br>
+               <p class="footer">
+                  Bugs? Features? Feel free to open an issue on <a href="https://github.com/atye/wikitable-api" target="_blank">GitHub</a>.
+               </p>
+            </div>
+         </div>
+   </body>
+   </body>
+</html>

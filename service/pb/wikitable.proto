@@ -23,6 +23,7 @@ message Table {
 
 message GetTablesRequest {
     string page = 1;
+    repeated string n = 2;
 }
 
 message GetTableRequest {
@@ -37,13 +38,7 @@ message GetTablesResponse {
 service WikiTable {
     rpc GetTables(GetTablesRequest) returns (GetTablesResponse) {
         option (google.api.http) = {
-            get: "/api/v1/{page}"
-        };
-    }
-
-    rpc GetTable(GetTableRequest) returns (Table) {
-        option (google.api.http) = {
-            get: "/api/v1/{page}/{n}"
+            get: "/api/v1/page/{page}"
         };
     }
 }

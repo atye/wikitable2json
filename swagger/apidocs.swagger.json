@@ -11,7 +11,7 @@
     "application/json"
   ],
   "paths": {
-    "/api/v1/{page}": {
+    "/api/v1/page/{page}": {
       "get": {
         "operationId": "WikiTable_GetTables",
         "responses": {
@@ -34,42 +34,16 @@
             "in": "path",
             "required": true,
             "type": "string"
-          }
-        ],
-        "tags": [
-          "WikiTable"
-        ]
-      }
-    },
-    "/api/v1/{page}/{n}": {
-      "get": {
-        "operationId": "WikiTable_GetTable",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/serviceTable"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response",
-            "schema": {
-              "$ref": "#/definitions/runtimeError"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "page",
-            "in": "path",
-            "required": true,
-            "type": "string"
           },
           {
             "name": "n",
-            "in": "path",
-            "required": true,
-            "type": "string"
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [

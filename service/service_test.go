@@ -13,16 +13,76 @@ import (
 	"github.com/jarcoal/httpmock"
 )
 
-func Test_GetTables(t *testing.T) {
-	startMocks(t)
+func TestMain(m *testing.M) {
+	startMocks()
 	defer httpmock.DeactivateAndReset()
+	os.Exit(m.Run())
+}
 
+func Test_GetTables(t *testing.T) {
 	tests := []struct {
 		Page                   string
+		N                      []string
 		ExepctedTablesResponse *pb.GetTablesResponse
 	}{
 		{
 			"table1",
+			[]string{},
+			&pb.GetTablesResponse{
+				Tables: []*pb.Table{
+					{
+						Caption: "test",
+						Rows: map[int64]*pb.Row{
+							0: {
+								Columns: map[int64]string{
+									0: "Column 1",
+									1: "Column 2",
+									2: "Column 3",
+								},
+							},
+							1: {
+								Columns: map[int64]string{
+									0: "A",
+									1: "B",
+									2: "B",
+								},
+							},
+							2: {
+								Columns: map[int64]string{
+									0: "A",
+									1: "C",
+									2: "D",
+								},
+							},
+							3: {
+								Columns: map[int64]string{
+									0: "E",
+									1: "F",
+									2: "F",
+								},
+							},
+							4: {
+								Columns: map[int64]string{
+									0: "G",
+									1: "F",
+									2: "F",
+								},
+							},
+							5: {
+								Columns: map[int64]string{
+									0: "H",
+									1: "H",
+									2: "H",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"table1",
+			[]string{"0"},
 			&pb.GetTablesResponse{
 				Tables: []*pb.Table{
 					{
@@ -82,6 +142,7 @@ func Test_GetTables(t *testing.T) {
 	for _, test := range tests {
 		gtReq := &pb.GetTablesRequest{
 			Page: test.Page,
+			N:    test.N,
 		}
 
 		tables, err := svc.GetTables(context.Background(), gtReq)
@@ -99,112 +160,73 @@ func Test_GetTables(t *testing.T) {
 	}
 }
 
-func Test_GetTable(t *testing.T) {
-	startMocks(t)
-	defer httpmock.DeactivateAndReset()
-
+func Test_GetTables_Error(t *testing.T) {
 	tests := []struct {
-		Page                  string
-		ExepctedTableResponse *pb.Table
+		Page string
+		N    []string
 	}{
 		{
-			"tables",
-			&pb.Table{
-
-				Caption: "test",
-				Rows: map[int64]*pb.Row{
-					0: {
-						Columns: map[int64]string{
-							0: "Column 1",
-							1: "Column 2",
-							2: "Column 3",
-						},
-					},
-					1: {
-						Columns: map[int64]string{
-							0: "A",
-							1: "B",
-							2: "B",
-						},
-					},
-					2: {
-						Columns: map[int64]string{
-							0: "A",
-							1: "C",
-							2: "D",
-						},
-					},
-					3: {
-						Columns: map[int64]string{
-							0: "E",
-							1: "F",
-							2: "F",
-						},
-					},
-					4: {
-						Columns: map[int64]string{
-							0: "G",
-							1: "F",
-							2: "F",
-						},
-					},
-					5: {
-						Columns: map[int64]string{
-							0: "H",
-							1: "H",
-							2: "H",
-						},
-					},
-				},
-			},
+			"rowspanError",
+			[]string{},
+		},
+		{
+			"colspanError",
+			[]string{},
+		},
+		{
+			"rowspanError",
+			[]string{"0"},
+		},
+		{
+			"table1",
+			[]string{"x"},
 		},
 	}
 
 	svc := &Service{}
 
 	for _, test := range tests {
-		gtReq := &pb.GetTableRequest{
+		gtReq := &pb.GetTablesRequest{
 			Page: test.Page,
-			N:    "1",
+			N:    test.N,
 		}
 
-		table, err := svc.GetTable(context.Background(), gtReq)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if !reflect.DeepEqual(table, test.ExepctedTableResponse) {
-			t.Log("expected:")
-			print(test.ExepctedTableResponse)
-			t.Log("got:")
-			print(table)
-			t.Errorf("expected %v, got %v", test.ExepctedTableResponse, table)
+		_, err := svc.GetTables(context.Background(), gtReq)
+		if err == nil {
+			t.Errorf("expected error, got nil")
 		}
 	}
 }
 
-func startMocks(t *testing.T) {
+func startMocks() {
 	httpmock.Activate()
 
 	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/%s", baseURL, "table1"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body: getRespBody(t, "table1.html"),
+				Body: getRespBody("table1.html"),
 			}, nil
 		})
 
-	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/%s", baseURL, "tables"),
+	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/%s", baseURL, "colspanError"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body: getRespBody(t, "tables.html"),
+				Body: getRespBody("colspanError.html"),
+			}, nil
+		})
+
+	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/%s", baseURL, "rowspanError"),
+		func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: getRespBody("rowspanError.html"),
 			}, nil
 		})
 }
 
-func getRespBody(t *testing.T, file string) io.ReadCloser {
+func getRespBody(file string) io.ReadCloser {
 	tables, err := os.Open(fmt.Sprintf("%s/%s", "testdata", file))
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 
 	return tables
