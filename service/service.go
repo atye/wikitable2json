@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	baseURL = "https://en.wikipedia.org/api/rest_v1/page/html"
+	baseURL = "wikipedia.org/api/rest_v1/page/html"
 )
 
 type Service struct{}
@@ -20,7 +20,7 @@ type Service struct{}
 func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.GetTablesResponse, error) {
 	var err error
 
-	doc, err := getDocument(req.Page)
+	doc, err := getDocument(req)
 	if err != nil {
 		return &pb.GetTablesResponse{}, err
 	}
@@ -128,8 +128,13 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 	return table, nil
 }
 
-func getDocument(page string) (*goquery.Document, error) {
-	resp, err := http.Get(fmt.Sprintf("%s/%s", baseURL, page))
+func getDocument(req *pb.GetTablesRequest) (*goquery.Document, error) {
+	lang := "en"
+	if req.Lang != "" {
+		lang = req.Lang
+	}
+
+	resp, err := http.Get(fmt.Sprintf("https://%s.%s/%s", lang, baseURL, req.Page))
 	if err != nil {
 		return nil, err
 	}

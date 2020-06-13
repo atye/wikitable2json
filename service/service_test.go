@@ -21,13 +21,14 @@ func TestMain(m *testing.M) {
 
 func Test_GetTables(t *testing.T) {
 	tests := []struct {
-		Page                   string
-		N                      []string
+		TablesRequest          *pb.GetTablesRequest
 		ExepctedTablesResponse *pb.GetTablesResponse
 	}{
 		{
-			"table1",
-			[]string{},
+			&pb.GetTablesRequest{
+				Page: "table1",
+				N:    []string{},
+			},
 			&pb.GetTablesResponse{
 				Tables: []*pb.Table{
 					{
@@ -81,8 +82,68 @@ func Test_GetTables(t *testing.T) {
 			},
 		},
 		{
-			"table1",
-			[]string{"0"},
+			&pb.GetTablesRequest{
+				Page: "table1",
+				N:    []string{"0"},
+			},
+			&pb.GetTablesResponse{
+				Tables: []*pb.Table{
+					{
+						Caption: "test",
+						Rows: map[int64]*pb.Row{
+							0: {
+								Columns: map[int64]string{
+									0: "Column 1",
+									1: "Column 2",
+									2: "Column 3",
+								},
+							},
+							1: {
+								Columns: map[int64]string{
+									0: "A",
+									1: "B",
+									2: "B",
+								},
+							},
+							2: {
+								Columns: map[int64]string{
+									0: "A",
+									1: "C",
+									2: "D",
+								},
+							},
+							3: {
+								Columns: map[int64]string{
+									0: "E",
+									1: "F",
+									2: "F",
+								},
+							},
+							4: {
+								Columns: map[int64]string{
+									0: "G",
+									1: "F",
+									2: "F",
+								},
+							},
+							5: {
+								Columns: map[int64]string{
+									0: "H",
+									1: "H",
+									2: "H",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			&pb.GetTablesRequest{
+				Page: "table1",
+				N:    []string{},
+				Lang: "cs",
+			},
 			&pb.GetTablesResponse{
 				Tables: []*pb.Table{
 					{
@@ -140,12 +201,7 @@ func Test_GetTables(t *testing.T) {
 	svc := &Service{}
 
 	for _, test := range tests {
-		gtReq := &pb.GetTablesRequest{
-			Page: test.Page,
-			N:    test.N,
-		}
-
-		tables, err := svc.GetTables(context.Background(), gtReq)
+		tables, err := svc.GetTables(context.Background(), test.TablesRequest)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -201,21 +257,28 @@ func Test_GetTables_Error(t *testing.T) {
 func startMocks() {
 	httpmock.Activate()
 
-	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/%s", baseURL, "table1"),
+	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "table1"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
 				Body: getRespBody("table1.html"),
 			}, nil
 		})
 
-	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/%s", baseURL, "colspanError"),
+	httpmock.RegisterResponder("GET", fmt.Sprintf("https://cs.%s/%s", baseURL, "table1"),
+		func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: getRespBody("table1.html"),
+			}, nil
+		})
+
+	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "colspanError"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
 				Body: getRespBody("colspanError.html"),
 			}, nil
 		})
 
-	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/%s", baseURL, "rowspanError"),
+	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "rowspanError"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
 				Body: getRespBody("rowspanError.html"),

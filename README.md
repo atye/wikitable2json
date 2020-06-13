@@ -5,7 +5,7 @@ An API to get Wikipedia table data.
 
 ## Example ([https://en.wikipedia.org/wiki/Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan))
 ### All tables
-curl [https://www.wikitable2json.com/api/v1/page/Arhaan_Khan](https://www.wikitable2json.com/api/v1/page/Arhaan_Khan)
+[https://www.wikitable2json.com/api/v1/page/Arhaan_Khan](https://www.wikitable2json.com/api/v1/page/Arhaan_Khan)
 ```
 {
   "tables": [
@@ -73,7 +73,7 @@ curl [https://www.wikitable2json.com/api/v1/page/Arhaan_Khan](https://www.wikita
 }
 ```
 ### Nth table
-curl [https://www.wikitable2json.com/api/v1/page/Arhaan_Khan?n=0](https://www.wikitable2json.com/api/v1/page/Arhaan_Khan?n=0)
+[https://www.wikitable2json.com/api/v1/page/Arhaan_Khan?n=0](https://www.wikitable2json.com/api/v1/page/Arhaan_Khan?n=0)
 ```
 {
   "tables": [
@@ -101,3 +101,7 @@ curl [https://www.wikitable2json.com/api/v1/page/Arhaan_Khan?n=0](https://www.wi
 }
 ```
 For multiple individual tables, you can use a query like: ```?n=0&n=3&n=7```.
+
+### Other query params
+?lang=
+The service will look for a page on the English subdomain (en.wikipedia.com) by default. To specify a page on a different language domain, like cs.wikipedia.com, use ?lang=cs.

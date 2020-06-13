@@ -44,6 +44,12 @@
               "type": "string"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
