@@ -68,7 +68,9 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 	// get the table rows, initialize a table, and get the table caption
 	rows := tableSelection.Find("tr")
 
-	table := initTable(rows)
+	table := &pb.Table{
+		Rows: make(map[int64]*pb.Row),
+	}
 	table.Caption = tableSelection.Find("caption").Text()
 
 	var err error
@@ -98,8 +100,15 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 			// loop through the spans and populate table columns
 			for i := 0; i < rowSpan; i++ {
 				for j := 0; j < colSpan; j++ {
+					row := rowNum + i
+					if _, ok := table.Rows[int64(row)]; !ok {
+						table.Rows[int64(row)] = &pb.Row{
+							Columns: make(map[int64]string),
+						}
+					}
+
 					nextAvailableCell := 0
-					columns := table.Rows[int64(rowNum+i)].Columns
+					columns := table.Rows[int64(row)].Columns
 
 					// check if column already has a value from a previous rowspan so we don't overrwite it
 					// loop until we get an availalbe column
@@ -149,20 +158,6 @@ func getDocument(req *pb.GetTablesRequest) (*goquery.Document, error) {
 	doc.Find(".mw-empty-elt").Remove()
 
 	return doc, err
-}
-
-func initTable(rows *goquery.Selection) *pb.Table {
-	table := &pb.Table{
-		Rows: make(map[int64]*pb.Row),
-	}
-
-	for row := 0; row < rows.Length(); row++ {
-		table.Rows[int64(row)] = &pb.Row{
-			Columns: make(map[int64]string),
-		}
-	}
-
-	return table
 }
 
 func parseText(s string) string {
