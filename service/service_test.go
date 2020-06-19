@@ -196,6 +196,109 @@ func Test_GetTables(t *testing.T) {
 				},
 			},
 		},
+		{
+			&pb.GetTablesRequest{
+				Page: "issue_1",
+				N:    []string{},
+			},
+			&pb.GetTablesResponse{
+				Tables: []*pb.Table{
+					{
+						Rows: map[int64]*pb.Row{
+							0: {
+								Columns: map[int64]string{
+									0: "Language",
+									1: "Country",
+									2: "Status",
+								},
+							},
+							1: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "Australia",
+									2: "minority",
+								},
+							},
+							2: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "Brazil",
+									2: "minority",
+								},
+							},
+							3: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "Canada",
+									2: "minority",
+								},
+							},
+							4: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "China",
+									2: "minority, co-official with Chinese in Yanbian Korean Autonomous Prefecture in Jilin Province",
+								},
+							},
+							5: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "Japan",
+									2: "minority",
+								},
+							},
+							6: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "North Korea",
+									2: "official",
+								},
+							},
+							7: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "Philippines",
+									2: "minority",
+								},
+							},
+							8: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "South Korea",
+									2: "official",
+								},
+							},
+							9: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "Taiwan",
+									2: "minority",
+								},
+							},
+							10: {
+								Columns: map[int64]string{
+									0: "Korean",
+									1: "United States",
+									2: "minority",
+								},
+							},
+							11: {
+								Columns: map[int64]string{
+									0: "Jeju",
+									1: "South Korea",
+									2: "official, in Jeju Island",
+								},
+							},
+							12: {
+								Columns: map[int64]string{
+									0: "Jeju",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	svc := &Service{}
@@ -261,6 +364,13 @@ func startMocks() {
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
 				Body: getRespBody("table1.html"),
+			}, nil
+		})
+
+	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "issue_1"),
+		func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body: getRespBody("issue_1.html"),
 			}, nil
 		})
 
