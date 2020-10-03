@@ -21,10 +21,12 @@ func TestMain(m *testing.M) {
 
 func Test_GetTables(t *testing.T) {
 	tests := []struct {
+		Name                   string
 		TablesRequest          *pb.GetTablesRequest
 		ExepctedTablesResponse *pb.GetTablesResponse
 	}{
 		{
+			"table1",
 			&pb.GetTablesRequest{
 				Page: "table1",
 				N:    []string{},
@@ -82,6 +84,7 @@ func Test_GetTables(t *testing.T) {
 			},
 		},
 		{
+			"table1_n=0",
 			&pb.GetTablesRequest{
 				Page: "table1",
 				N:    []string{"0"},
@@ -139,6 +142,7 @@ func Test_GetTables(t *testing.T) {
 			},
 		},
 		{
+			"table1_lang=cs",
 			&pb.GetTablesRequest{
 				Page: "table1",
 				N:    []string{},
@@ -197,6 +201,7 @@ func Test_GetTables(t *testing.T) {
 			},
 		},
 		{
+			"issue1",
 			&pb.GetTablesRequest{
 				Page: "issue_1",
 				N:    []string{},
@@ -304,18 +309,22 @@ func Test_GetTables(t *testing.T) {
 	svc := &Service{}
 
 	for _, test := range tests {
-		tables, err := svc.GetTables(context.Background(), test.TablesRequest)
-		if err != nil {
-			t.Fatal(err)
-		}
+		t.Run(test.Name, func(t *testing.T) {
+			tables, err := svc.GetTables(context.Background(), test.TablesRequest)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		if !reflect.DeepEqual(tables, test.ExepctedTablesResponse) {
-			t.Log("expected:")
-			print(test.ExepctedTablesResponse.Tables[0])
-			t.Log("got:")
-			print(tables.Tables[0])
-			t.Errorf("expected %v, got %v", test.ExepctedTablesResponse.Tables[0], tables.Tables[0])
-		}
+			if !reflect.DeepEqual(tables, test.ExepctedTablesResponse) {
+				//t.Log("expected:")
+				//print(test.ExepctedTablesResponse.Tables[0])
+				//t.Logf("%v", test.ExepctedTablesResponse.Tables)
+				//t.Log("got:")
+				//print(tables.Tables[0])
+				//t.Logf("%v", tables)
+				t.Errorf("expected %v, got %v", test.ExepctedTablesResponse.Tables[0], tables.Tables[0])
+			}
+		})
 	}
 }
 

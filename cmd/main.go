@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	errCh := make(chan error)
+	errCh := make(chan error, 1)
 
 	lis, err := net.Listen("tcp", ":2000")
 	if err != nil {
@@ -65,11 +65,4 @@ func setupHTTPMux(rMux *runtime.ServeMux) *http.ServeMux {
 
 func serveSwagger(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "swagger/apidocs.swagger.json")
-}
-
-func corsMW(handlerFunc http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		handlerFunc(w, r)
-	}
 }
