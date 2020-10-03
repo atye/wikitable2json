@@ -89,7 +89,7 @@ func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.
 						return
 					}
 
-					table, err := parseTable(doc.Find("table.wikitable").Eq(index))
+					table, err := parseTable(wikiTableSelection.Eq(index))
 					if err != nil {
 						errCh <- err
 						return
