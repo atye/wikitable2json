@@ -6,62 +6,111 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable-api/service/pb"
 )
 
 const (
-	baseURL = "wikipedia.org/api/rest_v1/page/html"
+	baseURL     = "wikipedia.org/api/rest_v1/page/html"
+	defaultLang = "en"
 )
 
 type Service struct{}
 
 func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.GetTablesResponse, error) {
-	var err error
-
 	doc, err := getDocument(req)
 	if err != nil {
 		return &pb.GetTablesResponse{}, err
 	}
 
-	resp := &pb.GetTablesResponse{}
-	var table *pb.Table
+	wikiTableSelection := doc.Find("table.wikitable")
 
 	switch len(req.N) {
 	case 0:
-		doc.Find("table.wikitable").EachWithBreak(func(_ int, s *goquery.Selection) bool {
-			table, err = parseTable(s)
-			if err != nil {
-				return false
-			}
+		var wg sync.WaitGroup
+		errCh := make(chan error, len(wikiTableSelection.Nodes))
 
-			resp.Tables = append(resp.Tables, table)
-			return true
-		})
-	default:
-		for _, n := range req.N {
-			var index int
-
-			index, err = strconv.Atoi(n)
-			if err != nil {
-				return &pb.GetTablesResponse{}, err
-			}
-
-			table, err = parseTable(doc.Find("table.wikitable").Eq(index))
-			if err != nil {
-				return &pb.GetTablesResponse{}, err
-			}
-
-			resp.Tables = append(resp.Tables, table)
+		resp := &pb.GetTablesResponse{
+			Tables: make([]*pb.Table, len(wikiTableSelection.Nodes)),
 		}
-	}
 
-	if err != nil {
-		return &pb.GetTablesResponse{}, err
-	}
+		go func() {
+			wikiTableSelection.Each(func(i int, selection *goquery.Selection) {
+				wg.Add(1)
+				go func(i int) {
+					defer func() {
+						wg.Done()
+					}()
 
-	return resp, nil
+					table, err := parseTable(selection)
+					if err != nil {
+						errCh <- err
+						return
+					}
+
+					resp.Tables[i] = table
+				}(i)
+			})
+
+			wg.Wait()
+			close(errCh)
+		}()
+
+		err := <-errCh
+		if err != nil {
+			return &pb.GetTablesResponse{}, err
+		}
+
+		return resp, nil
+
+	default:
+		var wg sync.WaitGroup
+		errCh := make(chan error, len(req.N))
+
+		resp := &pb.GetTablesResponse{
+			Tables: make([]*pb.Table, len(req.N)),
+		}
+
+		go func() {
+			for i, n := range req.N {
+				wg.Add(1)
+				go func(i int, n string) {
+					defer func() {
+						wg.Done()
+					}()
+
+					var index int
+
+					index, err = strconv.Atoi(n)
+					if err != nil {
+						errCh <- err
+						return
+					}
+
+					table, err := parseTable(doc.Find("table.wikitable").Eq(index))
+					if err != nil {
+						errCh <- err
+						return
+					}
+
+					resp.Tables[i] = table
+				}(i, n)
+
+			}
+
+			wg.Wait()
+			close(errCh)
+		}()
+
+		err := <-errCh
+		if err != nil {
+			return &pb.GetTablesResponse{}, err
+		}
+
+		return resp, nil
+	}
 }
 
 func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
@@ -138,7 +187,7 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 }
 
 func getDocument(req *pb.GetTablesRequest) (*goquery.Document, error) {
-	lang := "en"
+	lang := defaultLang
 	if req.Lang != "" {
 		lang = req.Lang
 	}
