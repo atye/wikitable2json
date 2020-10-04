@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -188,7 +189,7 @@ func getDocument(req *pb.GetTablesRequest) (*goquery.Document, error) {
 		lang = req.Lang
 	}
 
-	resp, err := http.Get(fmt.Sprintf("https://%s.%s/%s", lang, baseURL, req.Page))
+	resp, err := http.Get(fmt.Sprintf("https://%s.%s/%s", lang, baseURL, url.QueryEscape(req.Page)))
 	if err != nil {
 		return nil, err
 	}
