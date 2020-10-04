@@ -39,19 +39,19 @@ func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.
 		go func() {
 			wikiTableSelection.Each(func(i int, selection *goquery.Selection) {
 				wg.Add(1)
-				go func(i int) {
+				go func(index int, s *goquery.Selection) {
 					defer func() {
 						wg.Done()
 					}()
 
-					table, err := parseTable(selection)
+					table, err := parseTable(s)
 					if err != nil {
 						errCh <- err
 						return
 					}
 
-					resp.Tables[i] = table
-				}(i)
+					resp.Tables[index] = table
+				}(i, selection)
 			})
 
 			wg.Wait()
@@ -97,7 +97,6 @@ func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.
 
 					resp.Tables[i] = table
 				}(i, n)
-
 			}
 
 			wg.Wait()
@@ -114,9 +113,6 @@ func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.
 }
 
 func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
-	// get the table rows, initialize a table, and get the table caption
-	rows := tableSelection.Find("tr")
-
 	table := &pb.Table{
 		Rows: make(map[int64]*pb.Row),
 	}
@@ -125,7 +121,7 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 	var err error
 
 	// for each row in the table
-	rows.EachWithBreak(func(rowNum int, s *goquery.Selection) bool {
+	tableSelection.Find("tr").EachWithBreak(func(rowNum int, s *goquery.Selection) bool {
 		// find all th and td elements in the row
 		s.Find("th, td").EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
 			rowSpan := 1
