@@ -34,7 +34,7 @@ message GetTablesResponse {
 service WikiTable {
     rpc GetTables(GetTablesRequest) returns (GetTablesResponse) {
         option (google.api.http) = {
-            get: "/api/v1/page/{page}"
+            get: "/api/v1/page/{page=**}"
         };
     }
 }
