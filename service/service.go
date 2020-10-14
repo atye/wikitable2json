@@ -7,10 +7,10 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable-api/service/pb"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -23,92 +23,63 @@ type Service struct{}
 func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.GetTablesResponse, error) {
 	doc, err := getDocument(req)
 	if err != nil {
-		return &pb.GetTablesResponse{}, err
+		return nil, err
 	}
 
 	wikiTableSelection := doc.Find("table.wikitable")
+	var eg errgroup.Group
 
 	switch len(req.N) {
 	case 0:
-		var wg sync.WaitGroup
-		errCh := make(chan error, len(wikiTableSelection.Nodes))
-
 		resp := &pb.GetTablesResponse{
 			Tables: make([]*pb.Table, len(wikiTableSelection.Nodes)),
 		}
 
-		go func() {
-			wikiTableSelection.Each(func(i int, selection *goquery.Selection) {
-				wg.Add(1)
-				go func(index int, s *goquery.Selection) {
-					defer func() {
-						wg.Done()
-					}()
+		wikiTableSelection.Each(func(i int, selection *goquery.Selection) {
+			eg.Go(func() error {
+				table, err := parseTable(selection)
+				if err != nil {
+					return err
+				}
 
-					table, err := parseTable(s)
-					if err != nil {
-						errCh <- err
-						return
-					}
-
-					resp.Tables[index] = table
-				}(i, selection)
+				resp.Tables[i] = table
+				return nil
 			})
-
-			wg.Wait()
-			close(errCh)
-		}()
-
-		err := <-errCh
+		})
+		err := eg.Wait()
 		if err != nil {
-			return &pb.GetTablesResponse{}, err
+			return nil, err
 		}
-
 		return resp, nil
 
 	default:
-		var wg sync.WaitGroup
-		errCh := make(chan error, len(req.N))
-
 		resp := &pb.GetTablesResponse{
 			Tables: make([]*pb.Table, len(req.N)),
 		}
 
-		go func() {
-			for i, n := range req.N {
-				wg.Add(1)
-				go func(i int, n string) {
-					defer func() {
-						wg.Done()
-					}()
+		for i, n := range req.N {
+			i := i
+			n := n
+			eg.Go(func() error {
+				var index int
+				index, err = strconv.Atoi(n)
+				if err != nil {
+					return err
+				}
 
-					var index int
+				table, err := parseTable(wikiTableSelection.Eq(index))
+				if err != nil {
+					return err
+				}
 
-					index, err = strconv.Atoi(n)
-					if err != nil {
-						errCh <- err
-						return
-					}
-
-					table, err := parseTable(wikiTableSelection.Eq(index))
-					if err != nil {
-						errCh <- err
-						return
-					}
-
-					resp.Tables[i] = table
-				}(i, n)
-			}
-
-			wg.Wait()
-			close(errCh)
-		}()
-
-		err := <-errCh
-		if err != nil {
-			return &pb.GetTablesResponse{}, err
+				resp.Tables[i] = table
+				return nil
+			})
 		}
-
+		err := eg.Wait()
+		if err != nil {
+			return nil, err
+		}
 		return resp, nil
 	}
 }
@@ -177,7 +148,7 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 	})
 
 	if err != nil {
-		return &pb.Table{}, err
+		return nil, err
 	}
 
 	return table, nil
