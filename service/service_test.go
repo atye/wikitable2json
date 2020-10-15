@@ -1,9 +1,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"reflect"
@@ -349,6 +351,10 @@ func Test_GetTables_Error(t *testing.T) {
 			"table1",
 			[]string{"x"},
 		},
+		{
+			"httpError",
+			[]string{},
+		},
 	}
 
 	svc := &Service{}
@@ -372,35 +378,48 @@ func startMocks() {
 	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "table1"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body: getRespBody("table1.html"),
+				Body:       getRespBody("table1.html"),
+				StatusCode: http.StatusOK,
 			}, nil
 		})
 
 	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "issue_1"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body: getRespBody("issue_1.html"),
+				Body:       getRespBody("issue_1.html"),
+				StatusCode: http.StatusOK,
 			}, nil
 		})
 
 	httpmock.RegisterResponder("GET", fmt.Sprintf("https://cs.%s/%s", baseURL, "table1"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body: getRespBody("table1.html"),
+				Body:       getRespBody("table1.html"),
+				StatusCode: http.StatusOK,
 			}, nil
 		})
 
 	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "colspanError"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body: getRespBody("colspanError.html"),
+				Body:       getRespBody("colspanError.html"),
+				StatusCode: http.StatusOK,
 			}, nil
 		})
 
 	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "rowspanError"),
 		func(*http.Request) (*http.Response, error) {
 			return &http.Response{
-				Body: getRespBody("rowspanError.html"),
+				Body:       getRespBody("rowspanError.html"),
+				StatusCode: http.StatusOK,
+			}, nil
+		})
+
+	httpmock.RegisterResponder("GET", fmt.Sprintf("https://en.%s/%s", baseURL, "httpError"),
+		func(*http.Request) (*http.Response, error) {
+			return &http.Response{
+				Body:       ioutil.NopCloser(&bytes.Buffer{}),
+				StatusCode: http.StatusRequestEntityTooLarge,
 			}, nil
 		})
 }

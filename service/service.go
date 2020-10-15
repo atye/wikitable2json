@@ -11,6 +11,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable-api/service/pb"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
 const (
@@ -160,11 +162,17 @@ func getDocument(req *pb.GetTablesRequest) (*goquery.Document, error) {
 		lang = req.Lang
 	}
 
-	resp, err := http.Get(fmt.Sprintf("https://%s.%s/%s", lang, baseURL, url.QueryEscape(req.Page)))
+	url := fmt.Sprintf("https://%s.%s/%s", lang, baseURL, url.QueryEscape(req.Page))
+
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, grpc.Errorf(codes.Unknown, fmt.Sprintf("failed to get %s with status: %d", url, resp.StatusCode))
+	}
 
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
