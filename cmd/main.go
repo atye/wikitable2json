@@ -10,11 +10,12 @@ import (
 	"github.com/atye/wikitable-api/service"
 	"github.com/atye/wikitable-api/service/pb"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	errCh := make(chan error, 1)
+	var eg errgroup.Group
 
 	lis, err := net.Listen("tcp", ":2000")
 	if err != nil {
@@ -25,9 +26,9 @@ func main() {
 	svr := grpc.NewServer()
 
 	pb.RegisterWikiTableServer(svr, svc)
-	go func() {
-		errCh <- svr.Serve(lis)
-	}()
+	eg.Go(func() error {
+		return svr.Serve(lis)
+	})
 
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
@@ -46,11 +47,11 @@ func main() {
 		log.Fatal("PORT env not set")
 	}
 
-	go func() {
-		errCh <- http.ListenAndServe(":"+port, mux)
-	}()
+	eg.Go(func() error {
+		return http.ListenAndServe(":"+port, mux)
+	})
 
-	log.Fatal(<-errCh)
+	log.Fatal(eg.Wait())
 }
 
 func setupHTTPMux(rMux *runtime.ServeMux) *http.ServeMux {
