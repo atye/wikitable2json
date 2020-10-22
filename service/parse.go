@@ -2,36 +2,18 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable-api/service/pb"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 )
 
-const (
-	baseURL     = "wikipedia.org/api/rest_v1/page/html"
-	defaultLang = "en"
-)
-
-type Service struct{}
-
-func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.GetTablesResponse, error) {
-	doc, err := getDocument(req)
-	if err != nil {
-		return nil, err
-	}
-
-	wikiTableSelection := doc.Find("table.wikitable")
+func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, n []int) (*pb.GetTablesResponse, error) {
 	var eg errgroup.Group
 
-	switch len(req.N) {
+	switch len(n) {
 	case 0:
 		resp := &pb.GetTablesResponse{
 			Tables: make([]*pb.Table, len(wikiTableSelection.Nodes)),
@@ -56,20 +38,14 @@ func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.
 
 	default:
 		resp := &pb.GetTablesResponse{
-			Tables: make([]*pb.Table, len(req.N)),
+			Tables: make([]*pb.Table, len(n)),
 		}
 
-		for i, n := range req.N {
+		for i, n := range n {
 			i := i
 			n := n
 			eg.Go(func() error {
-				var index int
-				index, err = strconv.Atoi(n)
-				if err != nil {
-					return err
-				}
-
-				table, err := parseTable(wikiTableSelection.Eq(index))
+				table, err := parseTable(wikiTableSelection.Eq(n))
 				if err != nil {
 					return err
 				}
@@ -154,35 +130,6 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 	}
 
 	return table, nil
-}
-
-func getDocument(req *pb.GetTablesRequest) (*goquery.Document, error) {
-	lang := defaultLang
-	if req.Lang != "" {
-		lang = req.Lang
-	}
-
-	url := fmt.Sprintf("https://%s.%s/%s", lang, baseURL, url.QueryEscape(req.Page))
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, grpc.Errorf(codes.Unknown, fmt.Sprintf("failed to get %s with status: %d", url, resp.StatusCode))
-	}
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	// remove empty/hidden elements
-	doc.Find(".mw-empty-elt").Remove()
-
-	return doc, err
 }
 
 func parseText(s string) string {
