@@ -420,9 +420,7 @@ func TestRunError(t *testing.T) {
 			[]string{"x"},
 			Config{
 				HttpGet: func(string) (*http.Response, error) {
-					return &http.Response{
-						Body: ioutil.NopCloser(&bytes.Buffer{}),
-					}, errors.New("error")
+					return nil, errors.New("error")
 				},
 				HttpSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),

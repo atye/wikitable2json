@@ -71,11 +71,9 @@ func getDocument(req *pb.GetTablesRequest, get func(string) (*http.Response, err
 		lang = req.Lang
 	}
 
-	url := fmt.Sprintf("https://%s.%s/%s", lang, baseURL, url.QueryEscape(req.Page))
-
-	resp, err := get(url)
+	resp, err := get(fmt.Sprintf("https://%s.%s/%s", lang, baseURL, url.QueryEscape(req.Page)))
 	if err != nil {
-		return nil, resp.StatusCode, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 
