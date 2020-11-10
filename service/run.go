@@ -29,7 +29,7 @@ func Run(ctx context.Context, c Config) error {
 	}
 
 	svc := &Service{
-		HTTPGet: c.HttpGet,
+		HttpGet: c.HttpGet,
 	}
 
 	pb.RegisterWikiTableServer(c.GrpcSvr, svc)

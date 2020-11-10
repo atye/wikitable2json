@@ -133,6 +133,5 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 }
 
 func parseText(s string) string {
-	s = strings.TrimSpace(s)
-	return s
+	return strings.TrimSpace(s)
 }

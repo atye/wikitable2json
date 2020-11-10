@@ -17,15 +17,12 @@ func main() {
 		log.Fatal("PORT env not set")
 	}
 
-	grpcSvr := grpc.NewServer()
-	httpSvr := &http.Server{
-		Addr: fmt.Sprintf(":%s", port),
-	}
-
 	conf := service.Config{
 		HttpGet: http.Get,
-		HttpSvr: httpSvr,
-		GrpcSvr: grpcSvr,
+		HttpSvr: &http.Server{
+			Addr: fmt.Sprintf(":%s", port),
+		},
+		GrpcSvr: grpc.NewServer(),
 	}
 
 	log.Fatal(service.Run(context.Background(), conf))
