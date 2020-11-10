@@ -15,7 +15,7 @@ import (
 )
 
 type Service struct {
-	HTTPGet func(string) (*http.Response, error)
+	HttpGet func(string) (*http.Response, error)
 }
 
 const (
@@ -28,7 +28,7 @@ var (
 )
 
 func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.GetTablesResponse, error) {
-	doc, statusCode, err := getDocument(req, s.HTTPGet)
+	doc, statusCode, err := getDocument(req, s.HttpGet)
 	if err != nil {
 		if errors.Is(err, ErrWikipediaRestAPINotOk) {
 			headerErr := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(statusCode)))
