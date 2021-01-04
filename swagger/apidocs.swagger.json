@@ -13,7 +13,7 @@
   "paths": {
     "/api/v1/page/{page}": {
       "get": {
-        "operationId": "WikiTable_GetTables",
+        "operationId": "GetTables",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -50,6 +50,74 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "table",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "WikiTable"
+        ]
+      }
+    },
+    "/api/v2/{page}": {
+      "get": {
+        "operationId": "GetTablesV2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/serviceGetTablesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "table",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "collectionFormat": "multi"
           }
         ],
         "tags": [

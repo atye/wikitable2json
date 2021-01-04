@@ -25,6 +25,7 @@ message GetTablesRequest {
     string page = 1;
     repeated string n = 2;
     string lang = 3;
+    repeated int32 table = 4;
 }
 
 message GetTablesResponse {
@@ -35,6 +36,11 @@ service WikiTable {
     rpc GetTables(GetTablesRequest) returns (GetTablesResponse) {
         option (google.api.http) = {
             get: "/api/v1/page/{page=**}"
+        };
+    }
+    rpc GetTablesV2(GetTablesRequest) returns (GetTablesResponse) {
+        option (google.api.http) = {
+            get: "/api/v2/{page=**}"
         };
     }
 }

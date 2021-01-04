@@ -40,20 +40,42 @@ func (s *Service) GetTables(ctx context.Context, req *pb.GetTablesRequest) (*pb.
 		return nil, err
 	}
 
-	n := make([]int, len(req.N))
-	for i, reqN := range req.N {
-		index, err := strconv.Atoi(reqN)
-		if err != nil {
-			headerErr := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusBadRequest)))
+	tables, err := getTableRequestIndices(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := parseTables(ctx, doc.Find("table.wikitable"), tables)
+	if err != nil {
+		headerErr := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusInternalServerError)))
+		if headerErr != nil {
+			return nil, headerErr
+		}
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (s *Service) GetTablesV2(ctx context.Context, req *pb.GetTablesRequest) (*pb.GetTablesResponse, error) {
+	doc, statusCode, err := getDocument(req, s.HttpGet)
+	if err != nil {
+		if errors.Is(err, ErrWikipediaRestAPINotOk) {
+			headerErr := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(statusCode)))
 			if headerErr != nil {
 				return nil, headerErr
 			}
-			return nil, fmt.Errorf("table index (n) should be a number - got %s", reqN)
+			return nil, fmt.Errorf("wikipedia API response not 200/OK - got status code: %d", statusCode)
 		}
-		n[i] = index
+		return nil, err
 	}
 
-	resp, err := parseTables(ctx, doc.Find("table.wikitable"), n)
+	tables, err := getTableRequestIndices(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := parseTables(ctx, doc.Find("table.wikitable"), tables)
 	if err != nil {
 		headerErr := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusInternalServerError)))
 		if headerErr != nil {
@@ -90,4 +112,30 @@ func getDocument(req *pb.GetTablesRequest, get func(string) (*http.Response, err
 	doc.Find(".mw-empty-elt").Remove()
 
 	return doc, resp.StatusCode, err
+}
+
+func getTableRequestIndices(ctx context.Context, req *pb.GetTablesRequest) ([]int, error) {
+	if len(req.Table) > 0 {
+		tables := make([]int, len(req.Table))
+		for i, table := range req.Table {
+			tables[i] = int(table)
+		}
+		return tables, nil
+	}
+	if len(req.N) > 0 {
+		n := make([]int, len(req.N))
+		for i, reqN := range req.N {
+			index, err := strconv.Atoi(reqN)
+			if err != nil {
+				headerErr := grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(http.StatusBadRequest)))
+				if headerErr != nil {
+					return nil, headerErr
+				}
+				return nil, fmt.Errorf("table index (n) should be a number - got %s", reqN)
+			}
+			n[i] = index
+		}
+		return n, nil
+	}
+	return nil, nil
 }

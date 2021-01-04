@@ -15,7 +15,7 @@ protoc:
 	./service/pb/*.proto
 
 test:
-	go test -v -cover -race ./...
+	go test -v -cover -race -p 1 ./...
 
 deploy:
 	docker build -t wikitable-api .

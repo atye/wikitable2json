@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
 	"strconv"
@@ -15,17 +14,19 @@ import (
 )
 
 type Config struct {
-	HttpGet func(string) (*http.Response, error)
-	HttpSvr *http.Server
-	GrpcSvr *grpc.Server
+	HttpGet     func(string) (*http.Response, error)
+	HttpSvr     *http.Server
+	GrpcSvr     *grpc.Server
+	Port        string
+	signalReady chan struct{}
 }
 
 func Run(ctx context.Context, c Config) error {
 	var eg errgroup.Group
 
-	lis, err := net.Listen("tcp", ":2000")
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", c.Port))
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	svc := &Service{
@@ -49,9 +50,9 @@ func Run(ctx context.Context, c Config) error {
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
 	}
-	err = pb.RegisterWikiTableHandlerFromEndpoint(ctx, gwMux, "127.0.0.1:2000", opts)
+	err = pb.RegisterWikiTableHandlerFromEndpoint(ctx, gwMux, fmt.Sprintf("127.0.0.1:%s", c.Port), opts)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	mux.Handle("/api/", gwMux)
@@ -63,6 +64,10 @@ func Run(ctx context.Context, c Config) error {
 	eg.Go(func() error {
 		return c.HttpSvr.ListenAndServe()
 	})
+
+	if c.signalReady != nil {
+		c.signalReady <- struct{}{}
+	}
 
 	return eg.Wait()
 }
