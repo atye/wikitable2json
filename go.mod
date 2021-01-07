@@ -4,10 +4,10 @@ go 1.14
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.1
-	github.com/golang/protobuf v1.4.2
-	github.com/grpc-ecosystem/grpc-gateway v1.14.6
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884
-	google.golang.org/grpc v1.29.1
-	google.golang.org/protobuf v1.23.0
+	github.com/golang/protobuf v1.4.3
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.1.0
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	google.golang.org/genproto v0.0.0-20210106152847-07624b53cd92
+	google.golang.org/grpc v1.34.0
+	google.golang.org/protobuf v1.25.0
 )

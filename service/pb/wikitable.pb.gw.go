@@ -13,14 +13,14 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/golang/protobuf/descriptor"
-	"github.com/golang/protobuf/proto"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/grpc-ecosystem/grpc-gateway/utilities"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 // Suppress "imported and not used" errors
@@ -29,14 +29,14 @@ var _ io.Reader
 var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
-var _ = descriptor.ForMessage
+var _ = metadata.Join
 
 var (
-	filter_WikiTable_GetTables_0 = &utilities.DoubleArray{Encoding: map[string]int{"page": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_WikiTableJSONAPI_GetTables_0 = &utilities.DoubleArray{Encoding: map[string]int{"page": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
-func request_WikiTable_GetTables_0(ctx context.Context, marshaler runtime.Marshaler, client WikiTableClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTablesRequest
+func request_WikiTableJSONAPI_GetTables_0(ctx context.Context, marshaler runtime.Marshaler, client WikiTableJSONAPIClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq TablesRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -52,7 +52,6 @@ func request_WikiTable_GetTables_0(ctx context.Context, marshaler runtime.Marsha
 	}
 
 	protoReq.Page, err = runtime.String(val)
-
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "page", err)
 	}
@@ -60,7 +59,7 @@ func request_WikiTable_GetTables_0(ctx context.Context, marshaler runtime.Marsha
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_WikiTable_GetTables_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_WikiTableJSONAPI_GetTables_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -69,8 +68,8 @@ func request_WikiTable_GetTables_0(ctx context.Context, marshaler runtime.Marsha
 
 }
 
-func local_request_WikiTable_GetTables_0(ctx context.Context, marshaler runtime.Marshaler, server WikiTableServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTablesRequest
+func local_request_WikiTableJSONAPI_GetTables_0(ctx context.Context, marshaler runtime.Marshaler, server WikiTableJSONAPIServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq TablesRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -86,12 +85,14 @@ func local_request_WikiTable_GetTables_0(ctx context.Context, marshaler runtime.
 	}
 
 	protoReq.Page, err = runtime.String(val)
-
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "page", err)
 	}
 
-	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_WikiTable_GetTables_0); err != nil {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_WikiTableJSONAPI_GetTables_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
@@ -100,126 +101,41 @@ func local_request_WikiTable_GetTables_0(ctx context.Context, marshaler runtime.
 
 }
 
-var (
-	filter_WikiTable_GetTablesV2_0 = &utilities.DoubleArray{Encoding: map[string]int{"page": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
-
-func request_WikiTable_GetTablesV2_0(ctx context.Context, marshaler runtime.Marshaler, client WikiTableClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTablesRequest
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["page"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "page")
-	}
-
-	protoReq.Page, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "page", err)
-	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_WikiTable_GetTablesV2_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := client.GetTablesV2(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
-	return msg, metadata, err
-
-}
-
-func local_request_WikiTable_GetTablesV2_0(ctx context.Context, marshaler runtime.Marshaler, server WikiTableServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetTablesRequest
-	var metadata runtime.ServerMetadata
-
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["page"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "page")
-	}
-
-	protoReq.Page, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "page", err)
-	}
-
-	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_WikiTable_GetTablesV2_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
-	msg, err := server.GetTablesV2(ctx, &protoReq)
-	return msg, metadata, err
-
-}
-
-// RegisterWikiTableHandlerServer registers the http handlers for service WikiTable to "mux".
-// UnaryRPC     :call WikiTableServer directly.
+// RegisterWikiTableJSONAPIHandlerServer registers the http handlers for service WikiTableJSONAPI to "mux".
+// UnaryRPC     :call WikiTableJSONAPIServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
-func RegisterWikiTableHandlerServer(ctx context.Context, mux *runtime.ServeMux, server WikiTableServer) error {
+// Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterWikiTableJSONAPIHandlerFromEndpoint instead.
+func RegisterWikiTableJSONAPIHandlerServer(ctx context.Context, mux *runtime.ServeMux, server WikiTableJSONAPIServer) error {
 
-	mux.Handle("GET", pattern_WikiTable_GetTables_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WikiTableJSONAPI_GetTables_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/wikipedia.WikiTableJSONAPI/GetTables")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_WikiTable_GetTables_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_WikiTableJSONAPI_GetTables_0(rctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WikiTable_GetTables_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("GET", pattern_WikiTable_GetTablesV2_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := local_request_WikiTable_GetTablesV2_0(rctx, inboundMarshaler, server, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_WikiTable_GetTablesV2_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WikiTableJSONAPI_GetTables_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-// RegisterWikiTableHandlerFromEndpoint is same as RegisterWikiTableHandler but
+// RegisterWikiTableJSONAPIHandlerFromEndpoint is same as RegisterWikiTableJSONAPIHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterWikiTableHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterWikiTableJSONAPIHandlerFromEndpoint(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -239,59 +155,39 @@ func RegisterWikiTableHandlerFromEndpoint(ctx context.Context, mux *runtime.Serv
 		}()
 	}()
 
-	return RegisterWikiTableHandler(ctx, mux, conn)
+	return RegisterWikiTableJSONAPIHandler(ctx, mux, conn)
 }
 
-// RegisterWikiTableHandler registers the http handlers for service WikiTable to "mux".
+// RegisterWikiTableJSONAPIHandler registers the http handlers for service WikiTableJSONAPI to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterWikiTableHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterWikiTableHandlerClient(ctx, mux, NewWikiTableClient(conn))
+func RegisterWikiTableJSONAPIHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterWikiTableJSONAPIHandlerClient(ctx, mux, NewWikiTableJSONAPIClient(conn))
 }
 
-// RegisterWikiTableHandlerClient registers the http handlers for service WikiTable
-// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "WikiTableClient".
-// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "WikiTableClient"
+// RegisterWikiTableJSONAPIHandlerClient registers the http handlers for service WikiTableJSONAPI
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "WikiTableJSONAPIClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "WikiTableJSONAPIClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
-// "WikiTableClient" to call the correct interceptors.
-func RegisterWikiTableHandlerClient(ctx context.Context, mux *runtime.ServeMux, client WikiTableClient) error {
+// "WikiTableJSONAPIClient" to call the correct interceptors.
+func RegisterWikiTableJSONAPIHandlerClient(ctx context.Context, mux *runtime.ServeMux, client WikiTableJSONAPIClient) error {
 
-	mux.Handle("GET", pattern_WikiTable_GetTables_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_WikiTableJSONAPI_GetTables_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/wikipedia.WikiTableJSONAPI/GetTables")
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_WikiTable_GetTables_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_WikiTableJSONAPI_GetTables_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_WikiTable_GetTables_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
-
-	})
-
-	mux.Handle("GET", pattern_WikiTable_GetTablesV2_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
-		ctx, cancel := context.WithCancel(req.Context())
-		defer cancel()
-		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-		resp, md, err := request_WikiTable_GetTablesV2_0(rctx, inboundMarshaler, client, req, pathParams)
-		ctx = runtime.NewServerMetadataContext(ctx, md)
-		if err != nil {
-			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
-			return
-		}
-
-		forward_WikiTable_GetTablesV2_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_WikiTableJSONAPI_GetTables_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -299,13 +195,9 @@ func RegisterWikiTableHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 }
 
 var (
-	pattern_WikiTable_GetTables_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 3, 0, 4, 1, 5, 2}, []string{"api", "v1", "page"}, "", runtime.AssumeColonVerbOpt(false)))
-
-	pattern_WikiTable_GetTablesV2_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 3, 0, 4, 1, 5, 2}, []string{"api", "v2", "page"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_WikiTableJSONAPI_GetTables_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 3, 0, 4, 1, 5, 2}, []string{"api", "v2", "page"}, ""))
 )
 
 var (
-	forward_WikiTable_GetTables_0 = runtime.ForwardResponseMessage
-
-	forward_WikiTable_GetTablesV2_0 = runtime.ForwardResponseMessage
+	forward_WikiTableJSONAPI_GetTables_0 = runtime.ForwardResponseMessage
 )

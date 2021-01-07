@@ -16,7 +16,6 @@ func main() {
 	if !ok {
 		log.Fatal("PORT env not set")
 	}
-
 	conf := service.Config{
 		HttpGet: http.Get,
 		HttpSvr: &http.Server{
@@ -24,6 +23,5 @@ func main() {
 		},
 		GrpcSvr: grpc.NewServer(),
 	}
-
 	log.Fatal(service.Run(context.Background(), conf))
 }

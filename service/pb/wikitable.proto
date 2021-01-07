@@ -1,14 +1,14 @@
 syntax = "proto3";
-package service;
+package wikipedia;
 
 option go_package = "github.com/atye/wikitable-api/service/pb";
 
 import "google/api/annotations.proto";
-import "protoc-gen-swagger/options/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
-option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
     info: {
-        title: "WikiTable API";
+        title: "Wikipedia Table JSON API";
     };
 };
 
@@ -21,24 +21,18 @@ message Table {
     map<int64, Row> rows = 2;
 }
 
-message GetTablesRequest {
+message TablesRequest {
     string page = 1;
-    repeated string n = 2;
-    string lang = 3;
-    repeated int32 table = 4;
+    string lang = 2;
+    repeated int32 table = 3;
 }
 
-message GetTablesResponse {
+message TablesResponse {
     repeated Table tables = 1;
 }
 
-service WikiTable {
-    rpc GetTables(GetTablesRequest) returns (GetTablesResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/page/{page=**}"
-        };
-    }
-    rpc GetTablesV2(GetTablesRequest) returns (GetTablesResponse) {
+service WikiTableJSONAPI {
+    rpc GetTables(TablesRequest) returns (TablesResponse) {
         option (google.api.http) = {
             get: "/api/v2/{page=**}"
         };
