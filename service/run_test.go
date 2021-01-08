@@ -22,7 +22,7 @@ func TestRunSuccess(t *testing.T) {
 	tests := []struct {
 		Name           string
 		Page           string
-		N              []string
+		Tables         []int32
 		Lang           string
 		Config         Config
 		ExpectedTables []*pb.Table
@@ -30,7 +30,7 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"table1",
 			"table1",
-			[]string{},
+			[]int32{},
 			"",
 			Config{
 				HttpGet: func(string) (*http.Response, error) {
@@ -98,7 +98,7 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"table1_n=0",
 			"table1",
-			[]string{"0"},
+			[]int32{0},
 			"",
 			Config{
 				HttpGet: func(string) (*http.Response, error) {
@@ -166,7 +166,7 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"table1_lang=cs",
 			"table1",
-			[]string{},
+			[]int32{},
 			"cs",
 			Config{
 				HttpGet: func(string) (*http.Response, error) {
@@ -234,7 +234,7 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"issue1",
 			"issue1",
-			[]string{},
+			[]int32{},
 			"",
 			Config{
 				HttpGet: func(string) (*http.Response, error) {
@@ -287,8 +287,8 @@ func TestRunSuccess(t *testing.T) {
 			}
 
 			queryParams := req.URL.Query()
-			for _, n := range tc.N {
-				queryParams.Add("n", n)
+			for _, table := range tc.Tables {
+				queryParams.Add("n", strconv.Itoa(int(table)))
 			}
 
 			if tc.Lang != "" {
@@ -406,26 +406,6 @@ func TestRunError(t *testing.T) {
 			},
 			http.StatusRequestEntityTooLarge,
 		},
-		/*{
-			"BadIndexError",
-			"test",
-			[]string{"x"},
-			Config{
-				HttpGet: func(string) (*http.Response, error) {
-					return &http.Response{
-						Body:       ioutil.NopCloser(&bytes.Buffer{}),
-						StatusCode: http.StatusOK,
-					}, nil
-				},
-				HttpSvr: &http.Server{
-					Addr: fmt.Sprintf(":%s", "8080"),
-				},
-				GrpcSvr:     grpc.NewServer(),
-				signalReady: make(chan struct{}),
-			},
-
-			http.StatusBadRequest,
-		},*/
 		{
 			"HttpGetError",
 			"test",
@@ -440,7 +420,7 @@ func TestRunError(t *testing.T) {
 				GrpcSvr:     grpc.NewServer(),
 				signalReady: make(chan struct{}),
 			},
-			http.StatusServiceUnavailable,
+			http.StatusInternalServerError,
 		},
 	}
 
