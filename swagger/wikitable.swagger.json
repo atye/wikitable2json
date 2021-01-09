@@ -6,7 +6,7 @@
   },
   "tags": [
     {
-      "name": "WikiTableJSONAPI"
+      "name": "WikipediaTableJSONAPI"
     }
   ],
   "consumes": [
@@ -16,9 +16,9 @@
     "application/json"
   ],
   "paths": {
-    "/api/v2/{page}": {
+    "/api/{page}": {
       "get": {
-        "operationId": "WikiTableJSONAPI_GetTables",
+        "operationId": "WikipediaTableJSONAPI_GetTables",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -59,7 +59,7 @@
           }
         ],
         "tags": [
-          "WikiTableJSONAPI"
+          "WikipediaTableJSONAPI"
         ]
       }
     }

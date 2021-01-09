@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/atye/wikitable-api/service"
+	"github.com/atye/wikitable-api/internal/service"
 	"google.golang.org/grpc"
 )
 
@@ -16,12 +16,11 @@ func main() {
 	if !ok {
 		log.Fatal("PORT env not set")
 	}
-	conf := service.Config{
-		HttpGet: http.Get,
-		HttpSvr: &http.Server{
+	log.Fatal(service.Run(context.Background(), service.Config{
+		HTTPGet: http.Get,
+		HTTPSvr: &http.Server{
 			Addr: fmt.Sprintf(":%s", port),
 		},
 		GrpcSvr: grpc.NewServer(),
-	}
-	log.Fatal(service.Run(context.Background(), conf))
+	}))
 }

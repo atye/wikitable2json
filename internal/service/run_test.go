@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/atye/wikitable-api/service/pb"
+	"github.com/atye/wikitable-api/internal/service/pb"
 	"google.golang.org/grpc"
 )
 
@@ -33,13 +33,13 @@ func TestRunSuccess(t *testing.T) {
 			[]int32{},
 			"",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("table1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -101,13 +101,13 @@ func TestRunSuccess(t *testing.T) {
 			[]int32{0},
 			"",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("table1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -169,13 +169,13 @@ func TestRunSuccess(t *testing.T) {
 			[]int32{},
 			"cs",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("table1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -237,13 +237,13 @@ func TestRunSuccess(t *testing.T) {
 			[]int32{},
 			"",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("issue_1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -278,7 +278,7 @@ func TestRunSuccess(t *testing.T) {
 
 			defer func() {
 				tc.Config.GrpcSvr.GracefulStop()
-				tc.Config.HttpSvr.Shutdown(context.Background())
+				tc.Config.HTTPSvr.Shutdown(context.Background())
 			}()
 
 			req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8080/api/v2/%s", tc.Page), nil)
@@ -335,13 +335,13 @@ func TestRunError(t *testing.T) {
 			"rowSpanError",
 			[]int32{},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("rowspanError.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -354,13 +354,13 @@ func TestRunError(t *testing.T) {
 			"colSpanError",
 			[]int32{},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("colspanError.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -373,13 +373,13 @@ func TestRunError(t *testing.T) {
 			"SpanError_n=0",
 			[]int32{0},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("colspanError.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -392,13 +392,13 @@ func TestRunError(t *testing.T) {
 			"",
 			[]int32{0},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       ioutil.NopCloser(&bytes.Buffer{}),
 						StatusCode: http.StatusRequestEntityTooLarge,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -407,14 +407,14 @@ func TestRunError(t *testing.T) {
 			http.StatusRequestEntityTooLarge,
 		},
 		{
-			"HttpGetError",
+			"HTTPGetError",
 			"test",
 			[]int32{0},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return nil, errors.New("error")
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
 				GrpcSvr:     grpc.NewServer(),
@@ -432,7 +432,7 @@ func TestRunError(t *testing.T) {
 
 			defer func() {
 				tc.Config.GrpcSvr.GracefulStop()
-				tc.Config.HttpSvr.Shutdown(context.Background())
+				tc.Config.HTTPSvr.Shutdown(context.Background())
 			}()
 
 			req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8080/api/v2/%s", tc.Page), nil)

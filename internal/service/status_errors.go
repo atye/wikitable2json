@@ -1,59 +1,17 @@
 package service
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func fromStatusWithDetailsErrorHandler(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, req *http.Request, err error) {
-	if s, ok := status.FromError(err); ok {
-		if s.Details() != nil && len(s.Details()) > 0 {
-			switch d := s.Details()[0].(type) {
-			case *errdetails.ErrorInfo:
-				respCodeStr, ok := d.Metadata["ResponseStatusCode"]
-				if !ok {
-					panic("response status code wasn't included in the error details")
-				}
-				respCode, err := strconv.Atoi(respCodeStr)
-				if err != nil {
-					http.Error(w, fmt.Sprintf("error processing response code : %v", err.Error()), http.StatusInternalServerError)
-					return
-				}
-				w.WriteHeader(respCode)
-			}
-		} else {
-			http.Error(w, fmt.Sprintf("encountered an error but no other details were provided: %v", err.Error()), http.StatusInternalServerError)
-			return
-		}
-		data, err := marshaler.Marshal(s.Proto())
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err.Error()), http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "%s", data)
-	} else {
-		fmt.Fprintf(w, "encountered an error but no other details were provided: %v", err.Error())
-	}
-}
-
-type wikiApiError struct {
-	statusCode int
-	message    string
-}
-
-func (e *wikiApiError) Error() string {
-	return ""
-}
-
-func wikiAPIStatusErr(apiErr *wikiApiError) error {
+func wikiAPIRespNotOKStatusErr(apiErr *wikiApiError) error {
 	st := status.New(codes.Internal, apiErr.message)
 	st, err := st.WithDetails(&errdetails.ErrorInfo{
 		Domain: "wikipedia.org/api/rest_v1/#",
@@ -61,6 +19,7 @@ func wikiAPIStatusErr(apiErr *wikiApiError) error {
 		Metadata: map[string]string{
 			"ResponseStatusCode": strconv.Itoa(apiErr.statusCode),
 			"ResponseStatusText": http.StatusText(apiErr.statusCode),
+			"Page":               apiErr.page,
 		},
 	})
 	if err != nil {
@@ -90,7 +49,7 @@ func tableParseStatusErr(ptErr *parseTableError) error {
 	return st.Err()
 }
 
-func getDocumentStatusErr(err error) error {
+func getGeneralStatusErr(err error) error {
 	st := status.New(codes.Internal, err.Error())
 	st, err = st.WithDetails(&errdetails.ErrorInfo{
 		Domain: "wikitable2json.com",
@@ -105,15 +64,4 @@ func getDocumentStatusErr(err error) error {
 		return status.Error(codes.Internal, "not sure what happened. Open an issue at https://github.com/atye/wikitable-api if you'd like.")
 	}
 	return st.Err()
-}
-
-type parseTableError struct {
-	err        error
-	tableIndex int
-	rowNum     int
-	cellNum    int
-}
-
-func (e *parseTableError) Error() string {
-	return ""
 }

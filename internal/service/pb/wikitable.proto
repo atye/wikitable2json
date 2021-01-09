@@ -1,7 +1,7 @@
 syntax = "proto3";
 package wikipedia;
 
-option go_package = "github.com/atye/wikitable-api/service/pb";
+option go_package = "github.com/atye/wikitable-api/internal/pb";
 
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
@@ -31,10 +31,10 @@ message TablesResponse {
     repeated Table tables = 1;
 }
 
-service WikiTableJSONAPI {
+service WikipediaTableJSONAPI {
     rpc GetTables(TablesRequest) returns (TablesResponse) {
         option (google.api.http) = {
-            get: "/api/v2/{page=**}"
+            get: "/api/{page=**}"
         };
     }
 }
