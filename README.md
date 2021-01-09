@@ -3,7 +3,7 @@ An API to get Wikipedia table data.
 
 [www.wikitable2json.com](https://www.wikitable2json.com)
 
-## Example using ([https://en.wikipedia.org/wiki/Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan))
+## Examples
 ### All tables
 [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
 ```

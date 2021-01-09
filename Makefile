@@ -36,18 +36,3 @@ cover-profile:
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out
 	rm -f coverage.out
-
-generate:
-	docker run --rm -v "${PWD}:/local" openapitools/openapi-generator-cli:v5.0.0 generate \
-    -i /local/swagger/wikitable.swagger.json \
-    -g go-server \
-	--package-name openapi \
-    -o /local/${OPENAPI_DIR}
-	rm -f \
-		${OPENAPI_DIR}/.openapi-generator/FILES \
-		${OPENAPI_DIR}/.gitignore \
-		${OPENAPI_DIR}/.openapi-generator-ignore \
-		${OPENAPI_DIR}/.travis.yml \
-		${OPENAPI_DIR}/git_push.sh \
-		${OPENAPI_DIR}/go.mod \
-		${OPENAPI_DIR}/go.sum
