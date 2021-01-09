@@ -3,9 +3,9 @@ An API to get Wikipedia table data.
 
 [www.wikitable2json.com](https://www.wikitable2json.com)
 
-## Example ([https://en.wikipedia.org/wiki/Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan))
+## Example using ([https://en.wikipedia.org/wiki/Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan))
 ### All tables
-[https://www.wikitable2json.com/api/v1/page/Arhaan_Khan](https://www.wikitable2json.com/api/v1/page/Arhaan_Khan)
+[https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
 ```
 {
   "tables": [
@@ -72,36 +72,9 @@ An API to get Wikipedia table data.
   ]
 }
 ```
-### Nth table
-[https://www.wikitable2json.com/api/v1/page/Arhaan_Khan?n=0](https://www.wikitable2json.com/api/v1/page/Arhaan_Khan?n=0)
-```
-{
-  "tables": [
-    {
-      "rows": {
-        "0": {
-          "columns": {
-            "0": "Year",
-            "1": "Title",
-            "2": "Role",
-            "3": "Notes"
-          }
-        },
-        "1": {
-          "columns": {
-            "0": "2017",
-            "1": "SriValli",
-            "2": "Majnu",
-            "3": "Telugu film"
-          }
-        }
-      }
-    }
-  ]
-}
-```
-For multiple individual tables, you can use a query like: ```?n=0&n=3&n=7```.
 
-### Other query params
-?lang=
-The service will look for a page on the English subdomain (en.wikipedia.com) by default. To specify a page on a different language domain, like cs.wikipedia.com, use ?lang=cs.
+### Query parameters
+#### Specific tables: ?table=
+[https://www.wikitable2json.com/api/Arhaan_Khan?table=0&table=1](https://www.wikitable2json.com/api/Arhaan_Khan?table=0&table=1)
+#### Non-English page: ?lang=
+[https://www.wikitable2json.com/api/Liste_der_Kulturdenkmale_in_Dedeleben?lang=de](https://www.wikitable2json.com/api/Liste_der_Kulturdenkmale_in_Dedeleben?lang=de)

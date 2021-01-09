@@ -288,7 +288,7 @@ func TestRunSuccess(t *testing.T) {
 
 			queryParams := req.URL.Query()
 			for _, table := range tc.Tables {
-				queryParams.Add("n", strconv.Itoa(int(table)))
+				queryParams.Add("table", strconv.Itoa(int(table)))
 			}
 
 			if tc.Lang != "" {

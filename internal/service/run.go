@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -42,7 +43,7 @@ func Run(ctx context.Context, c Config) error {
 	})
 	mux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui", http.FileServer(http.Dir("swagger/swagger-ui"))))
 	gwMux := runtime.NewServeMux(
-		runtime.WithErrorHandler(fromStatusWithDetailsErrorHandler),
+		runtime.WithErrorHandler(fromStatusErrorHandler),
 	)
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
@@ -65,34 +66,31 @@ func Run(ctx context.Context, c Config) error {
 	return eg.Wait()
 }
 
-func fromStatusWithDetailsErrorHandler(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, req *http.Request, err error) {
-	if s, ok := status.FromError(err); ok {
-		if s.Details() != nil && len(s.Details()) > 0 {
-			switch d := s.Details()[0].(type) {
-			case *errdetails.ErrorInfo:
-				respCodeStr, ok := d.Metadata["ResponseStatusCode"]
-				if !ok {
-					panic("response status code wasn't included in the error details")
-				}
-				respCode, err := strconv.Atoi(respCodeStr)
-				if err != nil {
-					http.Error(w, fmt.Sprintf("error processing response code : %v", err.Error()), http.StatusInternalServerError)
-					return
-				}
-				w.WriteHeader(respCode)
-			}
-		} else {
-			http.Error(w, s.Err().Error(), http.StatusInternalServerError)
-			return
-		}
-		data, err := marshaler.Marshal(s.Proto())
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err.Error()), http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "%s", data)
+func fromStatusErrorHandler(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, req *http.Request, err error) {
+	s, _ := status.FromError(err)
+	if s.Details() == nil || len(s.Details()) == 0 {
+		w.WriteHeader(runtime.HTTPStatusFromCode(s.Code()))
 	} else {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		switch d := s.Details()[0].(type) {
+		case *errdetails.ErrorInfo:
+			respCodeStr, ok := d.Metadata["ResponseStatusCode"]
+			if !ok {
+				panic("response status code wasn't included in the error details")
+			}
+			respCode, err := strconv.Atoi(respCodeStr)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				s = status.New(codes.Internal, fmt.Sprintf("error processing response code: %v", err.Error()))
+			}
+			w.WriteHeader(respCode)
+		default:
+			w.WriteHeader(runtime.HTTPStatusFromCode(s.Code()))
+		}
+	}
+	data, err := marshaler.Marshal(s.Proto())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
 		return
 	}
+	fmt.Fprintf(w, "%s", data)
 }

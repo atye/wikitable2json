@@ -1,80 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-    <title>WikiTable to JSON</title>
-    <meta name="description" content="An API to get Wikipedia tables in JSON.">
-    <link rel="canonical" href="https://www.wikitable2json.com">
-      <style>
-         h1, h2, h3, h4, h5, h6{
-         font-family: 'Roboto', sans-serif;
-         font-weight: 100;
-         }
-         a{
-         color:white;
-         }
-         a:hover{
-         color:#eee;
-         }
-         .images{
-         text-align: center;
-         }
-         pre {
-         font-family: 'Source Code Pro', monospace;
-         font-size: 18px;
-         background-color:gray;
-         color: #fff;
-         border: none;
-         border-radius: 10px;
-         padding: 20px;
-         }
-         body, p {
-         font-weight: 100;
-         margin: 0;
-         }
-         p {
-         letter-spacing: 1px;
-         font-size: 130%;
-         }
-         .head{
-         padding:40px;
-         text-align:center;
-         }
-         .page{
-         margin:0;
-         padding: 20px 20%;
-         background-color:lightseagreen;
-         color:#fff;
-         }
-         .footer{
-         text-align:center;
-         padding-bottom: 40px;
-         }
-         .section-header{
-        padding-top: 20px;
-        padding-bottom:20px;
+
+<head>
+  <title>Wikipedia Table JSON API</title>
+  <meta name="description" content="An API to get Wikipedia tables in JSON.">
+  <link rel="canonical" href="https://www.wikitable2json.com">
+  <style>
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-family: 'Roboto', sans-serif;
+      font-weight: 100;
     }
-      </style>
-   </head>
-   <body>
-         <div class="page">
-            <div class="head">
-               <h1 class="title"><a href="https://github.com/atye/wikitable-api" target="_blank">WikiTable API</a> - Get Wikipedia table data in JSON</h1>
-               <h2><a href="/swagger-ui">Swagger UI</a></h2>
-            </div>
-            <div class="container">
-               <h2 class="section-header">Get all tables on page <a href="https://en.wikipedia.org/wiki/Arhaan_Khan" target="_blank">Arhaan_Khan</a>:</h2>
-               <pre>https://wikitable2json.com/api/v1/page/Arhaan_Khan</pre>
-               <br>
-               <div class="images">
-                  <div>
-                     <img src="assets/images/table_1.png" alt="table_1">
-                  </div>
-                  <div>
-                     <img src="assets/images/table_2.png" alt="table_2">
-                  </div>
-               </div>
-               <h3>Response:</h3>
-               <pre>
+
+    a {
+      color: white;
+    }
+
+    a:hover {
+      color: #eee;
+    }
+
+    .images {
+      text-align: center;
+    }
+
+    pre {
+      font-family: 'Source Code Pro', monospace;
+      font-size: 18px;
+      background-color: gray;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    body,
+    p {
+      font-weight: 100;
+      margin: 0;
+    }
+
+    p {
+      letter-spacing: 1px;
+      font-size: 130%;
+    }
+
+    .head {
+      padding: 40px;
+      text-align: center;
+    }
+
+    .page {
+      margin: 0;
+      padding: 20px 20%;
+      background-color: lightseagreen;
+      color: #fff;
+    }
+
+    .footer {
+      text-align: center;
+      padding-bottom: 40px;
+    }
+
+    .section-header {
+      padding-top: 20px;
+      padding-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="head">
+      <h1 class="title"><a href="https://github.com/atye/wikitable-api" target="_blank">Wikipedia Table JSON API</a> -
+        Get
+        Wikipedia table data in JSON</h1>
+      <h2><a href="/swagger-ui">Swagger UI</a></h2>
+    </div>
+    <div class="container">
+      <h2 class="section-header">Get all tables on page <a href="https://en.wikipedia.org/wiki/Arhaan_Khan"
+          target="_blank">Arhaan_Khan</a>:</h2>
+      <pre>https://wikitable2json.com/api/Arhaan_Khan</pre>
+      <br>
+      <div class="images">
+        <div>
+          <img src="assets/images/table_1.png" alt="table_1">
+        </div>
+        <div>
+          <img src="assets/images/table_2.png" alt="table_2">
+        </div>
+      </div>
+      <h3>Response:</h3>
+      <pre>
 {
     "tables": [
       {
@@ -140,45 +161,20 @@
     ]
 }
 </pre>
-               <h2 class="section-header">Get nth table (starts at 0):</h2>
-               <pre>https://wikitable2json.com/api/v1/page/Arhaan_Khan?n=0</pre>
-               <p>You can specify multiple, individual tables via ?n=0&n=1.</p>
-               <br>
-               <h3>Response:</h3>
-               <pre>
-{
-    "tables": [
-      {
-        "rows": {
-          "0": {
-            "columns": {
-              "0": "Year",
-              "1": "Title",
-              "2": "Role",
-              "3": "Notes"
-            }
-          },
-          "1": {
-            "columns": {
-              "0": "2017",
-              "1": "SriValli",
-              "2": "Majnu",
-              "3": "Telugu film"
-            }
-          }
-        }
-      }
-    ]
-}
-</pre>
-            <h2 class="section-header">Other query params:</h2>
-            <pre>?lang=</pre>
-            <p>The default language for a page is English (en). To get a page that is not in the English subdomain (i.e., not on en.wikipedia.com), use ?lang= for the correct language subdomain.</p>
-               <br>
-               <p class="footer">
-                  Bugs? Features? Feel free to open an issue on <a href="https://github.com/atye/wikitable-api" target="_blank">GitHub</a>.
-               </p>
-            </div>
-         </div>
-   </body>
+      <h2 class="section-header">Query parameters</h2>
+      <h4>Specific tables: ?table=</h4>
+      <pre>https://www.wikitable2json.com/api/Arhaan_Khan?table=0&table=1</pre>
+      <h4>Non-English page: ?lang=</h4>
+      <pre>https://www.wikitable2json.com/api/Liste_der_Kulturdenkmale_in_Dedeleben?lang=de</pre>
+      <p>The default language for a page is English (en.wikipedia.com). To get a page that is not in the English
+        subdomain, use ?lang= for the correct language subdomain.</p>
+      <br>
+      <p class="footer">
+        Bugs? Features? Feel free to open an issue on <a href="https://github.com/atye/wikitable-api"
+          target="_blank">GitHub</a>.
+      </p>
+    </div>
+  </div>
+</body>
+
 </html>

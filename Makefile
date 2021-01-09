@@ -22,7 +22,6 @@ protoc:
 	--openapiv2_out . \
 	./internal/service/pb/*.proto
 	mv internal/service/pb/wikitable.swagger.json swagger/
-	rm -f internal/service/pb/wikitable_v1.swagger.json
 
 test:
 	go test -v -cover -race -p 1 ./...
