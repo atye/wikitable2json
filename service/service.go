@@ -35,14 +35,17 @@ func (s *Service) GetTables(ctx context.Context, req *pb.TablesRequest) (*pb.Tab
 	if err != nil {
 		var apiErr *wikiApiError
 		if errors.As(err, &apiErr) {
-			grpc.SetHeader(ctx, metadata.Pairs("x-http-code", strconv.Itoa(apiErr.statusCode)))
 			return nil, wikiAPIStatusErr(apiErr)
 		}
 		return nil, getDocumentStatusErr(err)
 	}
 	resp, err := parseTables(ctx, doc.Find("table.wikitable"), int32ToInt(req.Table))
 	if err != nil {
-		return nil, tableParseStatusErr(err)
+		var ptErr *parseTableError
+		if errors.As(err, &ptErr) {
+			return nil, tableParseStatusErr(ptErr)
+		}
+		panic("unsupported parseTable error type")
 	}
 	return resp, nil
 }
@@ -100,7 +103,7 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 		}
 		wikiTableSelection.Each(func(i int, selection *goquery.Selection) {
 			eg.Go(func() error {
-				table, err := parseTable(selection)
+				table, err := parseTable(selection, i)
 				if err != nil {
 					return err
 				}
@@ -121,7 +124,7 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 			i := i
 			tableIndex := tableIndex
 			eg.Go(func() error {
-				table, err := parseTable(wikiTableSelection.Eq(tableIndex))
+				table, err := parseTable(wikiTableSelection.Eq(tableIndex), tableIndex)
 				if err != nil {
 					return err
 				}
@@ -137,11 +140,12 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 	}
 }
 
-func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
+func parseTable(tableSelection *goquery.Selection, tableIndex int) (*pb.Table, error) {
 	table := &pb.Table{
 		Rows: make(map[int64]*pb.Row),
 	}
 	table.Caption = tableSelection.Find("caption").Text()
+	ptErr := &parseTableError{}
 	var err error
 	// for each row in the table
 	tableSelection.Find("tr").EachWithBreak(func(rowNum int, s *goquery.Selection) bool {
@@ -153,12 +157,20 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 			if attr := s.AttrOr("rowspan", ""); attr != "" {
 				rowSpan, err = strconv.Atoi(attr)
 				if err != nil {
+					ptErr.err = err
+					ptErr.rowNum = rowNum
+					ptErr.cellNum = cellNum
+					ptErr.tableIndex = tableIndex
 					return false
 				}
 			}
 			if attr := s.AttrOr("colspan", ""); attr != "" {
 				colSpan, err = strconv.Atoi(attr)
 				if err != nil {
+					ptErr.err = err
+					ptErr.rowNum = rowNum
+					ptErr.cellNum = cellNum
+					ptErr.tableIndex = tableIndex
 					return false
 				}
 			}
@@ -190,7 +202,7 @@ func parseTable(tableSelection *goquery.Selection) (*pb.Table, error) {
 		return true
 	})
 	if err != nil {
-		return nil, err
+		return nil, ptErr
 	}
 	return table, nil
 }

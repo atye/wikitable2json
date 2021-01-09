@@ -2,19 +2,13 @@ package service
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"log"
 	"net"
 	"net/http"
-	"strconv"
 
 	"github.com/atye/wikitable-api/service/pb"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 type Config struct {
@@ -49,7 +43,7 @@ func Run(ctx context.Context, c Config) error {
 	mux.Handle("/swagger-ui/", http.StripPrefix("/swagger-ui", http.FileServer(http.Dir("swagger/swagger-ui"))))
 
 	gwMux := runtime.NewServeMux(
-		runtime.WithForwardResponseOption(httpStatusCodeModifier),
+		runtime.WithErrorHandler(fromStatusWithDetailsErrorHandler),
 	)
 
 	opts := []grpc.DialOption{
@@ -73,53 +67,4 @@ func Run(ctx context.Context, c Config) error {
 	}
 
 	return eg.Wait()
-}
-
-func httpStatusCodeModifier(ctx context.Context, w http.ResponseWriter, p proto.Message) error {
-	md, ok := runtime.ServerMetadataFromContext(ctx)
-	if !ok {
-		return nil
-	}
-	// set http status code
-	if vals := md.HeaderMD.Get("x-http-code"); len(vals) > 0 {
-		code, err := strconv.Atoi(vals[0])
-		if err != nil {
-			return err
-		}
-		w.WriteHeader(code)
-		// delete the headers to not expose any grpc-metadata in http response
-		delete(md.HeaderMD, "x-http-code")
-		delete(w.Header(), "Grpc-Metadata-X-Http-Code")
-	}
-	return nil
-}
-
-func customErrorHandler(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, req *http.Request, err error) {
-	md, ok := runtime.ServerMetadataFromContext(ctx)
-	if !ok {
-		http.Error(w, "error getting server metadata", http.StatusInternalServerError)
-		return
-	}
-	if vals := md.HeaderMD.Get("x-http-code"); len(vals) > 0 {
-		code, err := strconv.Atoi(vals[0])
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error getting server status code: %v", err.Error()), http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(code)
-		// delete the headers to not expose any grpc-metadata in http response
-		delete(md.HeaderMD, "x-http-code")
-		delete(w.Header(), "Grpc-Metadata-X-Http-Code")
-	} else {
-		w.WriteHeader(runtime.HTTPStatusFromCode(grpc.Code(err)))
-	}
-	log.Printf("%T", err)
-	if s, ok := status.FromError(err); ok || !ok {
-		data, err := json.Marshal(s)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err.Error()), http.StatusInternalServerError)
-			return
-		}
-		w.Write(data)
-	}
 }

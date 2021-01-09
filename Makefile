@@ -24,8 +24,10 @@ protoc:
 test:
 	go test -v -cover -race -p 1 ./...
 
-deploy:
+build:
 	docker build -t wikitable-api .
+
+run: build
 	docker run --rm -p 8080:8080 -e PORT=8080 wikitable-api
 
 cover-profile:
