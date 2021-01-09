@@ -11,9 +11,10 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 
-	"github.com/atye/wikitable-api/service/pb"
+	"github.com/atye/wikitable-api/internal/service/pb"
 	"google.golang.org/grpc"
 )
 
@@ -21,7 +22,7 @@ func TestRunSuccess(t *testing.T) {
 	tests := []struct {
 		Name           string
 		Page           string
-		N              []string
+		Tables         []int32
 		Lang           string
 		Config         Config
 		ExpectedTables []*pb.Table
@@ -29,19 +30,20 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"table1",
 			"table1",
-			[]string{},
+			[]int32{},
 			"",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("table1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			[]*pb.Table{
 				{
@@ -96,19 +98,20 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"table1_n=0",
 			"table1",
-			[]string{"0"},
+			[]int32{0},
 			"",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("table1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			[]*pb.Table{
 				{
@@ -163,19 +166,20 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"table1_lang=cs",
 			"table1",
-			[]string{},
+			[]int32{},
 			"cs",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("table1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			[]*pb.Table{
 				{
@@ -230,19 +234,20 @@ func TestRunSuccess(t *testing.T) {
 		{
 			"issue1",
 			"issue1",
-			[]string{},
+			[]int32{},
 			"",
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       getRespBody("issue_1.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			[]*pb.Table{
 				{
@@ -273,17 +278,17 @@ func TestRunSuccess(t *testing.T) {
 
 			defer func() {
 				tc.Config.GrpcSvr.GracefulStop()
-				tc.Config.HttpSvr.Shutdown(context.Background())
+				tc.Config.HTTPSvr.Shutdown(context.Background())
 			}()
 
-			req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8080/api/v1/page/%s", tc.Page), nil)
+			req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8080/api/v2/%s", tc.Page), nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			queryParams := req.URL.Query()
-			for _, n := range tc.N {
-				queryParams.Add("n", n)
+			for _, table := range tc.Tables {
+				queryParams.Add("table", strconv.Itoa(int(table)))
 			}
 
 			if tc.Lang != "" {
@@ -292,6 +297,7 @@ func TestRunSuccess(t *testing.T) {
 
 			req.URL.RawQuery = queryParams.Encode()
 
+			<-tc.Config.signalReady
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				t.Fatal(err)
@@ -302,7 +308,7 @@ func TestRunSuccess(t *testing.T) {
 				t.Errorf("expected status %d, got %d", http.StatusOK, resp.StatusCode)
 			}
 
-			var tablesResp pb.GetTablesResponse
+			var tablesResp pb.TablesResponse
 
 			err = json.NewDecoder(resp.Body).Decode(&tablesResp)
 			if err != nil {
@@ -320,112 +326,99 @@ func TestRunError(t *testing.T) {
 	tests := []struct {
 		Name               string
 		Page               string
-		N                  []string
+		Tables             []int32
 		Config             Config
 		ExpectedStatusCode int
 	}{
 		{
 			"RowSpanError",
 			"rowSpanError",
-			[]string{},
+			[]int32{},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
-						Body:       getRespBody("rowSpanError.html"),
+						Body:       getRespBody("rowspanError.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			http.StatusInternalServerError,
 		},
 		{
 			"ColSpanError",
 			"colSpanError",
-			[]string{},
+			[]int32{},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
-						Body:       getRespBody("colSpanError.html"),
+						Body:       getRespBody("colspanError.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			http.StatusInternalServerError,
 		},
 		{
 			"SpanError_n=0",
 			"SpanError_n=0",
-			[]string{"0"},
+			[]int32{0},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
-						Body:       getRespBody("colSpanError.html"),
+						Body:       getRespBody("colspanError.html"),
 						StatusCode: http.StatusOK,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			http.StatusInternalServerError,
 		},
 		{
 			"WikiAPINotOkError",
 			"",
-			[]string{"0"},
+			[]int32{0},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return &http.Response{
 						Body:       ioutil.NopCloser(&bytes.Buffer{}),
 						StatusCode: http.StatusRequestEntityTooLarge,
 					}, nil
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			http.StatusRequestEntityTooLarge,
 		},
 		{
-			"BadIndexError",
+			"HTTPGetError",
 			"test",
-			[]string{"x"},
+			[]int32{0},
 			Config{
-				HttpGet: func(string) (*http.Response, error) {
-					return &http.Response{
-						Body:       ioutil.NopCloser(&bytes.Buffer{}),
-						StatusCode: http.StatusOK,
-					}, nil
-				},
-				HttpSvr: &http.Server{
-					Addr: fmt.Sprintf(":%s", "8080"),
-				},
-				GrpcSvr: grpc.NewServer(),
-			},
-			http.StatusBadRequest,
-		},
-		{
-			"HttpGetError",
-			"test",
-			[]string{"x"},
-			Config{
-				HttpGet: func(string) (*http.Response, error) {
+				HTTPGet: func(string) (*http.Response, error) {
 					return nil, errors.New("error")
 				},
-				HttpSvr: &http.Server{
+				HTTPSvr: &http.Server{
 					Addr: fmt.Sprintf(":%s", "8080"),
 				},
-				GrpcSvr: grpc.NewServer(),
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
 			},
 			http.StatusInternalServerError,
 		},
@@ -439,21 +432,22 @@ func TestRunError(t *testing.T) {
 
 			defer func() {
 				tc.Config.GrpcSvr.GracefulStop()
-				tc.Config.HttpSvr.Shutdown(context.Background())
+				tc.Config.HTTPSvr.Shutdown(context.Background())
 			}()
 
-			req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8080/api/v1/page/%s", tc.Page), nil)
+			req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:8080/api/v2/%s", tc.Page), nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			queryParams := req.URL.Query()
-			for _, n := range tc.N {
-				queryParams.Add("n", n)
+			for _, table := range tc.Tables {
+				queryParams.Add("table", strconv.Itoa(int(table)))
 			}
 
 			req.URL.RawQuery = queryParams.Encode()
 
+			<-tc.Config.signalReady
 			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				t.Fatal(err)
