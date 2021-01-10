@@ -45,15 +45,15 @@ func (s *Service) GetTables(ctx context.Context, req *pb.TablesRequest) (*pb.Tab
 		if errors.As(err, &apiErr) {
 			return nil, wikiAPIRespNotOKStatusErr(apiErr)
 		}
-		return nil, getGeneralStatusErr(err)
+		return nil, getGeneralStatusErr(err, "something went wrong retrieving the wikipedia API response document")
 	}
-	resp, err := parseTables(ctx, doc.Find("table.wikitable"), int32ToInt(req.Table))
+	resp, err := parseTables(ctx, doc.Find("table.wikitable"), req.Table)
 	if err != nil {
 		var ptErr *parseTableError
 		if errors.As(err, &ptErr) {
 			return nil, tableParseStatusErr(ptErr)
 		}
-		panic("unsupported parseTable error type")
+		return nil, getGeneralStatusErr(err, "something went wrong parsing a table")
 	}
 	return resp, nil
 }
@@ -89,15 +89,4 @@ func (s *Service) getWikiAPIResponse(ctx context.Context, page, lang string) (*h
 		return nil, &wikiApiError{statusCode: resp.StatusCode, page: page, message: string(body)}
 	}
 	return resp, nil
-}
-
-func int32ToInt(input []int32) []int {
-	if input != nil && len(input) > 0 {
-		output := make([]int, len(input))
-		for i, value := range input {
-			output[i] = int(value)
-		}
-		return output
-	}
-	return []int{}
 }
