@@ -49,11 +49,11 @@ func tableParseStatusErr(ptErr *parseTableError) error {
 	return st.Err()
 }
 
-func getGeneralStatusErr(err error) error {
+func getGeneralStatusErr(err error, reason string) error {
 	st := status.New(codes.Internal, err.Error())
 	st, err = st.WithDetails(&errdetails.ErrorInfo{
 		Domain: "wikitable2json.com",
-		Reason: "something unexpected was encountered while retrieving the wikipedia API response document",
+		Reason: reason,
 		Metadata: map[string]string{
 			"ResponseStatusCode": strconv.Itoa(http.StatusInternalServerError),
 			"ResponseStatusText": http.StatusText(http.StatusInternalServerError),
