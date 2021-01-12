@@ -54,15 +54,12 @@ func Run(ctx context.Context, c Config) error {
 	}
 	mux.Handle("/api/", gwMux)
 	c.HTTPSvr.Handler = mux
-
 	eg.Go(func() error {
 		return c.HTTPSvr.ListenAndServe()
 	})
-
 	if c.signalReady != nil {
 		c.signalReady <- struct{}{}
 	}
-
 	return eg.Wait()
 }
 
@@ -73,16 +70,16 @@ func fromStatusErrorHandler(ctx context.Context, mux *runtime.ServeMux, marshale
 	} else {
 		switch d := s.Details()[0].(type) {
 		case *errdetails.ErrorInfo:
-			respCodeStr, ok := d.Metadata["ResponseStatusCode"]
-			if !ok {
-				panic("response status code wasn't included in the error details")
+			if respCodeStr, ok := d.Metadata["ResponseStatusCode"]; ok {
+				respCode, err := strconv.Atoi(respCodeStr)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					s = status.New(codes.Internal, fmt.Sprintf("failed to process error response: %v", err))
+				}
+				w.WriteHeader(respCode)
+			} else {
+				w.WriteHeader(runtime.HTTPStatusFromCode(s.Code()))
 			}
-			respCode, err := strconv.Atoi(respCodeStr)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				s = status.New(codes.Internal, fmt.Sprintf("error processing response code: %v", err.Error()))
-			}
-			w.WriteHeader(respCode)
 		default:
 			w.WriteHeader(runtime.HTTPStatusFromCode(s.Code()))
 		}
