@@ -3,7 +3,7 @@ RUN apt update -y && apt install -y curl unzip ca-certificates && update-ca-cert
 
 RUN curl -L https://github.com/protocolbuffers/protobuf/releases/download/v3.14.0/protoc-3.14.0-linux-x86_64.zip -O
 RUN unzip -o protoc-3.14.0-linux-x86_64.zip -d /usr/local bin/protoc && unzip -o protoc-3.14.0-linux-x86_64.zip -d /usr/local 'include/*'
-RUn chmod +x /usr/local/bin/protoc
+RUN chmod +x /usr/local/bin/protoc
 
 WORKDIR /wikitable-api
 COPY . .
