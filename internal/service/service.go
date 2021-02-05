@@ -56,6 +56,7 @@ func (s *Service) getDocument(ctx context.Context, req *pb.TablesRequest) (*goqu
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return nil, err
