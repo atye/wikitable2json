@@ -82,32 +82,28 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (*pb.Table, e
 			colSpan := 1
 			// get the rowspan and colspan attributes
 			if attr := s.AttrOr("rowspan", ""); attr != "" {
-				if attr != "" {
-					rowSpanTexts := strings.Split(attr, " ")
-					if len(rowSpanTexts) > 0 {
-						rowSpan, err = strconv.Atoi(rowSpanTexts[0])
-						if err != nil {
-							ptErr.err = err
-							ptErr.rowNum = rowNum
-							ptErr.cellNum = cellNum
-							ptErr.tableIndex = tableIndex
-							return false
-						}
+				rowSpanTexts := strings.Split(attr, " ")
+				if len(rowSpanTexts) > 0 {
+					rowSpan, err = strconv.Atoi(rowSpanTexts[0])
+					if err != nil {
+						ptErr.err = err
+						ptErr.rowNum = rowNum
+						ptErr.cellNum = cellNum
+						ptErr.tableIndex = tableIndex
+						return false
 					}
 				}
 			}
 			if attr := s.AttrOr("colspan", ""); attr != "" {
-				if attr != "" {
-					colSpanTexts := strings.Split(attr, " ")
-					if len(colSpanTexts) > 0 {
-						colSpan, err = strconv.Atoi(colSpanTexts[0])
-						if err != nil {
-							ptErr.err = err
-							ptErr.rowNum = rowNum
-							ptErr.cellNum = cellNum
-							ptErr.tableIndex = tableIndex
-							return false
-						}
+				colSpanTexts := strings.Split(attr, " ")
+				if len(colSpanTexts) > 0 {
+					colSpan, err = strconv.Atoi(colSpanTexts[0])
+					if err != nil {
+						ptErr.err = err
+						ptErr.rowNum = rowNum
+						ptErr.cellNum = cellNum
+						ptErr.tableIndex = tableIndex
+						return false
 					}
 				}
 			}
