@@ -18,7 +18,7 @@ type parseTableError struct {
 }
 
 func (e *parseTableError) Error() string {
-	return ""
+	return e.err.Error()
 }
 
 func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []int32) (*pb.TablesResponse, error) {
@@ -82,23 +82,33 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (*pb.Table, e
 			colSpan := 1
 			// get the rowspan and colspan attributes
 			if attr := s.AttrOr("rowspan", ""); attr != "" {
-				rowSpan, err = strconv.Atoi(attr)
-				if err != nil {
-					ptErr.err = err
-					ptErr.rowNum = rowNum
-					ptErr.cellNum = cellNum
-					ptErr.tableIndex = tableIndex
-					return false
+				if attr != "" {
+					rowSpanTexts := strings.Split(attr, " ")
+					if len(rowSpanTexts) > 0 {
+						rowSpan, err = strconv.Atoi(rowSpanTexts[0])
+						if err != nil {
+							ptErr.err = err
+							ptErr.rowNum = rowNum
+							ptErr.cellNum = cellNum
+							ptErr.tableIndex = tableIndex
+							return false
+						}
+					}
 				}
 			}
 			if attr := s.AttrOr("colspan", ""); attr != "" {
-				colSpan, err = strconv.Atoi(attr)
-				if err != nil {
-					ptErr.err = err
-					ptErr.rowNum = rowNum
-					ptErr.cellNum = cellNum
-					ptErr.tableIndex = tableIndex
-					return false
+				if attr != "" {
+					colSpanTexts := strings.Split(attr, " ")
+					if len(colSpanTexts) > 0 {
+						colSpan, err = strconv.Atoi(colSpanTexts[0])
+						if err != nil {
+							ptErr.err = err
+							ptErr.rowNum = rowNum
+							ptErr.cellNum = cellNum
+							ptErr.tableIndex = tableIndex
+							return false
+						}
+					}
 				}
 			}
 			// loop through the spans and populate table columns

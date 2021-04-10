@@ -14,7 +14,7 @@ func wikiAPIStatusErr(apiErr *wikiApiError) error {
 	st := status.New(codes.Internal, apiErr.message)
 	st, err := st.WithDetails(&errdetails.ErrorInfo{
 		Domain: "wikipedia.org/api/rest_v1/#",
-		Reason: fmt.Sprintf("expected response status 200/OK from the wikipedia API, got something else"),
+		Reason: fmt.Sprintf("expected response status 200/OK from the wikipedia API, got %d/%s", apiErr.statusCode, http.StatusText(apiErr.statusCode)),
 		Metadata: map[string]string{
 			"ResponseStatusCode": strconv.Itoa(apiErr.statusCode),
 			"ResponseStatusText": http.StatusText(apiErr.statusCode),
@@ -34,8 +34,8 @@ func tableParseStatusErr(ptErr *parseTableError) error {
 		Reason: "something unexpected was encountered while parsing tables",
 		Metadata: map[string]string{
 			"TableIndex": strconv.Itoa(ptErr.tableIndex),
-			"RowNumber":  strconv.Itoa(ptErr.rowNum),
-			"CellNumber": strconv.Itoa(ptErr.cellNum),
+			"RowIndex":   strconv.Itoa(ptErr.rowNum),
+			"CellIndex":  strconv.Itoa(ptErr.cellNum),
 		},
 	})
 	if err != nil {

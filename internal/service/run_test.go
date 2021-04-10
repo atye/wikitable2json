@@ -268,6 +268,37 @@ func TestRunSuccess(t *testing.T) {
 				},
 			},
 		},
+		{
+			"data-sort-value_in_span",
+			"data-sort-value",
+			[]int32{},
+			"",
+			Config{
+				HTTPGet: func(string) (*http.Response, error) {
+					return &http.Response{
+						Body:       getRespBody("data-sort-value.html"),
+						StatusCode: http.StatusOK,
+					}, nil
+				},
+				HTTPSvr: &http.Server{
+					Addr: fmt.Sprintf(":%s", "8080"),
+				},
+				GrpcSvr:     grpc.NewServer(),
+				signalReady: make(chan struct{}),
+			},
+			[]*pb.Table{
+				{
+					Rows: map[int64]*pb.Row{
+						0: {
+							Columns: map[int64]string{
+								0: "Abu Dhabi, United Arab Emirates",
+								1: "N/A",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tests {

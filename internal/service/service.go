@@ -72,7 +72,7 @@ type wikiApiError struct {
 }
 
 func (e *wikiApiError) Error() string {
-	return ""
+	return e.message
 }
 
 func (s *Service) getWikiAPIResponse(ctx context.Context, page, lang string) (*http.Response, error) {
@@ -81,6 +81,7 @@ func (s *Service) getWikiAPIResponse(ctx context.Context, page, lang string) (*h
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to make http request to the wikipedia API: %v", err))
 	}
 	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return nil, &wikiApiError{statusCode: resp.StatusCode, page: page, message: fmt.Sprintf("failed to read wikipedia API response body: %v", err)}
