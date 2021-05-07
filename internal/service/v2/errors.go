@@ -37,12 +37,12 @@ func tableParseErr(e *parseTableError) *ServerError {
 	}
 }
 
-func generalErr(e error) *ServerError {
+func generalErr(e error, code int) *ServerError {
 	return &ServerError{
 		Message: e.Error(),
 		Metadata: map[string]interface{}{
-			"ResponseStatusCode": http.StatusInternalServerError,
-			"ResponseStatusText": http.StatusText(http.StatusInternalServerError),
+			"ResponseStatusCode": code,
+			"ResponseStatusText": http.StatusText(code),
 		},
 	}
 }
