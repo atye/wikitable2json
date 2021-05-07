@@ -1,4 +1,4 @@
-package service
+package v2
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func (e *parseTableError) Error() string {
 	return ""
 }
 
-func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []int32) (*pb.TablesResponse, error) {
+func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []int) (*pb.TablesResponse, error) {
 	var eg errgroup.Group
 	switch len(tableIndices) {
 	case 0:
@@ -51,7 +51,7 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 			i := i
 			tableIndex := tableIndex
 			eg.Go(func() error {
-				table, err := parseTable(wikiTableSelection.Eq(int(tableIndex)), int(tableIndex))
+				table, err := parseTable(wikiTableSelection.Eq(tableIndex), tableIndex)
 				if err != nil {
 					return err
 				}

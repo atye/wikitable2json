@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/atye/wikitable-api/internal/service"
-	"google.golang.org/grpc"
+	v2 "github.com/atye/wikitable-api/internal/service/v2"
 )
 
 func main() {
@@ -16,11 +13,15 @@ func main() {
 	if !ok {
 		log.Fatal("PORT env not set")
 	}
-	log.Fatal(service.Run(context.Background(), service.Config{
+	/*log.Fatal(service.Run(context.Background(), service.Config{
 		HTTPGet: http.Get,
 		HTTPSvr: &http.Server{
 			Addr: fmt.Sprintf(":%s", port),
 		},
 		GrpcSvr: grpc.NewServer(),
+	}))*/
+
+	log.Fatal(v2.Run(context.Background(), v2.Config{
+		Port: port,
 	}))
 }
