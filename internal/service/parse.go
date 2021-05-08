@@ -2,13 +2,22 @@ package service
 
 import (
 	"context"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/atye/wikitable-api/internal/service/pb"
 	"golang.org/x/sync/errgroup"
 )
+
+type Tables struct {
+	Tables []Table `json:"tables"`
+}
+
+type Table struct {
+	Caption string     `json:"caption"`
+	Data    [][]string `json:"data"`
+}
 
 type parseTableError struct {
 	err        error
@@ -18,23 +27,22 @@ type parseTableError struct {
 }
 
 func (e *parseTableError) Error() string {
-	return ""
+	return e.err.Error()
 }
 
-func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []int32) (*pb.TablesResponse, error) {
+func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []string) (*Tables, error) {
 	var eg errgroup.Group
+	tables := new(Tables)
 	switch len(tableIndices) {
 	case 0:
-		resp := &pb.TablesResponse{
-			Tables: make([]*pb.Table, len(wikiTableSelection.Nodes)),
-		}
+		tables.Tables = make([]Table, wikiTableSelection.Length())
 		wikiTableSelection.Each(func(i int, selection *goquery.Selection) {
 			eg.Go(func() error {
 				table, err := parseTable(selection, i)
 				if err != nil {
 					return err
 				}
-				resp.Tables[i] = table
+				tables.Tables[i] = *table
 				return nil
 			})
 		})
@@ -42,20 +50,21 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 		if err != nil {
 			return nil, err
 		}
-		return resp, nil
+		return tables, nil
 	default:
-		resp := &pb.TablesResponse{
-			Tables: make([]*pb.Table, len(tableIndices)),
-		}
+		tables.Tables = make([]Table, len(tableIndices))
 		for i, tableIndex := range tableIndices {
 			i := i
-			tableIndex := tableIndex
+			tableIndex, err := strconv.Atoi(tableIndex)
+			if err != nil {
+				return nil, generalErr(err, http.StatusBadRequest)
+			}
 			eg.Go(func() error {
-				table, err := parseTable(wikiTableSelection.Eq(int(tableIndex)), int(tableIndex))
+				table, err := parseTable(wikiTableSelection.Eq(tableIndex), tableIndex)
 				if err != nil {
 					return err
 				}
-				resp.Tables[i] = table
+				tables.Tables[i] = *table
 				return nil
 			})
 		}
@@ -63,15 +72,16 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 		if err != nil {
 			return nil, err
 		}
-		return resp, nil
+		return tables, nil
 	}
 }
 
-func parseTable(tableSelection *goquery.Selection, tableIndex int) (*pb.Table, error) {
-	table := &pb.Table{
-		Rows: make(map[int64]*pb.Row),
-	}
+func parseTable(tableSelection *goquery.Selection, tableIndex int) (*Table, error) {
+	table := &Table{}
 	table.Caption = tableSelection.Find("caption").Text()
+
+	dataMap := make(map[int]map[int]string)
+
 	ptErr := &parseTableError{}
 	var err error
 	// for each row in the table
@@ -82,43 +92,49 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (*pb.Table, e
 			colSpan := 1
 			// get the rowspan and colspan attributes
 			if attr := s.AttrOr("rowspan", ""); attr != "" {
-				rowSpan, err = strconv.Atoi(attr)
-				if err != nil {
-					ptErr.err = err
-					ptErr.rowNum = rowNum
-					ptErr.cellNum = cellNum
-					ptErr.tableIndex = tableIndex
-					return false
+				rowSpanTexts := strings.Split(attr, " ")
+				if len(rowSpanTexts) > 0 {
+					rowSpan, err = strconv.Atoi(rowSpanTexts[0])
+					if err != nil {
+						ptErr.err = err
+						ptErr.rowNum = rowNum
+						ptErr.cellNum = cellNum
+						ptErr.tableIndex = tableIndex
+						return false
+					}
 				}
 			}
 			if attr := s.AttrOr("colspan", ""); attr != "" {
-				colSpan, err = strconv.Atoi(attr)
-				if err != nil {
-					ptErr.err = err
-					ptErr.rowNum = rowNum
-					ptErr.cellNum = cellNum
-					ptErr.tableIndex = tableIndex
-					return false
+				colSpanTexts := strings.Split(attr, " ")
+				if len(colSpanTexts) > 0 {
+					colSpan, err = strconv.Atoi(colSpanTexts[0])
+					if err != nil {
+						ptErr.err = err
+						ptErr.rowNum = rowNum
+						ptErr.cellNum = cellNum
+						ptErr.tableIndex = tableIndex
+						return false
+					}
 				}
 			}
 			// loop through the spans and populate table columns
 			for i := 0; i < rowSpan; i++ {
 				for j := 0; j < colSpan; j++ {
 					row := rowNum + i
-					if _, ok := table.Rows[int64(row)]; !ok {
-						table.Rows[int64(row)] = &pb.Row{
-							Columns: make(map[int64]string),
-						}
-					}
 					nextAvailableCell := 0
-					columns := table.Rows[int64(row)].Columns
+
+					if _, ok := dataMap[row]; !ok {
+						dataMap[row] = make(map[int]string)
+					}
+
+					columns := dataMap[row]
 					// check if column already has a value from a previous rowspan so we don't overrwite it
 					// loop until we get an availalbe column
 					// https://en.wikipedia.org/wiki/Help:Table#Combined_use_of_COLSPAN_and_ROWSPAN
-					for columns[int64(cellNum+j+nextAvailableCell)] != "" {
+					for columns[cellNum+j+nextAvailableCell] != "" {
 						nextAvailableCell++
 					}
-					columns[int64(cellNum+j+nextAvailableCell)] = parseText(s.Text())
+					columns[cellNum+j+nextAvailableCell] = parseText(s.Text())
 				}
 			}
 			return true
@@ -129,11 +145,24 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (*pb.Table, e
 		return true
 	})
 	if err != nil {
-		return nil, ptErr
+		return nil, tableParseErr(ptErr)
 	}
+
+	dataMapToData(dataMap, table)
 	return table, nil
 }
 
 func parseText(s string) string {
 	return strings.TrimSpace(s)
+}
+
+func dataMapToData(dataMap map[int]map[int]string, table *Table) {
+	table.Data = make([][]string, len(dataMap))
+	for i := 0; i < len(dataMap); i++ {
+		row := dataMap[i]
+		table.Data[i] = make([]string, len(row))
+		for j := 0; j < len(row); j++ {
+			table.Data[i][j] = row[j]
+		}
+	}
 }

@@ -1,4 +1,4 @@
-package v2
+package service
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,10 +18,16 @@ const (
 )
 
 var (
-	baseURL = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
+	BaseURL = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
 )
 
-type Server struct{}
+type Server struct {
+	wikiAPIEndpoint string
+}
+
+func NewServer(endpoint string) *Server {
+	return &Server{wikiAPIEndpoint: endpoint}
+}
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -68,26 +73,27 @@ func (s *Server) getDocument(ctx context.Context, page, lang string) (*goquery.D
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, generalErr(err, http.StatusInternalServerError)
 	}
 	doc.Find(".mw-empty-elt").Remove()
 	return doc, nil
 }
 
 type wikiApiError struct {
+	err        error
 	statusCode int
-	message    string
 	page       string
 }
 
 func (e *wikiApiError) Error() string {
-	return e.message
+	return e.err.Error()
 }
 
 func (s *Server) getWikiAPIResponse(ctx context.Context, page, lang string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(baseURL, lang, url.QueryEscape(page)), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, CondSprintf(s.wikiAPIEndpoint, lang, url.QueryEscape(page)), nil)
 	if err != nil {
 		return nil, generalErr(err, http.StatusInternalServerError)
 	}
@@ -99,9 +105,9 @@ func (s *Server) getWikiAPIResponse(ctx context.Context, page, lang string) (*ht
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return nil, wikiAPIErr(&wikiApiError{statusCode: resp.StatusCode, page: page, message: fmt.Sprintf("failed to read wikipedia API response body: %v", err.Error())})
+			return nil, wikiAPIErr(&wikiApiError{err: err, statusCode: resp.StatusCode, page: page})
 		}
-		return nil, wikiAPIErr(&wikiApiError{statusCode: resp.StatusCode, page: page, message: string(body)})
+		return nil, wikiAPIErr(&wikiApiError{err: fmt.Errorf("%s", string(body)), statusCode: resp.StatusCode, page: page})
 	}
 	return resp, nil
 }
@@ -118,11 +124,27 @@ func writeServerError(w http.ResponseWriter, err error) {
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		log.Printf("%+v", svrErr)
-		fmt.Fprintf(w, "%v", svrErr)
+		bytes, err := json.Marshal(svrErr)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintf(w, "%s", bytes)
 		return
 	}
 	genErr := generalErr(err, http.StatusInternalServerError)
 	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintf(w, "%v", genErr)
+	bytes, err := json.Marshal(genErr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
+		return
+	}
+	fmt.Fprintf(w, "%s", bytes)
+}
+
+// https://stackoverflow.com/questions/59692243/is-there-a-way-to-conditionally-fmt-a-string
+func CondSprintf(format string, v ...interface{}) string {
+	v = append(v, "")
+	format += fmt.Sprint("%[", len(v), "]s")
+	return fmt.Sprintf(format, v...)
 }
