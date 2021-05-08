@@ -139,10 +139,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (*Table, erro
 			}
 			return true
 		})
-		if err != nil {
-			return false
-		}
-		return true
+		return err == nil
 	})
 	if err != nil {
 		return nil, tableParseErr(ptErr)
