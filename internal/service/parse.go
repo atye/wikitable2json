@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/sync/errgroup"
@@ -155,11 +156,17 @@ func parseText(s string) string {
 
 func dataMapToData(dataMap map[int]map[int]string, table *Table) {
 	table.Data = make([][]string, len(dataMap))
+	var wg sync.WaitGroup
 	for i := 0; i < len(dataMap); i++ {
-		row := dataMap[i]
-		table.Data[i] = make([]string, len(row))
-		for j := 0; j < len(row); j++ {
-			table.Data[i][j] = row[j]
-		}
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			row := dataMap[i]
+			table.Data[i] = make([]string, len(row))
+			for j := 0; j < len(row); j++ {
+				table.Data[i][j] = row[j]
+			}
+		}(i)
 	}
+	wg.Wait()
 }
