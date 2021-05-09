@@ -15,7 +15,7 @@ func TestServerSuccess(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("table.html"))
+				w.Write(getRespBody(t, "table.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -63,7 +63,7 @@ func TestServerSuccess(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("table.html"))
+				w.Write(getRespBody(t, "table.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -109,7 +109,7 @@ func TestServerSuccess(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("table.html"))
+				w.Write(getRespBody(t, "table.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -160,7 +160,7 @@ func TestServerSuccess(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("issue_1.html"))
+				w.Write(getRespBody(t, "issue_1.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -198,7 +198,7 @@ func TestServerSuccess(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("data-sort-value.html"))
+				w.Write(getRespBody(t, "data-sort-value.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -237,7 +237,7 @@ func TestServerError(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("rowspanError.html"))
+				w.Write(getRespBody(t, "rowspanError.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -275,7 +275,7 @@ func TestServerError(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("rowspanError.html"))
+				w.Write(getRespBody(t, "rowspanError.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -316,7 +316,7 @@ func TestServerError(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("colspanError.html"))
+				w.Write(getRespBody(t, "colspanError.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -355,14 +355,14 @@ func TestServerError(t *testing.T) {
 			switch r.URL.Path {
 			case "/":
 				w.WriteHeader(http.StatusRequestEntityTooLarge)
-				w.Write([]byte("request enitty too large"))
+				w.Write([]byte("request entity too large"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
 
 		want := ServerError{
-			Message: `request enitty too large`,
+			Message: `request entity too large`,
 			Metadata: map[string]interface{}{
 				"Page":               "apiError",
 				"ResponseStatusCode": float64(http.StatusRequestEntityTooLarge),
@@ -391,7 +391,7 @@ func TestServerError(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/":
-				w.Write(getRespBody("table.html"))
+				w.Write(getRespBody(t, "table.html"))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -452,10 +452,10 @@ func TestServerError(t *testing.T) {
 	})
 }
 
-func getRespBody(file string) []byte {
+func getRespBody(t *testing.T, file string) []byte {
 	tables, err := os.ReadFile(fmt.Sprintf("%s/%s", "testdata", file))
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	return tables
