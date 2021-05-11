@@ -20,6 +20,7 @@ func TestServerSuccess(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := Tables{
 			Tables: []Table{
@@ -54,6 +55,10 @@ func TestServerSuccess(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusOK {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusOK)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -68,6 +73,7 @@ func TestServerSuccess(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := Tables{
 			Tables: []Table{
@@ -100,6 +106,10 @@ func TestServerSuccess(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusOK {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusOK)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -114,6 +124,7 @@ func TestServerSuccess(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := Tables{
 			Tables: []Table{
@@ -151,6 +162,10 @@ func TestServerSuccess(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusOK {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusOK)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -165,6 +180,7 @@ func TestServerSuccess(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := Tables{
 			Tables: []Table{
@@ -189,6 +205,10 @@ func TestServerSuccess(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusOK {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusOK)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -203,6 +223,7 @@ func TestServerSuccess(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := Tables{
 			Tables: []Table{
@@ -226,6 +247,10 @@ func TestServerSuccess(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusOK {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusOK)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -242,6 +267,7 @@ func TestServerError(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := ServerError{
 			Message: `strconv.Atoi: parsing "x": invalid syntax`,
@@ -266,6 +292,10 @@ func TestServerError(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusInternalServerError {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusInternalServerError)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -280,6 +310,7 @@ func TestServerError(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := ServerError{
 			Message: `strconv.Atoi: parsing "x": invalid syntax`,
@@ -307,6 +338,10 @@ func TestServerError(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusInternalServerError {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusInternalServerError)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -321,6 +356,7 @@ func TestServerError(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := ServerError{
 			Message: `strconv.Atoi: parsing "x": invalid syntax`,
@@ -345,6 +381,10 @@ func TestServerError(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusInternalServerError {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusInternalServerError)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -360,6 +400,7 @@ func TestServerError(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := ServerError{
 			Message: `request entity too large`,
@@ -382,6 +423,10 @@ func TestServerError(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if w.Code != http.StatusRequestEntityTooLarge {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusRequestEntityTooLarge)
+		}
+
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("got %+v, want %+v", got, want)
 		}
@@ -396,6 +441,7 @@ func TestServerError(t *testing.T) {
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
 		}))
+		defer ts.Close()
 
 		want := ServerError{
 			Message: `strconv.Atoi: parsing "x": invalid syntax`,
@@ -418,6 +464,10 @@ func TestServerError(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &got)
 		if err != nil {
 			t.Fatal(err)
+		}
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusBadRequest)
 		}
 
 		if !reflect.DeepEqual(want, got) {
@@ -444,6 +494,10 @@ func TestServerError(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &got)
 		if err != nil {
 			t.Fatal(err)
+		}
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("got code %d, expected %d", w.Code, http.StatusBadRequest)
 		}
 
 		if !reflect.DeepEqual(want, got) {
