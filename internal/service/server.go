@@ -74,10 +74,12 @@ func (s *Server) getDocument(ctx context.Context, page, lang string) (*goquery.D
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return nil, generalErr(err, http.StatusInternalServerError)
 	}
+
 	doc.Find(".mw-empty-elt").Remove()
 	return doc, nil
 }
@@ -97,10 +99,12 @@ func (s *Server) getWikiAPIResponse(ctx context.Context, page, lang string) (*ht
 	if err != nil {
 		return nil, generalErr(err, http.StatusInternalServerError)
 	}
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, generalErr(err, http.StatusInternalServerError)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
@@ -124,6 +128,7 @@ func writeServerError(w http.ResponseWriter, err error) {
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
+
 		bytes, err := json.Marshal(svrErr)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
@@ -132,8 +137,10 @@ func writeServerError(w http.ResponseWriter, err error) {
 		fmt.Fprintf(w, "%s", bytes)
 		return
 	}
+
 	genErr := generalErr(err, http.StatusInternalServerError)
 	w.WriteHeader(http.StatusInternalServerError)
+
 	bytes, err := json.Marshal(genErr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)

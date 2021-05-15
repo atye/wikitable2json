@@ -501,6 +501,5 @@ func getRespBody(t *testing.T, file string) []byte {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	return tables
 }
