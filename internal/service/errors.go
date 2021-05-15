@@ -26,7 +26,7 @@ func wikiAPIErr(e *wikiApiError) *ServerError {
 
 func tableParseErr(e *parseTableError) *ServerError {
 	return &ServerError{
-		Message: e.err.Error(),
+		Message: e.Error(),
 		Metadata: map[string]interface{}{
 			"ResponseStatusCode": http.StatusInternalServerError,
 			"ResponseStatusText": http.StatusText(http.StatusInternalServerError),
