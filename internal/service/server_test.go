@@ -22,23 +22,21 @@ func TestServerSuccess(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		want := Tables{
-			Tables: []Table{
-				{
-					Caption: "test",
-					Data: [][]string{
-						{"Column 1", "Column 2", "Column 3"},
-						{"A", "B", "B"},
-						{"A", "C", "D"},
-						{"E", "F", "F"},
-						{"G", "F", "F"},
-						{"H", "H", "H"},
-					},
+		want := []Table{
+			{
+				Caption: "test",
+				Data: [][]string{
+					{"Column 1", "Column 2", "Column 3"},
+					{"A", "B", "B"},
+					{"A", "C", "D"},
+					{"E", "F", "F"},
+					{"G", "F", "F"},
+					{"H", "H", "H"},
 				},
-				{
-					Data: [][]string{
-						{"Column 1", "Column 2", "Column 3"},
-					},
+			},
+			{
+				Data: [][]string{
+					{"Column 1", "Column 2", "Column 3"},
 				},
 			},
 		}
@@ -49,7 +47,7 @@ func TestServerSuccess(t *testing.T) {
 
 		svr.ServeHTTP(w, r)
 
-		var got Tables
+		var got []Table
 		err := json.Unmarshal(w.Body.Bytes(), &got)
 		if err != nil {
 			t.Fatal(err)
@@ -75,18 +73,16 @@ func TestServerSuccess(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		want := Tables{
-			Tables: []Table{
-				{
-					Caption: "test",
-					Data: [][]string{
-						{"Column 1", "Column 2", "Column 3"},
-						{"A", "B", "B"},
-						{"A", "C", "D"},
-						{"E", "F", "F"},
-						{"G", "F", "F"},
-						{"H", "H", "H"},
-					},
+		want := []Table{
+			{
+				Caption: "test",
+				Data: [][]string{
+					{"Column 1", "Column 2", "Column 3"},
+					{"A", "B", "B"},
+					{"A", "C", "D"},
+					{"E", "F", "F"},
+					{"G", "F", "F"},
+					{"H", "H", "H"},
 				},
 			},
 		}
@@ -100,7 +96,7 @@ func TestServerSuccess(t *testing.T) {
 
 		svr.ServeHTTP(w, r)
 
-		var got Tables
+		var got []Table
 		err := json.Unmarshal(w.Body.Bytes(), &got)
 		if err != nil {
 			t.Fatal(err)
@@ -126,23 +122,21 @@ func TestServerSuccess(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		want := Tables{
-			Tables: []Table{
-				{
-					Caption: "test",
-					Data: [][]string{
-						{"Column 1", "Column 2", "Column 3"},
-						{"A", "B", "B"},
-						{"A", "C", "D"},
-						{"E", "F", "F"},
-						{"G", "F", "F"},
-						{"H", "H", "H"},
-					},
+		want := []Table{
+			{
+				Caption: "test",
+				Data: [][]string{
+					{"Column 1", "Column 2", "Column 3"},
+					{"A", "B", "B"},
+					{"A", "C", "D"},
+					{"E", "F", "F"},
+					{"G", "F", "F"},
+					{"H", "H", "H"},
 				},
-				{
-					Data: [][]string{
-						{"Column 1", "Column 2", "Column 3"},
-					},
+			},
+			{
+				Data: [][]string{
+					{"Column 1", "Column 2", "Column 3"},
 				},
 			},
 		}
@@ -156,7 +150,7 @@ func TestServerSuccess(t *testing.T) {
 
 		svr.ServeHTTP(w, r)
 
-		var got Tables
+		var got []Table
 		err := json.Unmarshal(w.Body.Bytes(), &got)
 		if err != nil {
 			t.Fatal(err)
@@ -182,13 +176,11 @@ func TestServerSuccess(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		want := Tables{
-			Tables: []Table{
-				{
-					Data: [][]string{
-						{"Jeju", "South Korea", "official, in Jeju Island"},
-						{"Jeju"},
-					},
+		want := []Table{
+			{
+				Data: [][]string{
+					{"Jeju", "South Korea", "official, in Jeju Island"},
+					{"Jeju"},
 				},
 			},
 		}
@@ -199,7 +191,7 @@ func TestServerSuccess(t *testing.T) {
 
 		svr.ServeHTTP(w, r)
 
-		var got Tables
+		var got []Table
 		err := json.Unmarshal(w.Body.Bytes(), &got)
 		if err != nil {
 			t.Fatal(err)
@@ -225,12 +217,10 @@ func TestServerSuccess(t *testing.T) {
 		}))
 		defer ts.Close()
 
-		want := Tables{
-			Tables: []Table{
-				{
-					Data: [][]string{
-						{"Abu Dhabi, United Arab Emirates", "N/A"},
-					},
+		want := []Table{
+			{
+				Data: [][]string{
+					{"Abu Dhabi, United Arab Emirates", "N/A"},
 				},
 			},
 		}
@@ -241,7 +231,7 @@ func TestServerSuccess(t *testing.T) {
 
 		svr.ServeHTTP(w, r)
 
-		var got Tables
+		var got []Table
 		err := json.Unmarshal(w.Body.Bytes(), &got)
 		if err != nil {
 			t.Fatal(err)

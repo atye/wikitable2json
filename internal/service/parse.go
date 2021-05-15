@@ -11,10 +11,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type Tables struct {
-	Tables []Table `json:"tables"`
-}
-
 type Table struct {
 	Caption string     `json:"caption"`
 	Data    [][]string `json:"data"`
@@ -31,19 +27,18 @@ func (e *parseTableError) Error() string {
 	return e.err.Error()
 }
 
-func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []string) (*Tables, error) {
+func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []string) ([]Table, error) {
 	var eg errgroup.Group
-	tables := new(Tables)
 	switch len(tableIndices) {
 	case 0:
-		tables.Tables = make([]Table, wikiTableSelection.Length())
+		tables := make([]Table, wikiTableSelection.Length())
 		wikiTableSelection.Each(func(i int, selection *goquery.Selection) {
 			eg.Go(func() error {
 				table, err := parseTable(selection, i)
 				if err != nil {
 					return err
 				}
-				tables.Tables[i] = *table
+				tables[i] = *table
 				return nil
 			})
 		})
@@ -53,7 +48,7 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 		}
 		return tables, nil
 	default:
-		tables.Tables = make([]Table, len(tableIndices))
+		tables := make([]Table, len(tableIndices))
 		for i, tableIndex := range tableIndices {
 			i := i
 			tableIndex, err := strconv.Atoi(tableIndex)
@@ -65,7 +60,7 @@ func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tab
 				if err != nil {
 					return err
 				}
-				tables.Tables[i] = *table
+				tables[i] = *table
 				return nil
 			})
 		}
