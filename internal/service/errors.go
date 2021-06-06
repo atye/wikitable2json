@@ -13,6 +13,16 @@ func (e *ServerError) Error() string {
 	return e.Message
 }
 
+type wikiApiError struct {
+	err        error
+	statusCode int
+	page       string
+}
+
+func (e *wikiApiError) Error() string {
+	return e.err.Error()
+}
+
 func wikiAPIErr(e *wikiApiError) *ServerError {
 	return &ServerError{
 		Message: e.Error(),
@@ -22,6 +32,17 @@ func wikiAPIErr(e *wikiApiError) *ServerError {
 			"Page":               e.page,
 		},
 	}
+}
+
+type parseTableError struct {
+	err        error
+	tableIndex int
+	rowNum     int
+	cellNum    int
+}
+
+func (e *parseTableError) Error() string {
+	return e.err.Error()
 }
 
 func tableParseErr(e *parseTableError) *ServerError {

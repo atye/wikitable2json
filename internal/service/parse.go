@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,17 +15,6 @@ import (
 type Table struct {
 	Caption string     `json:"caption"`
 	Data    [][]string `json:"data"`
-}
-
-type parseTableError struct {
-	err        error
-	tableIndex int
-	rowNum     int
-	cellNum    int
-}
-
-func (e *parseTableError) Error() string {
-	return e.err.Error()
 }
 
 func parseTables(ctx context.Context, wikiTableSelection *goquery.Selection, tableIndices []string) ([]Table, error) {
@@ -90,7 +80,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (*Table, erro
 			if attr := s.AttrOr("rowspan", ""); attr != "" {
 				rowSpanTexts := strings.Split(attr, " ")
 				if len(rowSpanTexts) > 0 {
-					rowSpan, err = strconv.Atoi(rowSpanTexts[0])
+					rowSpan, err = getSpan(rowSpanTexts)
 					if err != nil {
 						ptErr.err = err
 						ptErr.rowNum = rowNum
@@ -103,7 +93,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (*Table, erro
 			if attr := s.AttrOr("colspan", ""); attr != "" {
 				colSpanTexts := strings.Split(attr, " ")
 				if len(colSpanTexts) > 0 {
-					colSpan, err = strconv.Atoi(colSpanTexts[0])
+					colSpan, err = getSpan(colSpanTexts)
 					if err != nil {
 						ptErr.err = err
 						ptErr.rowNum = rowNum
@@ -164,4 +154,16 @@ func dataMapToData(dataMap map[int]map[int]string, table *Table) {
 		}(i)
 	}
 	wg.Wait()
+}
+
+func getSpan(values []string) (int, error) {
+	var err error
+	var span int
+	for _, v := range values {
+		span, err = strconv.Atoi(v)
+		if err == nil {
+			return span, nil
+		}
+	}
+	return 0, fmt.Errorf("no valid integer value in span attribute")
 }
