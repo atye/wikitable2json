@@ -260,7 +260,7 @@ func TestServerError(t *testing.T) {
 		defer ts.Close()
 
 		want := ServerError{
-			Message: `strconv.Atoi: parsing "x": invalid syntax`,
+			Message: `no valid integer value in span attribute`,
 			Metadata: map[string]interface{}{
 				"CellNumber":         float64(0),
 				"ResponseStatusCode": float64(500),
@@ -303,7 +303,7 @@ func TestServerError(t *testing.T) {
 		defer ts.Close()
 
 		want := ServerError{
-			Message: `strconv.Atoi: parsing "x": invalid syntax`,
+			Message: `no valid integer value in span attribute`,
 			Metadata: map[string]interface{}{
 				"CellNumber":         float64(0),
 				"ResponseStatusCode": float64(500),
@@ -349,7 +349,7 @@ func TestServerError(t *testing.T) {
 		defer ts.Close()
 
 		want := ServerError{
-			Message: `strconv.Atoi: parsing "x": invalid syntax`,
+			Message: `no valid integer value in span attribute`,
 			Metadata: map[string]interface{}{
 				"CellNumber":         float64(1),
 				"ResponseStatusCode": float64(500),

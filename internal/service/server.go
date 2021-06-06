@@ -84,16 +84,6 @@ func (s *Server) getDocument(ctx context.Context, page, lang string) (*goquery.D
 	return doc, nil
 }
 
-type wikiApiError struct {
-	err        error
-	statusCode int
-	page       string
-}
-
-func (e *wikiApiError) Error() string {
-	return e.err.Error()
-}
-
 func (s *Server) getWikiAPIResponse(ctx context.Context, page, lang string) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, CondSprintf(s.wikiAPIEndpoint, lang, url.QueryEscape(page)), nil)
 	if err != nil {
