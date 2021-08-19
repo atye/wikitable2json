@@ -53,7 +53,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		tableParams = v
 	}
 
-	tables, err := parseTables(r.Context(), doc.Find("table.wikitable"), tableParams)
+	tables, err := parseTables(r.Context(), doc.Find("table"), tableParams)
 	if err != nil {
 		writeServerError(w, err)
 		return
