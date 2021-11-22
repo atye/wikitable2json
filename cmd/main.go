@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/atye/wikitable-api/internal/service"
+	"github.com/atye/wikitable-api/internal/entrypoint"
+	"github.com/atye/wikitable-api/internal/server/data"
 )
 
 func main() {
@@ -15,8 +15,13 @@ func main() {
 		log.Fatal("PORT env not set")
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("./static"))))
-	mux.Handle("/api/", service.NewServer(service.BaseURL))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), mux))
+	c := entrypoint.Config{
+		Port:    port,
+		WikiAPI: data.NewWikiClient(data.BaseURL),
+	}
+
+	if err := entrypoint.Run(c); err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+		os.Exit(1)
+	}
 }
