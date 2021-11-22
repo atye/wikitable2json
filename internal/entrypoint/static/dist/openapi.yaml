@@ -1,0 +1,161 @@
+openapi: 3.0.0
+servers:
+  #- url: https://www.wikitable2json.com
+  - url: http://localhost:8080
+info:
+  title: WikiTable API
+  version: 1.0.0
+  description: |
+    [https://github.com/atye/wikitable-api](https://github.com/atye/wikitable-api/)
+
+    ### Notes
+    - Only tables with the HTML class `wikitable` and `standard` are returned
+
+    ### Examples:
+    [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
+    ```
+    [
+      [
+          [
+            "Year",
+            "Title",
+            "Role",
+            "Notes"
+          ],
+          [
+            "2017",
+            "SriValli",
+            "Majnu",
+            "Telugu film"
+          ]
+      ],
+      [
+          [
+            "Year",
+            "Title",
+            "Role",
+            "Notes"
+          ],
+          [
+            "2016-2018",
+            "Badho Bahu",
+            "Rana Ahlawat",
+            "Television debut"
+          ],
+          [
+            "2019",
+            "Bigg Boss 13",
+            "Contestant",
+            "Entered on day 36 evicted on day 50, re-entered on day 65  re-evicted on day 92"
+          ]
+      ]
+    ]
+    ```
+
+    [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&format=keyValue&lang=en](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&format=keyValue&lang=en)
+    ```
+    [
+      [
+          {
+            "Notes":"Television debut",
+            "Role":"Rana Ahlawat",
+            "Title":"Badho Bahu",
+            "Year":"2016-2018"
+          },
+          {
+            "Notes":"Entered on day 36 evicted on day 50, re-entered on day 65  re-evicted on day 92",
+            "Role":"Contestant",
+            "Title":"Bigg Boss 13",
+            "Year":"2019"
+          }
+      ]
+    ]
+    ```
+paths:
+  "/api/{page}":
+    get:
+      operationId: GetByPage
+      tags:
+        - API
+      parameters:
+        - name: page
+          description: Wikipedia page to get all tables from
+          example: Arhaan_Khan
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: table
+          description: Specific tables to get by index, starting from 0
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: lang
+          description: Wikipedia language code of the page
+          in: query
+          required: false
+          schema:
+            type: string
+            default: en
+        - name: format
+          description: |
+            One of the following:
+              - matrix
+              - keyValue
+          in: query
+          required: false
+          schema:
+            type: string
+            default: matrix
+      responses:
+        "200":
+          description: A successful response.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/matrix"
+                  - $ref: "#/components/schemas/keyValue"
+        default:
+          description: An error response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+components:
+  schemas:
+    matrix:
+      description: List of tables in the default, 2D format
+      type: array
+      items:
+        type: array
+        items:
+          type: array
+          items:
+            type: string
+    keyValue:
+      description: List of tables in the Key/Value format with the keys being the first row
+      type: array
+      items:
+        type: array
+        items:
+          type: object
+          additionalProperties:
+            type: string
+    error:
+      description: Error schema with a message, status code, and any details
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: integer
+          format: int64
+        details:
+          type: object
+          additionalProperties: true

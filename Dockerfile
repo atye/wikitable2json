@@ -7,6 +7,5 @@ RUN CGO_ENABLED=0 go build -o /tmp/service ./cmd/main.go && chmod u+x /tmp/servi
 
 FROM scratch
 COPY --from=staging /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=staging /wikitable-api/static /static
 COPY --from=staging /tmp/service /service
 ENTRYPOINT ["/service"]

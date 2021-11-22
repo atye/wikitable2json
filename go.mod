@@ -1,9 +1,8 @@
 module github.com/atye/wikitable-api
 
-go 1.14
+go 1.16
 
 require (
-	github.com/PuerkitoBio/goquery v1.5.1
-	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	github.com/PuerkitoBio/goquery v1.8.0
+	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 )
