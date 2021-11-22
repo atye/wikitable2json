@@ -41,7 +41,7 @@ func TestAPI(t *testing.T) {
 	}))
 
 	go Run(Config{
-		Port:    "8080",
+		Port:    PORT,
 		WikiAPI: data.NewWikiClient(ts.URL),
 	})
 
