@@ -1,7 +1,4 @@
 openapi: 3.0.0
-servers:
-  #- url: https://www.wikitable2json.com
-  - url: http://localhost:8080
 info:
   title: WikiTable API
   version: 1.0.0
