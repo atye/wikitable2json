@@ -104,7 +104,7 @@ paths:
             default: en
         - name: format
           description: |
-            One of the following:
+            One of the following schemas:
               - matrix
               - keyValue
           in: query
