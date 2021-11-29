@@ -61,14 +61,14 @@ func (c WikiClient) GetPageData(ctx context.Context, page, lang string) (io.Read
 
 func buildURL(endpoint, page, lang string) (string, error) {
 	if strings.Contains(endpoint, "wikipedia.org") {
-		u, err := url.Parse(fmt.Sprintf(BaseURL, lang, page))
+		u, err := url.Parse(fmt.Sprintf(BaseURL, lang, url.QueryEscape(page)))
 		if err != nil {
 			return "", err
 		}
 		return u.String(), nil
 	}
 
-	u, err := url.Parse(fmt.Sprintf("%s/api/rest_v1/page/html/%s", endpoint, page))
+	u, err := url.Parse(fmt.Sprintf("%s/api/rest_v1/page/html/%s", endpoint, url.QueryEscape(page)))
 	if err != nil {
 		return "", err
 	}
