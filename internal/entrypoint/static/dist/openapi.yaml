@@ -6,7 +6,7 @@ info:
     [https://github.com/atye/wikitable-api](https://github.com/atye/wikitable-api/)
 
     ### Notes
-    - Only tables with the HTML class `wikitable` and `standard` are returned
+    - Tables with the HTML class `wikitable`, `standard`, or `toccolours` are returned
 
     ### Examples:
     [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
