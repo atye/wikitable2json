@@ -119,6 +119,7 @@ func TestAPI(t *testing.T) {
 			want := [][][]string{
 				GoldenMatrix[0],
 				GoldenMatrix[0],
+				GoldenMatrix[0],
 			}
 
 			var got [][][]string
