@@ -17,6 +17,7 @@ var (
 	classes = []string{
 		"table.wikitable",
 		"table.standard",
+		"table.toccolours",
 	}
 )
 
@@ -31,7 +32,6 @@ func parse(ctx context.Context, r io.Reader, tables []int, format string) (inter
 	case 0:
 		resp := make([]interface{}, tableSelection.Length())
 		tableSelection.Each(func(i int, selection *goquery.Selection) {
-			// check if table has wikitable or standard class
 			eg.Go(func() error {
 				td, err := parseTable(selection, i)
 				if err != nil {
