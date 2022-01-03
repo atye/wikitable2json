@@ -90,6 +90,11 @@ func getTableSelection(r io.Reader) (*goquery.Selection, error) {
 	return doc.Find(strings.Join(classes, ", ")), nil
 }
 
+type cell struct {
+	set   bool
+	value string
+}
+
 func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, error) {
 	td := make(verbose)
 
@@ -98,7 +103,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 	// for each row in the table
 	tableSelection.Find("tr").EachWithBreak(func(rowNum int, s *goquery.Selection) bool {
 		// find all th and td elements in the row
-		s.Find("td, th").EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
+		s.Find("th, td").EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
 			rowSpan := 1
 			colSpan := 1
 			// get the rowspan and colspan attributes
@@ -137,17 +142,17 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 					nextAvailableCell := 0
 
 					if _, ok := td[row]; !ok {
-						td[row] = make(map[int]string)
+						td[row] = make(map[int]cell)
 					}
 
 					columns := td[row]
-					// check if column already has a value from a previous rowspan so we don't overrwite it
+					// check if column already is already set from a previous rowspan so we don't overrwite it
 					// loop until we get an availalbe column
 					// https://en.wikipedia.org/wiki/Help:Table#Combined_use_of_COLSPAN_and_ROWSPAN
-					for columns[cellNum+j+nextAvailableCell] != "" {
+					for columns[cellNum+j+nextAvailableCell].set {
 						nextAvailableCell++
 					}
-					columns[cellNum+j+nextAvailableCell] = parseText(s.Text())
+					columns[cellNum+j+nextAvailableCell] = cell{set: true, value: parseText(s.Text())}
 				}
 			}
 			return true

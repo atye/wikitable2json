@@ -54,4 +54,10 @@ var (
 			{"Abu Dhabi, United Arab Emirates", "N/A"},
 		},
 	}
+
+	Issue34Matrix = [][][]string{
+		{
+			{"18 May 2019 election", "", "", "", "test"},
+		},
+	}
 )
