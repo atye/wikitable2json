@@ -7,7 +7,7 @@ import (
 	"github.com/atye/wikitable-api/internal/status"
 )
 
-type verbose map[int]map[int]string
+type verbose map[int]map[int]cell
 
 func toFormat(format string, v verbose, tableIndex int) (interface{}, error) {
 	switch format {
@@ -37,7 +37,7 @@ func toMatrix(vf verbose) interface{} {
 			row := vf[i]
 			matrix[i] = make([]string, len(row))
 			for j := 0; j < len(row); j++ {
-				matrix[i][j] = row[j]
+				matrix[i][j] = row[j].value
 			}
 		}(i)
 	}
@@ -52,7 +52,7 @@ func toKeyValue(rows verbose, tableIndex int) (interface{}, error) {
 	if len(rows) > 0 {
 		var headers []string
 		for i := 0; i < len(rows[0]); i++ {
-			headers = append(headers, rows[0][i])
+			headers = append(headers, rows[0][i].value)
 		}
 
 		if len(rows) > 1 {
@@ -70,7 +70,7 @@ func toKeyValue(rows verbose, tableIndex int) (interface{}, error) {
 
 				pairs := make(map[string]string)
 				for j := 0; j < len(rows[i]); j++ {
-					pairs[headers[j]] = rows[i][j]
+					pairs[headers[j]] = rows[i][j].value
 				}
 
 				kv = append(kv, pairs)

@@ -32,6 +32,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "badRowSpan"))
 		case "/api/rest_v1/page/html/badColSpan":
 			w.Write(getPageBytes(t, "badColSpan"))
+		case "/api/rest_v1/page/html/issue34":
+			w.Write(getPageBytes(t, "issue34"))
 		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
@@ -62,6 +64,10 @@ func TestAPI(t *testing.T) {
 				{
 					"dataSortValue",
 					DataSortValueMatrix,
+				},
+				{
+					"issue34",
+					Issue34Matrix,
 				},
 			}
 
