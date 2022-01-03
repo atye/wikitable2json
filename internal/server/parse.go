@@ -63,7 +63,7 @@ func parse(ctx context.Context, r io.Reader, tables []int, format string) (inter
 					return err
 				}
 
-				f, err := toFormat(format, td, i)
+				f, err := toFormat(format, td, tableIndex)
 				if err != nil {
 					return err
 				}
