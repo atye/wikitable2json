@@ -34,6 +34,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "badColSpan"))
 		case "/api/rest_v1/page/html/issue34":
 			w.Write(getPageBytes(t, "issue34"))
+		case "/api/rest_v1/page/html/reference":
+			w.Write(getPageBytes(t, "reference"))
 		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
@@ -126,6 +128,20 @@ func TestAPI(t *testing.T) {
 				GoldenMatrix[0],
 				GoldenMatrix[0],
 				GoldenMatrix[0],
+			}
+
+			var got [][][]string
+			execGetRequest(t, addr, &got)
+
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("want %v\n got %v", want, got)
+			}
+		})
+
+		t.Run("CleanReference", func(t *testing.T) {
+			addr := fmt.Sprintf("http://localhost:%s/api/reference?cleanRef=true", PORT)
+			want := [][][]string{
+				ReferenceMatrix[0],
 			}
 
 			var got [][][]string
@@ -276,6 +292,8 @@ func TestAPI(t *testing.T) {
 }
 
 func execGetRequest(t *testing.T, url string, v interface{}) {
+	t.Helper()
+
 	resp, err := http.Get(url)
 	if err != nil {
 		t.Fatal(err)

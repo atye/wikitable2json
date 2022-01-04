@@ -39,7 +39,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := strings.TrimPrefix(r.URL.Path, "/api/")
-	lang, format, tables, err := parseParameters(r)
+	lang, format, tables, cleanRef, err := parseParameters(r)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -52,7 +52,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer reader.Close()
 
-	resp, err := parse(r.Context(), reader, tables, format)
+	input := parseOptions{
+		tables:   tables,
+		format:   format,
+		cleanRef: cleanRef,
+	}
+
+	resp, err := parse(r.Context(), reader, input)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -67,7 +73,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", b)
 }
 
-func parseParameters(r *http.Request) (lang string, format string, tables []int, e error) {
+func parseParameters(r *http.Request) (lang string, format string, tables []int, cleanRef bool, e error) {
 	params := r.URL.Query()
 	lang = defaultLang
 	if v := params.Get("lang"); v != "" {
@@ -88,6 +94,10 @@ func parseParameters(r *http.Request) (lang string, format string, tables []int,
 	format = defaultFormat
 	if v := params.Get("format"); v != "" {
 		format = v
+	}
+
+	if v := params.Get("cleanRef"); v == "true" {
+		cleanRef = true
 	}
 
 	return

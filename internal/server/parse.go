@@ -21,24 +21,30 @@ var (
 	}
 )
 
-func parse(ctx context.Context, r io.Reader, tables []int, format string) (interface{}, error) {
+type parseOptions struct {
+	tables   []int
+	format   string
+	cleanRef bool
+}
+
+func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, error) {
 	tableSelection, err := getTableSelection(r)
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
 	var eg errgroup.Group
-	switch len(tables) {
+	switch len(input.tables) {
 	case 0:
 		resp := make([]interface{}, tableSelection.Length())
 		tableSelection.Each(func(i int, selection *goquery.Selection) {
 			eg.Go(func() error {
-				td, err := parseTable(selection, i)
+				td, err := parseTable(selection, i, input)
 				if err != nil {
 					return err
 				}
 
-				f, err := toFormat(format, td, i)
+				f, err := toFormat(input.format, td, i)
 				if err != nil {
 					return err
 				}
@@ -53,17 +59,17 @@ func parse(ctx context.Context, r io.Reader, tables []int, format string) (inter
 		}
 		return resp, nil
 	default:
-		resp := make([]interface{}, len(tables))
-		for i, tableIndex := range tables {
+		resp := make([]interface{}, len(input.tables))
+		for i, tableIndex := range input.tables {
 			i := i
 			tableIndex := tableIndex
 			eg.Go(func() error {
-				td, err := parseTable(tableSelection.Eq(tableIndex), tableIndex)
+				td, err := parseTable(tableSelection.Eq(tableIndex), tableIndex, input)
 				if err != nil {
 					return err
 				}
 
-				f, err := toFormat(format, td, tableIndex)
+				f, err := toFormat(input.format, td, tableIndex)
 				if err != nil {
 					return err
 				}
@@ -95,7 +101,7 @@ type cell struct {
 	value string
 }
 
-func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, error) {
+func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOptions) (verbose, error) {
 	td := make(verbose)
 
 	errorStatus := status.Status{}
@@ -152,7 +158,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 					for columns[cellNum+j+nextAvailableCell].set {
 						nextAvailableCell++
 					}
-					columns[cellNum+j+nextAvailableCell] = cell{set: true, value: parseText(s.Text())}
+					columns[cellNum+j+nextAvailableCell] = cell{set: true, value: parseText(s, input.cleanRef)}
 				}
 			}
 			return true
@@ -165,8 +171,11 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 	return td, nil
 }
 
-func parseText(s string) string {
-	return strings.TrimSpace(s)
+func parseText(s *goquery.Selection, cleanRef bool) string {
+	if cleanRef {
+		s.Find(".reference").Remove().End()
+	}
+	return strings.TrimSpace(s.Text())
 }
 
 func getSpan(values []string) (int, error) {
