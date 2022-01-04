@@ -109,6 +109,15 @@ paths:
           schema:
             type: string
             default: matrix
+        - name: cleanRef
+          description: |
+            Set to true to remove the reference link texts<br/>
+            The HTML element containing the reference link must contain the class "reference" for it to be removed
+          in: query
+          required: false
+          schema:
+            type: string
+            default: false
       responses:
         "200":
           description: A successful response.
@@ -136,7 +145,9 @@ components:
           items:
             type: string
     keyValue:
-      description: List of tables in the Key/Value format with the keys being the first row
+      description: |
+        List of tables in the key/value format with the keys being the first row<br/>
+        This is a helper format for simpler tables. If you want keys that are not in the first row, you must use matrix and process the response
       type: array
       items:
         type: array

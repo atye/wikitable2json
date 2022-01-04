@@ -60,4 +60,10 @@ var (
 			{"18 May 2019 election", "", "", "", "test"},
 		},
 	}
+
+	ReferenceMatrix = [][][]string{
+		{
+			{"Roy Morgan"},
+		},
+	}
 )

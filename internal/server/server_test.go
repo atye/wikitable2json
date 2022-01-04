@@ -15,17 +15,19 @@ func TestParseParameters(t *testing.T) {
 		params := r.URL.Query()
 		params.Add("lang", "sp")
 		params.Add("table", "0")
-		params.Add("format", "verbose")
+		params.Add("format", "keyValue")
+		params.Add("cleanRef", "true")
 		r.URL.RawQuery = params.Encode()
 
-		gotLang, gotFormat, gotTables, err := parseParameters(r)
+		gotLang, gotFormat, gotTables, gotCleanRef, err := parseParameters(r)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		wantLang := "sp"
-		wantFormat := "verbose"
+		wantFormat := "keyValue"
 		wantTables := []int{0}
+		wantCleanRef := true
 
 		if wantLang != gotLang {
 			t.Errorf("expected %v, got %v", wantLang, gotLang)
@@ -33,6 +35,10 @@ func TestParseParameters(t *testing.T) {
 
 		if wantFormat != gotFormat {
 			t.Errorf("expected %v, got %v", wantFormat, gotFormat)
+		}
+
+		if wantCleanRef != gotCleanRef {
+			t.Errorf("expected %v, got %v", wantCleanRef, gotCleanRef)
 		}
 
 		if !reflect.DeepEqual(wantTables, gotTables) {
@@ -46,7 +52,7 @@ func TestParseParameters(t *testing.T) {
 		params.Add("table", "x")
 		r.URL.RawQuery = params.Encode()
 
-		_, _, _, got := parseParameters(r)
+		_, _, _, _, got := parseParameters(r)
 		if got == nil {
 			t.Fatal("expected non-nil error")
 		}
