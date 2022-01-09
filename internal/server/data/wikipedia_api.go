@@ -11,18 +11,14 @@ import (
 	"github.com/atye/wikitable-api/internal/status"
 )
 
-const (
-	defaultUserAgent = "Go-http-client/1.1"
-)
-
-var (
-	BaseURL = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
-)
-
 type WikiClient struct {
 	client   *http.Client
 	endpoint string
 }
+
+var (
+	BaseURL = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
+)
 
 func NewWikiClient(endpoint string) WikiClient {
 	return WikiClient{
@@ -42,7 +38,7 @@ func (c WikiClient) GetPageData(ctx context.Context, page, lang, userAgent strin
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
-	if userAgent != defaultUserAgent {
+	if userAgent != "" {
 		req.Header.Add("User-Agent", userAgent)
 	}
 
