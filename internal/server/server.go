@@ -19,7 +19,7 @@ const (
 )
 
 type WikiAPI interface {
-	GetPageData(ctx context.Context, page, lang, userAgnet string) (io.ReadCloser, error)
+	GetPageData(ctx context.Context, page, lang, userAgent string) (io.ReadCloser, error)
 }
 
 type Server struct {
