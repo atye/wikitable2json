@@ -27,7 +27,7 @@ func NewWikiClient(endpoint string) WikiClient {
 	}
 }
 
-func (c WikiClient) GetPageData(ctx context.Context, page, lang string) (io.ReadCloser, error) {
+func (c WikiClient) GetPageData(ctx context.Context, page, lang, userAgent string) (io.ReadCloser, error) {
 	addr, err := buildURL(c.endpoint, page, lang)
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
@@ -36,6 +36,10 @@ func (c WikiClient) GetPageData(ctx context.Context, page, lang string) (io.Read
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, addr, nil)
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
+	}
+
+	if userAgent != "" {
+		req.Header.Add("User-Agent", userAgent)
 	}
 
 	resp, err := c.client.Do(req)

@@ -39,10 +39,17 @@ func TestAPI(t *testing.T) {
 		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
+		case "/api/rest_v1/page/html/UserAgent":
+			got := r.Header.Get("User-Agent")
+			want := "test@mail.com"
+			if want != got {
+				t.Errorf("want %s, got %s", want, got)
+			}
 		default:
 			t.Fatalf("path %s not supported", r.URL.Path)
 		}
 	}))
+	defer ts.Close()
 
 	go Run(Config{
 		Port:    PORT,
@@ -149,6 +156,19 @@ func TestAPI(t *testing.T) {
 
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("want %v\n got %v", want, got)
+			}
+		})
+
+		t.Run("UserAgent", func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%s/api/UserAgent", PORT), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Add("User-Agent", "test@mail.com")
+
+			_, err = http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
 			}
 		})
 	})

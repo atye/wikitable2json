@@ -19,7 +19,7 @@ const (
 )
 
 type WikiAPI interface {
-	GetPageData(ctx context.Context, page, lang string) (io.ReadCloser, error)
+	GetPageData(ctx context.Context, page, lang, userAgent string) (io.ReadCloser, error)
 }
 
 type Server struct {
@@ -45,7 +45,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reader, err := s.wiki.GetPageData(r.Context(), page, lang)
+	reader, err := s.wiki.GetPageData(r.Context(), page, lang, r.Header.Get("User-Agent"))
 	if err != nil {
 		writeError(w, err)
 		return
