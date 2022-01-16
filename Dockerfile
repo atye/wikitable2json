@@ -1,4 +1,4 @@
-FROM golang:1.16 as staging
+FROM golang:1.17.6 as staging
 RUN apt update -y && apt install -y curl unzip ca-certificates && update-ca-certificates
 
 WORKDIR /wikitable-api
