@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/atye/wikitable-api/internal/server/data"
 	"github.com/atye/wikitable-api/internal/status"
@@ -55,6 +56,8 @@ func TestAPI(t *testing.T) {
 		Port:    PORT,
 		WikiAPI: data.NewWikiClient(ts.URL),
 	})
+
+	waitforServer()
 
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Matrix", func(t *testing.T) {
@@ -334,4 +337,15 @@ func getPageBytes(t *testing.T, page string) []byte {
 		t.Fatal(err)
 	}
 	return f
+}
+
+func waitforServer() {
+	for {
+		resp, err := http.Get(fmt.Sprintf("http://localhost:%s", PORT))
+		if err != nil || resp.StatusCode != http.StatusOK {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		return
+	}
 }
