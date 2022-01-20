@@ -102,6 +102,10 @@ type cell struct {
 }
 
 func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOptions) (verbose, error) {
+	if input.cleanRef {
+		tableSelection.Find(".reference").Remove().End()
+	}
+
 	td := make(verbose)
 
 	errorStatus := status.Status{}
@@ -158,7 +162,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOp
 					for columns[cellNum+j+nextAvailableCell].set {
 						nextAvailableCell++
 					}
-					columns[cellNum+j+nextAvailableCell] = cell{set: true, value: parseText(s, input.cleanRef)}
+					columns[cellNum+j+nextAvailableCell] = cell{set: true, value: parseText(s)}
 				}
 			}
 			return true
@@ -171,10 +175,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOp
 	return td, nil
 }
 
-func parseText(s *goquery.Selection, cleanRef bool) string {
-	if cleanRef {
-		s.Find(".reference").Remove().End()
-	}
+func parseText(s *goquery.Selection) string {
 	return strings.TrimSpace(s.Text())
 }
 
