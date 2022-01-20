@@ -9,24 +9,24 @@ import (
 
 type verbose map[int]map[int]cell
 
-func toFormat(format string, v verbose, tableIndex int) (interface{}, error) {
+func format(format string, v verbose, tableIndex int) (interface{}, error) {
 	switch format {
 	case "keyvalue":
 		fallthrough
 	case "keyValue":
-		kv, err := toKeyValue(v, tableIndex)
+		kv, err := keyValue(v, tableIndex)
 		if err != nil {
 			return nil, err
 		}
 		return kv, nil
 	default:
-		return toMatrix(v), nil
+		return matrix(v), nil
 	}
 }
 
 type Matrix [][]string
 
-func toMatrix(vf verbose) interface{} {
+func matrix(vf verbose) interface{} {
 	matrix := make(Matrix, len(vf))
 
 	var wg sync.WaitGroup
@@ -48,7 +48,7 @@ func toMatrix(vf verbose) interface{} {
 
 type KeyValue []map[string]string
 
-func toKeyValue(rows verbose, tableIndex int) (interface{}, error) {
+func keyValue(rows verbose, tableIndex int) (interface{}, error) {
 	if len(rows) > 0 {
 		var headers []string
 		for i := 0; i < len(rows[0]); i++ {

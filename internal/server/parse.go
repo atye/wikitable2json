@@ -33,6 +33,10 @@ func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, e
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
+	if input.cleanRef {
+		tableSelection.Find(".reference").Remove().End()
+	}
+
 	var eg errgroup.Group
 	switch len(input.tables) {
 	case 0:
@@ -44,7 +48,7 @@ func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, e
 					return err
 				}
 
-				f, err := toFormat(input.format, td, i)
+				f, err := format(input.format, td, i)
 				if err != nil {
 					return err
 				}
@@ -69,7 +73,7 @@ func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, e
 					return err
 				}
 
-				f, err := toFormat(input.format, td, tableIndex)
+				f, err := format(input.format, td, tableIndex)
 				if err != nil {
 					return err
 				}
@@ -102,10 +106,6 @@ type cell struct {
 }
 
 func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOptions) (verbose, error) {
-	if input.cleanRef {
-		tableSelection.Find(".reference").Remove().End()
-	}
-
 	td := make(verbose)
 
 	errorStatus := status.Status{}
