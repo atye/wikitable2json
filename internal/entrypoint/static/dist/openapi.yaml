@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: WikiTable API
+  title: Wikipedia Table API
   version: 1.0.0
   description: |
     [https://github.com/atye/wikitable-api](https://github.com/atye/wikitable-api/)
