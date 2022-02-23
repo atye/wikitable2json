@@ -46,6 +46,12 @@ func TestAPI(t *testing.T) {
 			if want != got {
 				t.Errorf("want %s, got %s", want, got)
 			}
+		case "/api/rest_v1/page/html/NoUserAgent":
+			got := r.Header.Get("User-Agent")
+			want := "github.com/atye/wikitable-api"
+			if want != got {
+				t.Errorf("want %s, got %s", want, got)
+			}
 		default:
 			t.Fatalf("path %s not supported", r.URL.Path)
 		}
@@ -168,6 +174,20 @@ func TestAPI(t *testing.T) {
 				t.Fatal(err)
 			}
 			req.Header.Add("User-Agent", "test@mail.com")
+
+			_, err = http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		t.Run("NoUserAgent", func(t *testing.T) {
+			addr := fmt.Sprintf("http://localhost:%s/api/NoUserAgent", PORT)
+			req, err := http.NewRequest(http.MethodGet, addr, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Add("User-Agent", "")
 
 			_, err = http.DefaultClient.Do(req)
 			if err != nil {

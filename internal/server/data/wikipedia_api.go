@@ -38,9 +38,11 @@ func (c WikiClient) GetPageData(ctx context.Context, page, lang, userAgent strin
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
+	agent := "github.com/atye/wikitable-api"
 	if userAgent != "" {
-		req.Header.Add("User-Agent", userAgent)
+		agent = userAgent
 	}
+	req.Header.Add("User-Agent", agent)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
