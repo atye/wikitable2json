@@ -194,6 +194,26 @@ func TestAPI(t *testing.T) {
 				t.Fatal(err)
 			}
 		})
+
+		t.Run("ResponseContentType", func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%s/api/golden", PORT), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := "application/json"
+			got := resp.Header.Get("Content-Type")
+
+			if want != got {
+				t.Errorf("want %s, got %s", want, got)
+			}
+
+		})
 	})
 
 	t.Run("Error", func(t *testing.T) {

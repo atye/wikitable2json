@@ -20,7 +20,7 @@ type Config struct {
 func Run(c Config) error {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.StripPrefix("/", http.FileServer(getSwagger())))
-	mux.Handle("/api/", corsMW(server.NewServer(c.WikiAPI)))
+	mux.Handle("/api/", headerMW(server.NewServer(c.WikiAPI)))
 	return http.ListenAndServe(fmt.Sprintf(":%s", c.Port), mux)
 }
 
@@ -32,9 +32,10 @@ func getSwagger() http.FileSystem {
 	return http.FS(dist)
 }
 
-func corsMW(next http.Handler) http.Handler {
+func headerMW(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Content-Type", "application/json")
 		next.ServeHTTP(w, r)
 	})
 }
