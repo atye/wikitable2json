@@ -47,7 +47,6 @@ func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, e
 				if err != nil {
 					return err
 				}
-
 				f, err := format(input.format, td, i)
 				if err != nil {
 					return err
@@ -101,8 +100,9 @@ func getTableSelection(r io.Reader) (*goquery.Selection, error) {
 }
 
 type cell struct {
-	set   bool
-	value string
+	set    bool
+	value  string
+	header bool
 }
 
 func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOptions) (verbose, error) {
@@ -172,7 +172,19 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOp
 	if err != nil {
 		return nil, errorStatus
 	}
+
+	setHeaderCells(tableSelection, td)
 	return td, nil
+}
+
+func setHeaderCells(tableSelection *goquery.Selection, data verbose) {
+	theader := tableSelection.Find("thead").Eq(0)
+	theader.Find("tr").Each(func(i int, s *goquery.Selection) {
+		for j, cell := range data[i] {
+			cell.header = true
+			data[i][j] = cell
+		}
+	})
 }
 
 func parseText(s *goquery.Selection) string {

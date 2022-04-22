@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/atye/wikitable-api/internal/server"
 	"github.com/atye/wikitable-api/internal/server/data"
 	"github.com/atye/wikitable-api/internal/status"
 )
@@ -37,6 +38,10 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "issue34"))
 		case "/api/rest_v1/page/html/reference":
 			w.Write(getPageBytes(t, "reference"))
+		case "/api/rest_v1/page/html/simpleKeyValue":
+			w.Write(getPageBytes(t, "simpleKeyValue"))
+		case "/api/rest_v1/page/html/complexKeyValue":
+			w.Write(getPageBytes(t, "complexKeyValue"))
 		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
@@ -103,27 +108,57 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("KeyValue", func(t *testing.T) {
-			tests := []struct {
-				page string
-				want interface{}
-			}{
-				{
-					"golden",
-					GoldenKeyValue,
-				},
-			}
+			t.Run("Simple", func(t *testing.T) {
+				addr := fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?format=keyvalue", PORT)
 
-			for _, tc := range tests {
-				t.Run(tc.page, func(t *testing.T) {
-					addr := fmt.Sprintf("http://localhost:%s/api/%s?format=keyvalue", PORT, tc.page)
-					var got [][]map[string]string
-					execGetRequest(t, addr, &got)
+				want := []server.KeyValue{
+					{
+						{
+							"Rank":    "1",
+							"Account": "Alpha",
+						},
+					},
+				}
 
-					if !reflect.DeepEqual(tc.want, got) {
-						t.Errorf("want %v\n got %v", tc.want, got)
-					}
-				})
-			}
+				var got []server.KeyValue
+				execGetRequest(t, addr, &got)
+
+				if !reflect.DeepEqual(want, got) {
+					t.Errorf("want %v\n got %v", want, got)
+				}
+			})
+
+			t.Run("Complex", func(t *testing.T) {
+				addr := fmt.Sprintf("http://localhost:%s/api/complexKeyValue?format=keyvalue&cleanRef=true", PORT)
+
+				want := []server.KeyValue{
+					{
+						{
+							"Date":              "19–20 April 2022",
+							"Brand":             "Essential",
+							"Primary vote L/NP": "37%",
+							"Primary vote ALP":  "35%",
+							"2pp vote L/NP":     "46%",
+							"2pp vote ALP":      "47%",
+						},
+						{
+							"Date":              "11–17 April 2022",
+							"Brand":             "Roy Morgan",
+							"Primary vote L/NP": "35.5%",
+							"Primary vote ALP":  "35%",
+							"2pp vote L/NP":     "45%",
+							"2pp vote ALP":      "55%",
+						},
+					},
+				}
+
+				var got []server.KeyValue
+				execGetRequest(t, addr, &got)
+
+				if !reflect.DeepEqual(want, got) {
+					t.Errorf("want %v\n got %v", want, got)
+				}
+			})
 		})
 
 		t.Run("WithParameters", func(t *testing.T) {
