@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,6 +11,11 @@ import (
 )
 
 type verbose map[int]map[int]cell
+
+var (
+	ErrNotEnoughRows         = errors.New("table needs at least two rows")
+	ErrNumKeysValuesMismatch = errors.New("number of keys does not equal number of values")
+)
 
 func format(format string, v verbose, tableIndex int) (interface{}, error) {
 	switch format {
@@ -51,17 +57,17 @@ func matrix(vf verbose) interface{} {
 type KeyValue []map[string]string
 
 func keyValue(data verbose, tableIndex int) (interface{}, error) {
-	headRows := 0
-	for _, col := range data {
-		if len(col) > 0 {
-			if col[0].header {
-				headRows++
+	if len(data) > 1 {
+		headRows := 0
+		for _, col := range data {
+			if len(col) > 0 {
+				if col[0].header {
+					headRows++
+				}
 			}
 		}
-	}
 
-	if headRows > 0 {
-		if len(data) > 1 {
+		if headRows > 0 {
 			var keys []string
 			for colNum := 0; colNum < len(data[0]); colNum++ {
 				var b strings.Builder
@@ -84,8 +90,7 @@ func keyValue(data verbose, tableIndex int) (interface{}, error) {
 			var kv KeyValue
 			for i := headRows; i < len(data); i++ {
 				if len(keys) != len(data[i]) {
-					msg := "keys length does not match row length"
-					return nil, status.NewStatus(msg, http.StatusInternalServerError, status.WithDetails(status.Details{
+					return nil, status.NewStatus(ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 						status.TableIndex: tableIndex,
 						status.RowNumber:  i,
 						status.KeysLength: len(keys),
@@ -101,44 +106,8 @@ func keyValue(data verbose, tableIndex int) (interface{}, error) {
 			}
 			return kv, nil
 		}
-		msg := "table needs at least two rows"
-		return nil, status.NewStatus(msg, http.StatusBadRequest, status.WithDetails(status.Details{
-			status.TableIndex: tableIndex,
-		}))
 	}
-
-	/*if len(rows) > 0 {
-		var headers []string
-		for i := 0; i < len(rows[0]); i++ {
-			headers = append(headers, rows[0][i].value)
-		}
-
-		if len(rows) > 1 {
-			var kv KeyValue
-			for i := 1; i <= len(rows)-1; i++ {
-				if len(headers) != len(rows[i]) {
-					msg := "keys length does not match row length"
-					return nil, status.NewStatus(msg, http.StatusInternalServerError, status.WithDetails(status.Details{
-						status.TableIndex: tableIndex,
-						status.RowNumber:  i,
-						status.KeysLength: len(headers),
-						status.RowLength:  len(rows[i]),
-					}))
-				}
-
-				pairs := make(map[string]string)
-				for j := 0; j < len(rows[i]); j++ {
-					pairs[headers[j]] = rows[i][j].value
-				}
-
-				kv = append(kv, pairs)
-			}
-			return kv, nil
-		}
-		msg := "table only seems to have one row, need at least two"
-		return nil, status.NewStatus(msg, http.StatusInternalServerError, status.WithDetails(status.Details{
-			status.TableIndex: tableIndex,
-		}))
-	}*/
-	return KeyValue{}, nil
+	return nil, status.NewStatus(ErrNotEnoughRows.Error(), http.StatusBadRequest, status.WithDetails(status.Details{
+		status.TableIndex: tableIndex,
+	}))
 }

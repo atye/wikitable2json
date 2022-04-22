@@ -354,7 +354,7 @@ func TestAPI(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				want := status.NewStatus("keys length does not match row length", http.StatusInternalServerError, status.WithDetails(status.Details{
+				want := status.NewStatus(server.ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
 					status.RowNumber:  float64(1),
 					status.KeysLength: float64(3),
@@ -378,7 +378,7 @@ func TestAPI(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				want := status.NewStatus("table only seems to have one row, need at least two", http.StatusInternalServerError, status.WithDetails(status.Details{
+				want := status.NewStatus(server.ErrNotEnoughRows.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
 				}))
 				if !reflect.DeepEqual(want, got) {
