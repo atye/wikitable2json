@@ -1,23 +1,34 @@
-package data
+package api
 
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/atye/wikitable2json/internal/status"
 )
+
+var data = []byte(`
+<!DOCTYPE html>
+<html>
+<body>
+    <table class="wikitable">
+        <tbody>
+        </tbody>
+    </table>
+</body>
+</html>
+`)
 
 func TestWikiClient(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			switch r.URL.Path {
 			case "/api/rest_v1/page/html/test":
-				w.Write([]byte("test"))
+				w.Write([]byte(data))
 			default:
 				t.Fatalf("path %s not supported", r.URL.Path)
 			}
@@ -26,17 +37,12 @@ func TestWikiClient(t *testing.T) {
 
 		sut := NewWikiClient(ts.URL)
 
-		r, err := sut.GetPageData(context.Background(), "test", "en", "")
+		got, err := sut.GetPageBytes(context.Background(), "test", "en", "")
 		if err != nil {
 			t.Errorf("expected nil error, got %v", err)
 		}
 
-		want := "test"
-
-		got, err := io.ReadAll(r)
-		if err != nil {
-			t.Fatal(err)
-		}
+		want := string(data)
 
 		if want != string(got) {
 			t.Errorf("expected %v, got %v", want, got)
@@ -57,7 +63,7 @@ func TestWikiClient(t *testing.T) {
 
 		sut := NewWikiClient(ts.URL)
 
-		_, got := sut.GetPageData(context.Background(), "test", "en", "")
+		_, got := sut.GetPageBytes(context.Background(), "test", "en", "")
 
 		want := status.Status{
 			Message: "error",

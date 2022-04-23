@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 func TestParseParameters(t *testing.T) {
@@ -17,42 +17,48 @@ func TestParseParameters(t *testing.T) {
 		params.Add("table", "0")
 		params.Add("format", "keyValue")
 		params.Add("cleanRef", "true")
+		params.Add("keyRows", "2")
 		r.URL.RawQuery = params.Encode()
 
-		gotLang, gotFormat, gotTables, gotCleanRef, err := parseParameters(r)
+		qv, err := parseParameters(r)
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		gotLang := qv.lang
+		gotTables := qv.tables
+		gotCleanRef := qv.cleanRef
+		gotKeyRows := qv.keyRows
+
 		wantLang := "sp"
-		wantFormat := "keyValue"
 		wantTables := []int{0}
 		wantCleanRef := true
+		wantKeyRows := 2
 
 		if wantLang != gotLang {
-			t.Errorf("expected %v, got %v", wantLang, gotLang)
-		}
-
-		if wantFormat != gotFormat {
-			t.Errorf("expected %v, got %v", wantFormat, gotFormat)
+			t.Errorf("want %v, got %v", wantLang, gotLang)
 		}
 
 		if wantCleanRef != gotCleanRef {
-			t.Errorf("expected %v, got %v", wantCleanRef, gotCleanRef)
+			t.Errorf("want %v, got %v", wantCleanRef, gotCleanRef)
 		}
 
 		if !reflect.DeepEqual(wantTables, gotTables) {
-			t.Errorf("expected %v, got %v", wantTables, gotTables)
+			t.Errorf("want %v, got %v", wantTables, gotTables)
+		}
+
+		if wantKeyRows != gotKeyRows {
+			t.Errorf("want %d, got %d", wantKeyRows, gotKeyRows)
 		}
 	})
 
-	t.Run("Error", func(t *testing.T) {
+	t.Run("Bad table query", func(t *testing.T) {
 		r := httptest.NewRequest(http.MethodGet, "/api", nil)
 		params := r.URL.Query()
 		params.Add("table", "x")
 		r.URL.RawQuery = params.Encode()
 
-		_, _, _, _, got := parseParameters(r)
+		_, got := parseParameters(r)
 		if got == nil {
 			t.Fatal("expected non-nil error")
 		}
@@ -61,5 +67,41 @@ func TestParseParameters(t *testing.T) {
 		if !reflect.DeepEqual(want, got) {
 			t.Errorf("expected %v, got %v", want, got)
 		}
+	})
+
+	t.Run("Bad keyrows query", func(t *testing.T) {
+		t.Run("Bad keyrows syntax", func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, "/api", nil)
+			params := r.URL.Query()
+			params.Add("keyRows", "x")
+			r.URL.RawQuery = params.Encode()
+
+			_, got := parseParameters(r)
+			if got == nil {
+				t.Fatal("expected non-nil error")
+			}
+
+			want := status.NewStatus(`strconv.Atoi: parsing "x": invalid syntax`, http.StatusBadRequest)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %v, got %v", want, got)
+			}
+		})
+
+		t.Run("keyrows less than 1", func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, "/api", nil)
+			params := r.URL.Query()
+			params.Add("keyRows", "0")
+			r.URL.RawQuery = params.Encode()
+
+			_, got := parseParameters(r)
+			if got == nil {
+				t.Fatal("expected non-nil error")
+			}
+
+			want := status.NewStatus(`keyRows must be at least 1`, http.StatusBadRequest)
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("expected %v, got %v", want, got)
+			}
+		})
 	})
 }

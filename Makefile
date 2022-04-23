@@ -2,10 +2,10 @@ test:
 	go test -coverpkg=./... -count=1 -race ./...
 
 build:
-	docker build -t wikitable-api .
+	docker build -t wikitable2json .
 
 run: build
-	docker run --rm -p 8080:8080 -e PORT=8080 wikitable-api
+	docker run --rm -p 8080:8080 -e PORT=8080 wikitable2json
 
 cover:
 	cd internal/entrypoint && go test -coverpkg=../... -coverprofile=coverage.out ./...

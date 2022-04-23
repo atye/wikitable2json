@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/atye/wikitable-api/internal/entrypoint"
-	"github.com/atye/wikitable-api/internal/server/data"
+	"github.com/atye/wikitable2json/internal/entrypoint"
+	"github.com/atye/wikitable2json/internal/server/api"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 
 	c := entrypoint.Config{
 		Port:    port,
-		WikiAPI: data.NewWikiClient(data.BaseURL),
+		WikiAPI: api.NewWikiClient(api.BaseURL),
 	}
 
 	if err := entrypoint.Run(c); err != nil {

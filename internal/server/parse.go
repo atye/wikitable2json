@@ -3,13 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/atye/wikitable2json/internal/status"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -23,20 +22,11 @@ var (
 
 type parseOptions struct {
 	tables   []int
-	format   string
 	cleanRef bool
+	keyrows  int
 }
 
-func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, error) {
-	tableSelection, err := getTableSelection(r)
-	if err != nil {
-		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
-	}
-
-	if input.cleanRef {
-		tableSelection.Find(".reference").Remove().End()
-	}
-
+func parse(ctx context.Context, tableSelection *goquery.Selection, input parseOptions) (interface{}, error) {
 	var eg errgroup.Group
 	switch len(input.tables) {
 	case 0:
@@ -47,12 +37,18 @@ func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, e
 				if err != nil {
 					return err
 				}
-				f, err := format(input.format, td, i)
-				if err != nil {
-					return err
+
+				var tmp interface{}
+				if input.keyrows >= 1 {
+					tmp, err = formatKeyValue(td, input.keyrows, i)
+					if err != nil {
+						return err
+					}
+				} else {
+					tmp = formatMatrix(td)
 				}
 
-				resp[i] = f
+				resp[i] = tmp
 				return nil
 			})
 		})
@@ -72,12 +68,17 @@ func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, e
 					return err
 				}
 
-				f, err := format(input.format, td, tableIndex)
-				if err != nil {
-					return err
+				var tmp interface{}
+				if input.keyrows >= 1 {
+					tmp, err = formatKeyValue(td, input.keyrows, i)
+					if err != nil {
+						return err
+					}
+				} else {
+					tmp = formatMatrix(td)
 				}
 
-				resp[i] = f
+				resp[i] = tmp
 				return nil
 			})
 		}
@@ -87,16 +88,6 @@ func parse(ctx context.Context, r io.Reader, input parseOptions) (interface{}, e
 		}
 		return resp, nil
 	}
-}
-
-func getTableSelection(r io.Reader) (*goquery.Selection, error) {
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, err
-	}
-	doc.Find(".mw-empty-elt").Remove()
-
-	return doc.Find(strings.Join(classes, ", ")), nil
 }
 
 type cell struct {
@@ -172,19 +163,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOp
 	if err != nil {
 		return nil, errorStatus
 	}
-
-	setHeaderCells(tableSelection, td)
 	return td, nil
-}
-
-func setHeaderCells(tableSelection *goquery.Selection, data verbose) {
-	theader := tableSelection.Find("thead").Eq(0)
-	theader.Find("tr").Each(func(i int, s *goquery.Selection) {
-		for j, cell := range data[i] {
-			cell.header = true
-			data[i][j] = cell
-		}
-	})
 }
 
 func parseText(s *goquery.Selection) string {

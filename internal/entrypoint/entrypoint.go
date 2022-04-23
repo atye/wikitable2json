@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"net/http"
 
-	"github.com/atye/wikitable-api/internal/server"
+	"github.com/atye/wikitable2json/internal/server"
 )
 
 //go:embed static/dist/*

@@ -1,4 +1,4 @@
-package data
+package api
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 type WikiClient struct {
@@ -27,7 +27,7 @@ func NewWikiClient(endpoint string) WikiClient {
 	}
 }
 
-func (c WikiClient) GetPageData(ctx context.Context, page, lang, userAgent string) (io.ReadCloser, error) {
+func (c WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error) {
 	addr, err := buildURL(c.endpoint, page, lang)
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
@@ -38,7 +38,7 @@ func (c WikiClient) GetPageData(ctx context.Context, page, lang, userAgent strin
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
-	agent := "github.com/atye/wikitable-api"
+	agent := "github.com/atye/wikitable2json"
 	if userAgent != "" {
 		agent = userAgent
 	}
@@ -48,6 +48,7 @@ func (c WikiClient) GetPageData(ctx context.Context, page, lang, userAgent strin
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		defer resp.Body.Close()
@@ -62,7 +63,12 @@ func (c WikiClient) GetPageData(ctx context.Context, page, lang, userAgent strin
 		}))
 	}
 
-	return resp.Body, nil
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 func buildURL(endpoint, page, lang string) (string, error) {

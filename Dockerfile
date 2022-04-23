@@ -1,7 +1,7 @@
 FROM golang:1.17.6 as staging
 RUN apt update -y && apt install -y curl unzip ca-certificates && update-ca-certificates
 
-WORKDIR /wikitable-api
+WORKDIR /wikitable2json
 COPY . .
 RUN CGO_ENABLED=0 go build -o /tmp/service ./cmd/main.go && chmod u+x /tmp/service
 

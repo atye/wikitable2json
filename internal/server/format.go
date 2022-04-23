@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 type verbose map[int]map[int]cell
@@ -17,24 +17,13 @@ var (
 	ErrNumKeysValuesMismatch = errors.New("number of keys does not equal number of values")
 )
 
-func format(format string, v verbose, tableIndex int) (interface{}, error) {
-	switch format {
-	case "keyvalue":
-		fallthrough
-	case "keyValue":
-		kv, err := keyValue(v, tableIndex)
-		if err != nil {
-			return nil, err
-		}
-		return kv, nil
-	default:
-		return matrix(v), nil
-	}
-}
-
 type Matrix [][]string
 
-func matrix(vf verbose) interface{} {
+func formatMatrix(data verbose) Matrix {
+	return matrix(data)
+}
+
+func matrix(vf verbose) Matrix {
 	matrix := make(Matrix, len(vf))
 
 	var wg sync.WaitGroup
@@ -56,56 +45,53 @@ func matrix(vf verbose) interface{} {
 
 type KeyValue []map[string]string
 
-func keyValue(data verbose, tableIndex int) (interface{}, error) {
-	if len(data) > 1 {
-		headRows := 0
-		for _, col := range data {
-			if len(col) > 0 {
-				if col[0].header {
-					headRows++
-				}
+func formatKeyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error) {
+	kv, err := keyValue(data, keyrows, tableIndex)
+	if err != nil {
+		return nil, err
+	}
+	return kv, nil
+}
+
+func keyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error) {
+	if len(data) > 1 && keyrows >= 1 {
+		var keys []string
+		for colNum := 0; colNum < len(data[0]); colNum++ {
+			var b strings.Builder
+			_, err := b.WriteString(data[0][colNum].value)
+			if err != nil {
+				return nil, err
 			}
-		}
 
-		if headRows > 0 {
-			var keys []string
-			for colNum := 0; colNum < len(data[0]); colNum++ {
-				var b strings.Builder
-				_, err := b.WriteString(data[0][colNum].value)
-				if err != nil {
-					return nil, err
-				}
-
-				for k := 1; k < headRows; k++ {
-					v := data[k][colNum].value
-					if v != data[k-1][colNum].value {
-						_, err := b.WriteString(fmt.Sprintf(" %s", v))
-						if err != nil {
-							return nil, err
-						}
+			for k := 1; k < keyrows; k++ {
+				v := data[k][colNum].value
+				if v != data[k-1][colNum].value {
+					_, err := b.WriteString(fmt.Sprintf(" %s", v))
+					if err != nil {
+						return nil, err
 					}
 				}
-				keys = append(keys, b.String())
 			}
-			var kv KeyValue
-			for i := headRows; i < len(data); i++ {
-				if len(keys) != len(data[i]) {
-					return nil, status.NewStatus(ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
-						status.TableIndex: tableIndex,
-						status.RowNumber:  i,
-						status.KeysLength: len(keys),
-						status.RowLength:  len(data[i]),
-					}))
-				}
-
-				pairs := make(map[string]string)
-				for j := 0; j < len(data[i]); j++ {
-					pairs[keys[j]] = data[i][j].value
-				}
-				kv = append(kv, pairs)
-			}
-			return kv, nil
+			keys = append(keys, b.String())
 		}
+		var kv KeyValue
+		for i := keyrows; i < len(data); i++ {
+			if len(keys) != len(data[i]) {
+				return nil, status.NewStatus(ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
+					status.TableIndex: tableIndex,
+					status.RowNumber:  i,
+					status.KeysLength: len(keys),
+					status.RowLength:  len(data[i]),
+				}))
+			}
+
+			pairs := make(map[string]string)
+			for j := 0; j < len(data[i]); j++ {
+				pairs[keys[j]] = data[i][j].value
+			}
+			kv = append(kv, pairs)
+		}
+		return kv, nil
 	}
 	return nil, status.NewStatus(ErrNotEnoughRows.Error(), http.StatusBadRequest, status.WithDetails(status.Details{
 		status.TableIndex: tableIndex,

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/atye/wikitable-api/internal/server"
-	"github.com/atye/wikitable-api/internal/server/data"
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/atye/wikitable2json/internal/server"
+	"github.com/atye/wikitable2json/internal/server/api"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 var (
@@ -42,6 +42,10 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "simpleKeyValue"))
 		case "/api/rest_v1/page/html/complexKeyValue":
 			w.Write(getPageBytes(t, "complexKeyValue"))
+		case "/api/rest_v1/page/html/keyValueBadRows":
+			w.Write(getPageBytes(t, "keyValueBadRows"))
+		case "/api/rest_v1/page/html/keyValueOneRow":
+			w.Write(getPageBytes(t, "keyValueOneRow"))
 		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
@@ -53,7 +57,7 @@ func TestAPI(t *testing.T) {
 			}
 		case "/api/rest_v1/page/html/NoUserAgent":
 			got := r.Header.Get("User-Agent")
-			want := "github.com/atye/wikitable-api"
+			want := "github.com/atye/wikitable2json"
 			if want != got {
 				t.Errorf("want %s, got %s", want, got)
 			}
@@ -65,7 +69,7 @@ func TestAPI(t *testing.T) {
 
 	go Run(Config{
 		Port:    PORT,
-		WikiAPI: data.NewWikiClient(ts.URL),
+		WikiAPI: api.NewWikiClient(ts.URL),
 	})
 
 	waitforServer()
@@ -109,7 +113,7 @@ func TestAPI(t *testing.T) {
 
 		t.Run("KeyValue", func(t *testing.T) {
 			t.Run("Simple", func(t *testing.T) {
-				addr := fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?format=keyvalue", PORT)
+				addr := fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1", PORT)
 
 				want := []server.KeyValue{
 					{
@@ -126,10 +130,29 @@ func TestAPI(t *testing.T) {
 				if !reflect.DeepEqual(want, got) {
 					t.Errorf("want %v\n got %v", want, got)
 				}
+
+				// do it again with table param for coverage
+				addr = fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1&table=0", PORT)
+
+				want = []server.KeyValue{
+					{
+						{
+							"Rank":    "1",
+							"Account": "Alpha",
+						},
+					},
+				}
+
+				var resp []server.KeyValue
+				execGetRequest(t, addr, &resp)
+
+				if !reflect.DeepEqual(want, resp) {
+					t.Errorf("want %v\n got %v", want, resp)
+				}
 			})
 
 			t.Run("Complex", func(t *testing.T) {
-				addr := fmt.Sprintf("http://localhost:%s/api/complexKeyValue?format=keyvalue&cleanRef=true", PORT)
+				addr := fmt.Sprintf("http://localhost:%s/api/complexKeyValue?keyRows=2&cleanRef=true", PORT)
 
 				want := []server.KeyValue{
 					{
@@ -342,7 +365,7 @@ func TestAPI(t *testing.T) {
 
 		t.Run("KeyValue", func(t *testing.T) {
 			t.Run("MismatchedRow", func(t *testing.T) {
-				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/issueOne?format=keyValue", PORT))
+				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/keyValueBadRows?keyRows=1", PORT))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -356,9 +379,9 @@ func TestAPI(t *testing.T) {
 
 				want := status.NewStatus(server.ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
-					status.RowNumber:  float64(1),
-					status.KeysLength: float64(3),
-					status.RowLength:  float64(1),
+					status.RowNumber:  float64(2),
+					status.KeysLength: float64(2),
+					status.RowLength:  float64(3),
 				}))
 				if !reflect.DeepEqual(want, got) {
 					t.Errorf("expected %v, got %v", want, got)
@@ -366,7 +389,7 @@ func TestAPI(t *testing.T) {
 			})
 
 			t.Run("OneRow", func(t *testing.T) {
-				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/dataSortValue?format=keyValue&table=0", PORT))
+				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/keyValueOneRow?keyRows=1", PORT))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -378,9 +401,10 @@ func TestAPI(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				want := status.NewStatus(server.ErrNotEnoughRows.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
+				want := status.NewStatus(server.ErrNotEnoughRows.Error(), http.StatusBadRequest, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
 				}))
+
 				if !reflect.DeepEqual(want, got) {
 					t.Errorf("expected %v, got %v", want, got)
 				}
