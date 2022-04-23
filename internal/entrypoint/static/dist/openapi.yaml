@@ -13,7 +13,7 @@ info:
     [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
 
     ### Get the first and second tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
-    [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&table=2)
+    [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&table=2](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&table=2)
 
     ### Get the second table on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in a key-value format using the first row as keys:
     [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1)
