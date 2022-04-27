@@ -325,6 +325,22 @@ func TestAPI(t *testing.T) {
 					Code:    http.StatusBadRequest,
 				},
 			},
+			{
+				"KeyRows less than one",
+				fmt.Sprintf("http://localhost:%s/api/badKeyRows?keyRows=0", PORT),
+				status.Status{
+					Message: "keyRows must be at least 1",
+					Code:    http.StatusBadRequest,
+				},
+			},
+			{
+				"KeyRows not a number",
+				fmt.Sprintf("http://localhost:%s/api/badKeyRows?keyRows=x", PORT),
+				status.Status{
+					Message: `strconv.Atoi: parsing "x": invalid syntax`,
+					Code:    http.StatusBadRequest,
+				},
+			},
 		}
 
 		for _, tc := range tests {

@@ -91,9 +91,8 @@ func parse(ctx context.Context, tableSelection *goquery.Selection, input parseOp
 }
 
 type cell struct {
-	set    bool
-	value  string
-	header bool
+	set   bool
+	value string
 }
 
 func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOptions) (verbose, error) {
