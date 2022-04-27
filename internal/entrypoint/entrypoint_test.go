@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/atye/wikitable-api/internal/server/data"
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/atye/wikitable2json/internal/server"
+	"github.com/atye/wikitable2json/internal/server/api"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 var (
@@ -37,6 +38,14 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "issue34"))
 		case "/api/rest_v1/page/html/reference":
 			w.Write(getPageBytes(t, "reference"))
+		case "/api/rest_v1/page/html/simpleKeyValue":
+			w.Write(getPageBytes(t, "simpleKeyValue"))
+		case "/api/rest_v1/page/html/complexKeyValue":
+			w.Write(getPageBytes(t, "complexKeyValue"))
+		case "/api/rest_v1/page/html/keyValueBadRows":
+			w.Write(getPageBytes(t, "keyValueBadRows"))
+		case "/api/rest_v1/page/html/keyValueOneRow":
+			w.Write(getPageBytes(t, "keyValueOneRow"))
 		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
@@ -48,7 +57,7 @@ func TestAPI(t *testing.T) {
 			}
 		case "/api/rest_v1/page/html/NoUserAgent":
 			got := r.Header.Get("User-Agent")
-			want := "github.com/atye/wikitable-api"
+			want := "github.com/atye/wikitable2json"
 			if want != got {
 				t.Errorf("want %s, got %s", want, got)
 			}
@@ -60,7 +69,7 @@ func TestAPI(t *testing.T) {
 
 	go Run(Config{
 		Port:    PORT,
-		WikiAPI: data.NewWikiClient(ts.URL),
+		WikiAPI: api.NewWikiClient(ts.URL),
 	})
 
 	waitforServer()
@@ -103,27 +112,76 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("KeyValue", func(t *testing.T) {
-			tests := []struct {
-				page string
-				want interface{}
-			}{
-				{
-					"golden",
-					GoldenKeyValue,
-				},
-			}
+			t.Run("Simple", func(t *testing.T) {
+				addr := fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1", PORT)
 
-			for _, tc := range tests {
-				t.Run(tc.page, func(t *testing.T) {
-					addr := fmt.Sprintf("http://localhost:%s/api/%s?format=keyvalue", PORT, tc.page)
-					var got [][]map[string]string
-					execGetRequest(t, addr, &got)
+				want := []server.KeyValue{
+					{
+						{
+							"Rank":    "1",
+							"Account": "Alpha",
+						},
+					},
+				}
 
-					if !reflect.DeepEqual(tc.want, got) {
-						t.Errorf("want %v\n got %v", tc.want, got)
-					}
-				})
-			}
+				var got []server.KeyValue
+				execGetRequest(t, addr, &got)
+
+				if !reflect.DeepEqual(want, got) {
+					t.Errorf("want %v\n got %v", want, got)
+				}
+
+				// do it again with table param for coverage
+				addr = fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1&table=0", PORT)
+
+				want = []server.KeyValue{
+					{
+						{
+							"Rank":    "1",
+							"Account": "Alpha",
+						},
+					},
+				}
+
+				var resp []server.KeyValue
+				execGetRequest(t, addr, &resp)
+
+				if !reflect.DeepEqual(want, resp) {
+					t.Errorf("want %v\n got %v", want, resp)
+				}
+			})
+
+			t.Run("Complex", func(t *testing.T) {
+				addr := fmt.Sprintf("http://localhost:%s/api/complexKeyValue?keyRows=2&cleanRef=true", PORT)
+
+				want := []server.KeyValue{
+					{
+						{
+							"Date":              "19–20 April 2022",
+							"Brand":             "Essential",
+							"Primary vote L/NP": "37%",
+							"Primary vote ALP":  "35%",
+							"2pp vote L/NP":     "46%",
+							"2pp vote ALP":      "47%",
+						},
+						{
+							"Date":              "11–17 April 2022",
+							"Brand":             "Roy Morgan",
+							"Primary vote L/NP": "35.5%",
+							"Primary vote ALP":  "35%",
+							"2pp vote L/NP":     "45%",
+							"2pp vote ALP":      "55%",
+						},
+					},
+				}
+
+				var got []server.KeyValue
+				execGetRequest(t, addr, &got)
+
+				if !reflect.DeepEqual(want, got) {
+					t.Errorf("want %v\n got %v", want, got)
+				}
+			})
 		})
 
 		t.Run("WithParameters", func(t *testing.T) {
@@ -267,6 +325,22 @@ func TestAPI(t *testing.T) {
 					Code:    http.StatusBadRequest,
 				},
 			},
+			{
+				"KeyRows less than one",
+				fmt.Sprintf("http://localhost:%s/api/badKeyRows?keyRows=0", PORT),
+				status.Status{
+					Message: "keyRows must be at least 1",
+					Code:    http.StatusBadRequest,
+				},
+			},
+			{
+				"KeyRows not a number",
+				fmt.Sprintf("http://localhost:%s/api/badKeyRows?keyRows=x", PORT),
+				status.Status{
+					Message: `strconv.Atoi: parsing "x": invalid syntax`,
+					Code:    http.StatusBadRequest,
+				},
+			},
 		}
 
 		for _, tc := range tests {
@@ -307,7 +381,7 @@ func TestAPI(t *testing.T) {
 
 		t.Run("KeyValue", func(t *testing.T) {
 			t.Run("MismatchedRow", func(t *testing.T) {
-				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/issueOne?format=keyValue", PORT))
+				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/keyValueBadRows?keyRows=1", PORT))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -319,11 +393,11 @@ func TestAPI(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				want := status.NewStatus("keys length does not match row length", http.StatusInternalServerError, status.WithDetails(status.Details{
+				want := status.NewStatus(server.ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
-					status.RowNumber:  float64(1),
-					status.KeysLength: float64(3),
-					status.RowLength:  float64(1),
+					status.RowNumber:  float64(2),
+					status.KeysLength: float64(2),
+					status.RowLength:  float64(3),
 				}))
 				if !reflect.DeepEqual(want, got) {
 					t.Errorf("expected %v, got %v", want, got)
@@ -331,7 +405,7 @@ func TestAPI(t *testing.T) {
 			})
 
 			t.Run("OneRow", func(t *testing.T) {
-				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/dataSortValue?format=keyValue&table=0", PORT))
+				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/keyValueOneRow?keyRows=1", PORT))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -343,9 +417,10 @@ func TestAPI(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				want := status.NewStatus("table only seems to have one row, need at least two", http.StatusInternalServerError, status.WithDetails(status.Details{
+				want := status.NewStatus(server.ErrNotEnoughRows.Error(), http.StatusBadRequest, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
 				}))
+
 				if !reflect.DeepEqual(want, got) {
 					t.Errorf("expected %v, got %v", want, got)
 				}

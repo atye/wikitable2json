@@ -1,4 +1,4 @@
-module github.com/atye/wikitable-api
+module github.com/atye/wikitable2json
 
 go 1.17
 

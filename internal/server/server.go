@@ -1,16 +1,17 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/atye/wikitable-api/internal/status"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 )
 
 type WikiAPI interface {
-	GetPageData(ctx context.Context, page, lang, userAgent string) (io.ReadCloser, error)
+	GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error)
 }
 
 type Server struct {
@@ -39,26 +40,39 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := strings.TrimPrefix(r.URL.Path, "/api/")
-	lang, format, tables, cleanRef, err := parseParameters(r)
+
+	qv, err := parseParameters(r)
 	if err != nil {
 		writeError(w, err)
 		return
 	}
 
-	reader, err := s.wiki.GetPageData(r.Context(), page, lang, r.Header.Get("User-Agent"))
+	data, err := s.wiki.GetPageBytes(r.Context(), page, qv.lang, r.Header.Get("User-Agent"))
 	if err != nil {
 		writeError(w, err)
 		return
 	}
-	defer reader.Close()
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	doc.Find(".mw-empty-elt").Remove()
+	tableSelection := doc.Find(strings.Join(classes, ", "))
+
+	if qv.cleanRef {
+		tableSelection.Find(".reference").Remove()
+	}
 
 	input := parseOptions{
-		tables:   tables,
-		format:   format,
-		cleanRef: cleanRef,
+		tables:   qv.tables,
+		cleanRef: qv.cleanRef,
+		keyrows:  qv.keyRows,
 	}
 
-	resp, err := parse(r.Context(), reader, input)
+	resp, err := parse(r.Context(), tableSelection, input)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -73,34 +87,50 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", b)
 }
 
-func parseParameters(r *http.Request) (lang string, format string, tables []int, cleanRef bool, e error) {
+type queryValues struct {
+	lang     string
+	tables   []int
+	cleanRef bool
+	keyRows  int
+}
+
+func parseParameters(r *http.Request) (queryValues, error) {
+	var qv queryValues
+
 	params := r.URL.Query()
-	lang = defaultLang
+	qv.lang = defaultLang
 	if v := params.Get("lang"); v != "" {
-		lang = v
+		qv.lang = v
 	}
 
 	if v, ok := params["table"]; ok {
 		for _, table := range v {
 			t, err := strconv.Atoi(table)
 			if err != nil {
-				e = status.NewStatus(err.Error(), http.StatusBadRequest)
-				return
+				return queryValues{}, status.NewStatus(err.Error(), http.StatusBadRequest)
 			}
-			tables = append(tables, t)
+			qv.tables = append(qv.tables, t)
 		}
 	}
 
-	format = defaultFormat
-	if v := params.Get("format"); v != "" {
-		format = v
-	}
-
 	if v := params.Get("cleanRef"); v == "true" {
-		cleanRef = true
+		qv.cleanRef = true
 	}
 
-	return
+	if v := params.Get("keyRows"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return queryValues{}, status.NewStatus(err.Error(), http.StatusBadRequest)
+		}
+
+		if n < 1 {
+			return queryValues{}, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
+		}
+
+		qv.keyRows = n
+	}
+
+	return qv, nil
 }
 
 func writeError(w http.ResponseWriter, err error) {
