@@ -8,7 +8,8 @@ info:
     - Tables with the HTML class `wikitable`, `standard`, and `toccolours` are returned
     - If you are making automated requests, set a unique `User-Agent` header with an email address or URL contact page per the [Wikimedia REST API](https://en.wikipedia.org/api/rest_v1/)
 
-    ## Examples:
+    ### Examples: 
+
     ### Get all tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
     [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
 
@@ -23,6 +24,9 @@ info:
 
     ### Get all tables on German page [Liste_der_Baudenkmäler_in_Feucht](https://de.wikipedia.org/wiki/Liste_der_Baudenkmäler_in_Feucht) in the default matrix format: 
     [https://www.wikitable2json.com/api/Liste_der_Baudenkmäler_in_Feucht?lang=de](https://www.wikitable2json.com/api/Liste_der_Baudenkmäler_in_Feucht?lang=de)
+
+    ### Get all tables on page [Template:COVID-19_pandemic_data](https://en.wikipedia.org/wiki/Template:COVID-19_pandemic_data) with reference link text removed
+    [https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true](https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true)
 paths:
   "/api/{page}":
     get:
