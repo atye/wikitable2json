@@ -66,4 +66,14 @@ var (
 			{"Roy Morgan"},
 		},
 	}
+
+	ComplexMatrix = [][][]string{
+		{
+			{"Date", "Brand", "Interview mode", "Sample size", "Primary vote", "Primary vote", "Primary vote", "Primary vote", "Primary vote", "Primary vote", "UND", "2pp vote", "2pp vote"},
+			{"Date", "Brand", "Interview mode", "Sample size", "L/NP", "ALP", "GRN", "ONP", "UAP", "OTH", "UND", "L/NP", "ALP"},
+			{"18–24 April 2022", "Roy Morgan", "Telephone/online", "1393", "35.5%", "35%", "12%", "4.5%", "1.5%", "11.5%", "–", "45.5%", "54.5%"},
+			{"20–23 April 2022", "Newspoll-YouGov", "Online", "1538", "36%", "37%", "11%", "3%", "4%", "9%", "–", "47%", "53%"},
+			{"20–23 April 2022", "Ipsos", "Telephone/online", "2302", "32%", "34%", "12%", "4%", "3%", "8%", "8%", "45%", "55%"},
+		},
+	}
 )

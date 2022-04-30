@@ -103,6 +103,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOp
 	// for each row in the table
 	tableSelection.Find("tr").EachWithBreak(func(rowNum int, s *goquery.Selection) bool {
 		// find all th and td elements in the row
+		var col int
 		s.Find("th, td").EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
 			rowSpan := 1
 			colSpan := 1
@@ -135,6 +136,9 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOp
 					}
 				}
 			}
+
+			startCol := col
+
 			// loop through the spans and populate table columns
 			for i := 0; i < rowSpan; i++ {
 				for j := 0; j < colSpan; j++ {
@@ -146,13 +150,20 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOp
 					}
 
 					columns := td[row]
+
 					// check if column already is already set from a previous rowspan so we don't overrwite it
 					// loop until we get an availalbe column
 					// https://en.wikipedia.org/wiki/Help:Table#Combined_use_of_COLSPAN_and_ROWSPAN
-					for columns[cellNum+j+nextAvailableCell].set {
+					for columns[startCol+j+nextAvailableCell].set {
 						nextAvailableCell++
+						if i == 0 {
+							col++
+						}
 					}
-					columns[cellNum+j+nextAvailableCell] = cell{set: true, value: parseText(s)}
+					columns[startCol+j+nextAvailableCell] = cell{set: true, value: parseText(s)}
+					if i == 0 {
+						col++
+					}
 				}
 			}
 			return true
