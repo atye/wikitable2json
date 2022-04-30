@@ -8,7 +8,7 @@ info:
     - Tables with the HTML class `wikitable`, `standard`, and `toccolours` are returned
     - If you are making automated requests, set a unique `User-Agent` header with an email address or URL contact page per the [Wikimedia REST API](https://en.wikipedia.org/api/rest_v1/)
 
-    ### Examples: 
+    ## Examples: 
 
     ### Get all tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
     [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
