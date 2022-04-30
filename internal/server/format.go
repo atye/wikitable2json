@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/atye/wikitable2json/internal/status"
 )
@@ -20,25 +19,15 @@ var (
 type Matrix [][]string
 
 func formatMatrix(data verbose) Matrix {
-	return matrix(data)
-}
+	matrix := make(Matrix, len(data))
 
-func matrix(vf verbose) Matrix {
-	matrix := make(Matrix, len(vf))
-
-	var wg sync.WaitGroup
-	for i := 0; i < len(vf); i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			row := vf[i]
-			matrix[i] = make([]string, len(row))
-			for j := 0; j < len(row); j++ {
-				matrix[i][j] = row[j].value
-			}
-		}(i)
+	for i := 0; i < len(data); i++ {
+		row := data[i]
+		matrix[i] = make([]string, len(row))
+		for j := 0; j < len(row); j++ {
+			matrix[i][j] = row[j].value
+		}
 	}
-	wg.Wait()
 
 	return matrix
 }
@@ -46,14 +35,6 @@ func matrix(vf verbose) Matrix {
 type KeyValue []map[string]string
 
 func formatKeyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error) {
-	kv, err := keyValue(data, keyrows, tableIndex)
-	if err != nil {
-		return nil, err
-	}
-	return kv, nil
-}
-
-func keyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error) {
 	if len(data) > 1 && keyrows >= 1 {
 		var keys []string
 		for colNum := 0; colNum < len(data[0]); colNum++ {

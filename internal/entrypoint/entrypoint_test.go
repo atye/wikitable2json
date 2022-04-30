@@ -77,30 +77,40 @@ func TestAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Matrix", func(t *testing.T) {
 			tests := []struct {
-				page string
-				want interface{}
+				page  string
+				query string
+				want  interface{}
 			}{
 				{
 					"golden",
+					"",
 					GoldenMatrix,
 				},
 				{
 					"issueOne",
+					"",
 					IssueOneMatrix,
 				},
 				{
 					"dataSortValue",
+					"",
 					DataSortValueMatrix,
 				},
 				{
 					"issue34",
+					"",
 					Issue34Matrix,
+				},
+				{
+					"complexKeyValue",
+					"?cleanRef=true",
+					ComplexMatrix,
 				},
 			}
 
 			for _, tc := range tests {
 				t.Run(tc.page, func(t *testing.T) {
-					addr := fmt.Sprintf("http://localhost:%s/api/%s", PORT, tc.page)
+					addr := fmt.Sprintf("http://localhost:%s/api/%s%s", PORT, tc.page, tc.query)
 					var got [][][]string
 					execGetRequest(t, addr, &got)
 
@@ -157,18 +167,47 @@ func TestAPI(t *testing.T) {
 				want := []server.KeyValue{
 					{
 						{
-							"Date":              "19–20 April 2022",
-							"Brand":             "Essential",
-							"Primary vote L/NP": "37%",
-							"Primary vote ALP":  "35%",
-							"2pp vote L/NP":     "46%",
-							"2pp vote ALP":      "47%",
-						},
-						{
-							"Date":              "11–17 April 2022",
+							"Date":              "18–24 April 2022",
 							"Brand":             "Roy Morgan",
+							"Interview mode":    "Telephone/online",
+							"Sample size":       "1393",
 							"Primary vote L/NP": "35.5%",
 							"Primary vote ALP":  "35%",
+							"Primary vote GRN":  "12%",
+							"Primary vote ONP":  "4.5%",
+							"Primary vote UAP":  "1.5%",
+							"Primary vote OTH":  "11.5%",
+							"UND":               "–",
+							"2pp vote L/NP":     "45.5%",
+							"2pp vote ALP":      "54.5%",
+						},
+						{
+							"Date":              "20–23 April 2022",
+							"Brand":             "Newspoll-YouGov",
+							"Interview mode":    "Online",
+							"Sample size":       "1538",
+							"Primary vote L/NP": "36%",
+							"Primary vote ALP":  "37%",
+							"Primary vote GRN":  "11%",
+							"Primary vote ONP":  "3%",
+							"Primary vote UAP":  "4%",
+							"Primary vote OTH":  "9%",
+							"UND":               "–",
+							"2pp vote L/NP":     "47%",
+							"2pp vote ALP":      "53%",
+						},
+						{
+							"Date":              "20–23 April 2022",
+							"Brand":             "Ipsos",
+							"Interview mode":    "Telephone/online",
+							"Sample size":       "2302",
+							"Primary vote L/NP": "32%",
+							"Primary vote ALP":  "34%",
+							"Primary vote GRN":  "12%",
+							"Primary vote ONP":  "4%",
+							"Primary vote UAP":  "3%",
+							"Primary vote OTH":  "8%",
+							"UND":               "8%",
 							"2pp vote L/NP":     "45%",
 							"2pp vote ALP":      "55%",
 						},
