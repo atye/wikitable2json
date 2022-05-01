@@ -46,7 +46,7 @@ func formatKeyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error)
 
 			for k := 1; k < keyrows; k++ {
 				v := data[k][colNum].value
-				if v != data[k-1][colNum].value {
+				if v != data[k-1][colNum].value && v != "" {
 					_, err := b.WriteString(fmt.Sprintf(" %s", v))
 					if err != nil {
 						return nil, err
