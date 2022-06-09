@@ -98,12 +98,14 @@ func cleanReferences(tables *goquery.Selection) {
 	tables.Find(".reference").Remove()
 
 	tables.Find("sup").Each(func(_ int, s *goquery.Selection) {
-		s.Find("a").Each(func(_ int, anchor *goquery.Selection) {
+		s.Find("a").EachWithBreak(func(_ int, anchor *goquery.Selection) bool {
 			if v, ok := anchor.Attr("title"); ok {
 				if v == "Wikipedia:Citation needed" {
 					s.Remove()
+					return false
 				}
 			}
+			return true
 		})
 	})
 }
