@@ -12,7 +12,6 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable2json/internal/status"
-	"golang.org/x/net/html"
 )
 
 const (
@@ -93,20 +92,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%s", b)
-}
-
-type referenceRemover struct{}
-
-func (r referenceRemover) Match(node *html.Node) bool {
-	return false
-}
-
-func (r referenceRemover) MatchAll(node *html.Node) []*html.Node {
-	return nil
-}
-
-func (r referenceRemover) Filter(nodes []*html.Node) []*html.Node {
-	return nil
 }
 
 func cleanReferences(tables *goquery.Selection) {
