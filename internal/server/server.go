@@ -66,8 +66,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-
 	doc.Find(".mw-empty-elt").Remove()
+
 	tables := doc.Find(strings.Join(classes, ", "))
 
 	if qv.cleanRef {

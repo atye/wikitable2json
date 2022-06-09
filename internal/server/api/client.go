@@ -51,7 +51,6 @@ func (c WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent stri
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, status.NewStatus(err.Error(), resp.StatusCode, status.WithDetails(status.Details{
