@@ -63,7 +63,7 @@ var (
 
 	Issue56Matrix = [][][]string{
 		{
-			{"test", "2035"},
+			{"test", "2035", "2035"},
 		},
 	}
 
