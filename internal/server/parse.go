@@ -12,18 +12,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	classes = []string{
-		"table.wikitable",
-		"table.standard",
-		"table.toccolours",
-	}
-)
-
 type parseOptions struct {
-	tables   []int
-	cleanRef bool
-	keyrows  int
+	tables  []int
+	keyrows int
 }
 
 func parse(ctx context.Context, tableSelection *goquery.Selection, input parseOptions) (interface{}, error) {

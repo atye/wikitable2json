@@ -12,11 +12,20 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable2json/internal/status"
+	"golang.org/x/net/html"
 )
 
 const (
 	defaultLang   = "en"
 	defaultFormat = "matrix"
+)
+
+var (
+	classes = []string{
+		"table.wikitable",
+		"table.standard",
+		"table.toccolours",
+	}
 )
 
 type WikiAPI interface {
@@ -60,19 +69,18 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	doc.Find(".mw-empty-elt").Remove()
-	tableSelection := doc.Find(strings.Join(classes, ", "))
+	tables := doc.Find(strings.Join(classes, ", "))
 
 	if qv.cleanRef {
-		tableSelection.Find(".reference").Remove()
+		cleanReferences(tables)
 	}
 
-	input := parseOptions{
-		tables:   qv.tables,
-		cleanRef: qv.cleanRef,
-		keyrows:  qv.keyRows,
+	opts := parseOptions{
+		tables:  qv.tables,
+		keyrows: qv.keyRows,
 	}
 
-	resp, err := parse(r.Context(), tableSelection, input)
+	resp, err := parse(r.Context(), tables, opts)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -85,6 +93,34 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%s", b)
+}
+
+type referenceRemover struct{}
+
+func (r referenceRemover) Match(node *html.Node) bool {
+	return false
+}
+
+func (r referenceRemover) MatchAll(node *html.Node) []*html.Node {
+	return nil
+}
+
+func (r referenceRemover) Filter(nodes []*html.Node) []*html.Node {
+	return nil
+}
+
+func cleanReferences(tables *goquery.Selection) {
+	tables.Find(".reference").Remove()
+
+	tables.Find("sup").Each(func(_ int, s *goquery.Selection) {
+		s.Find("a").Each(func(_ int, anchor *goquery.Selection) {
+			if v, ok := anchor.Attr("title"); ok {
+				if v == "Wikipedia:Citation needed" {
+					s.Remove()
+				}
+			}
+		})
+	})
 }
 
 type queryValues struct {

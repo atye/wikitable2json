@@ -36,6 +36,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "badColSpan"))
 		case "/api/rest_v1/page/html/issue34":
 			w.Write(getPageBytes(t, "issue34"))
+		case "/api/rest_v1/page/html/issue56":
+			w.Write(getPageBytes(t, "issue56"))
 		case "/api/rest_v1/page/html/reference":
 			w.Write(getPageBytes(t, "reference"))
 		case "/api/rest_v1/page/html/simpleKeyValue":
@@ -256,6 +258,18 @@ func TestAPI(t *testing.T) {
 			want := [][][]string{
 				ReferenceMatrix[0],
 			}
+
+			var got [][][]string
+			execGetRequest(t, addr, &got)
+
+			if !reflect.DeepEqual(want, got) {
+				t.Errorf("want %v\n got %v", want, got)
+			}
+		})
+
+		t.Run("CleanReferenceCitationNeeded", func(t *testing.T) {
+			addr := fmt.Sprintf("http://localhost:%s/api/issue56?cleanRef=true", PORT)
+			want := Issue56Matrix
 
 			var got [][][]string
 			execGetRequest(t, addr, &got)
