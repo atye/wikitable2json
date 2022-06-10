@@ -119,9 +119,10 @@ type queryValues struct {
 
 func parseParameters(r *http.Request) (queryValues, error) {
 	var qv queryValues
+	qv.lang = defaultLang
 
 	params := r.URL.Query()
-	qv.lang = defaultLang
+
 	if v := params.Get("lang"); v != "" {
 		qv.lang = v
 	}
