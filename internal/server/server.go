@@ -19,6 +19,14 @@ const (
 	defaultFormat = "matrix"
 )
 
+var (
+	classes = []string{
+		"table.wikitable",
+		"table.standard",
+		"table.toccolours",
+	}
+)
+
 type WikiAPI interface {
 	GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error)
 }
@@ -58,21 +66,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, err)
 		return
 	}
-
 	doc.Find(".mw-empty-elt").Remove()
-	tableSelection := doc.Find(strings.Join(classes, ", "))
+
+	tables := doc.Find(strings.Join(classes, ", "))
 
 	if qv.cleanRef {
-		tableSelection.Find(".reference").Remove()
+		cleanReferences(tables)
 	}
 
-	input := parseOptions{
-		tables:   qv.tables,
-		cleanRef: qv.cleanRef,
-		keyrows:  qv.keyRows,
+	opts := parseOptions{
+		tables:  qv.tables,
+		keyrows: qv.keyRows,
 	}
 
-	resp, err := parse(r.Context(), tableSelection, input)
+	resp, err := parse(r.Context(), tables, opts)
 	if err != nil {
 		writeError(w, err)
 		return
@@ -87,6 +94,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", b)
 }
 
+func cleanReferences(tables *goquery.Selection) {
+	tables.Find(".reference").Remove()
+
+	tables.Find("sup").Each(func(_ int, s *goquery.Selection) {
+		s.Find("a").EachWithBreak(func(_ int, anchor *goquery.Selection) bool {
+			if v, ok := anchor.Attr("title"); ok {
+				if v == "Wikipedia:Citation needed" {
+					s.Remove()
+					return false
+				}
+			}
+			return true
+		})
+	})
+}
+
 type queryValues struct {
 	lang     string
 	tables   []int
@@ -96,9 +119,10 @@ type queryValues struct {
 
 func parseParameters(r *http.Request) (queryValues, error) {
 	var qv queryValues
+	qv.lang = defaultLang
 
 	params := r.URL.Query()
-	qv.lang = defaultLang
+
 	if v := params.Get("lang"); v != "" {
 		qv.lang = v
 	}

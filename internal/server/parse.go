@@ -12,18 +12,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	classes = []string{
-		"table.wikitable",
-		"table.standard",
-		"table.toccolours",
-	}
-)
-
 type parseOptions struct {
-	tables   []int
-	cleanRef bool
-	keyrows  int
+	tables  []int
+	keyrows int
 }
 
 func parse(ctx context.Context, tableSelection *goquery.Selection, input parseOptions) (interface{}, error) {
@@ -33,7 +24,7 @@ func parse(ctx context.Context, tableSelection *goquery.Selection, input parseOp
 		resp := make([]interface{}, tableSelection.Length())
 		tableSelection.Each(func(i int, selection *goquery.Selection) {
 			eg.Go(func() error {
-				td, err := parseTable(selection, i, input)
+				td, err := parseTable(selection, i)
 				if err != nil {
 					return err
 				}
@@ -63,7 +54,7 @@ func parse(ctx context.Context, tableSelection *goquery.Selection, input parseOp
 			i := i
 			tableIndex := tableIndex
 			eg.Go(func() error {
-				td, err := parseTable(tableSelection.Eq(tableIndex), tableIndex, input)
+				td, err := parseTable(tableSelection.Eq(tableIndex), tableIndex)
 				if err != nil {
 					return err
 				}
@@ -95,7 +86,7 @@ type cell struct {
 	value string
 }
 
-func parseTable(tableSelection *goquery.Selection, tableIndex int, input parseOptions) (verbose, error) {
+func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, error) {
 	td := make(verbose)
 
 	errorStatus := status.Status{}
