@@ -68,7 +68,6 @@ paths:
         - name: cleanRef
           description: |
             Set to true to remove the reference link texts<br/>
-            The HTML element containing the reference link must contain the class "reference" for it to be removed
           in: query
           required: false
           schema:
