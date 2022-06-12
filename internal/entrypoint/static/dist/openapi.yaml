@@ -25,7 +25,7 @@ info:
     ### Get all tables on German page [Liste_der_Baudenkmäler_in_Feucht](https://de.wikipedia.org/wiki/Liste_der_Baudenkmäler_in_Feucht) in the default matrix format: 
     [https://www.wikitable2json.com/api/Liste_der_Baudenkmäler_in_Feucht?lang=de](https://www.wikitable2json.com/api/Liste_der_Baudenkmäler_in_Feucht?lang=de)
 
-    ### Get all tables on page [Template:COVID-19_pandemic_data](https://en.wikipedia.org/wiki/Template:COVID-19_pandemic_data) with reference link text removed
+    ### Get all tables on page [Template:COVID-19_pandemic_data](https://en.wikipedia.org/wiki/Template:COVID-19_pandemic_data) with reference link text removed:
     [https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true](https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true)
 paths:
   "/api/{page}":
@@ -101,8 +101,7 @@ components:
             type: string
     keyValue:
       description: |
-        List of tables in the key/value format with the keys being the first row<br/>
-        This is a helper format for simpler tables. If you want keys that are not in the first row, you must use matrix and process the response
+        List of tables in the key-value format with the keys being the first x rows specified in the keyRows query<br/>
       type: array
       items:
         type: array
