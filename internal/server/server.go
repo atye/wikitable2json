@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/atye/wikitable2json/internal/cache"
 	"github.com/atye/wikitable2json/internal/status"
 )
 
@@ -32,12 +34,14 @@ type WikiAPI interface {
 }
 
 type Server struct {
-	wiki WikiAPI
+	wiki  WikiAPI
+	cache cache.Cache
 }
 
 func NewServer(wiki WikiAPI) *Server {
 	return &Server{
-		wiki: wiki,
+		wiki:  wiki,
+		cache: *cache.New(10, 10*time.Second, 10*time.Second),
 	}
 }
 
@@ -55,20 +59,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := s.wiki.GetPageBytes(r.Context(), page, qv.lang, r.Header.Get("User-Agent"))
-	if err != nil {
-		writeError(w, err)
-		return
-	}
+	tables, ok := s.cache.Get(page)
+	if !ok {
+		data, err := s.wiki.GetPageBytes(r.Context(), page, qv.lang, r.Header.Get("User-Agent"))
+		if err != nil {
+			writeError(w, err)
+			return
+		}
 
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	doc.Find(".mw-empty-elt").Remove()
+		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		doc.Find(".mw-empty-elt").Remove()
 
-	tables := doc.Find(strings.Join(classes, ", "))
+		tables = doc.Find(strings.Join(classes, ", "))
+		s.cache.Set(page, tables)
+	}
 
 	if qv.cleanRef {
 		cleanReferences(tables)
@@ -85,13 +93,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := json.Marshal(resp)
+	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		writeError(w, status.NewStatus(err.Error(), http.StatusInternalServerError))
 		return
 	}
-
-	fmt.Fprintf(w, "%s", b)
 }
 
 func cleanReferences(tables *goquery.Selection) {

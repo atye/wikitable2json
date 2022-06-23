@@ -8,6 +8,6 @@ run: build
 	docker run --rm -p 8080:8080 -e PORT=8080 wikitable2json
 
 cover:
-	cd internal/entrypoint && go test -coverpkg=../... -coverprofile=coverage.out ./...
-	go tool cover -html=internal/entrypoint/coverage.out
-	rm -f internal/entrypoint/coverage.out
+	go test -coverpkg=../... -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
+	rm -f coverage.out
