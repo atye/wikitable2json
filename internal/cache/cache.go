@@ -66,6 +66,7 @@ func (c *Cache) Set(key string, s *goquery.Selection) {
 	defer c.mu.Unlock()
 
 	if element, ok := c.elements[key]; ok {
+		element.Value.(*list.Element).Value = item{key: key, selection: s, expiresAt: element.Value.(*list.Element).Value.(item).expiresAt}
 		c.list.MoveToFront(element)
 	} else {
 		if c.list.Len() == c.capacity {
