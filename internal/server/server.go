@@ -41,7 +41,7 @@ type Server struct {
 func NewServer(wiki WikiAPI) *Server {
 	return &Server{
 		wiki:  wiki,
-		cache: *cache.New(10, 10*time.Second, 10*time.Second),
+		cache: *cache.New(10, 8*time.Second, 8*time.Second),
 	}
 }
 
@@ -166,28 +166,20 @@ func parseParameters(r *http.Request) (queryValues, error) {
 func writeError(w http.ResponseWriter, err error) {
 	var s status.Status
 	if errors.As(err, &s) {
-		b, err := json.Marshal(s)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
-			return
-		}
-
 		if s.Code != 0 {
 			w.WriteHeader(s.Code)
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-
-		fmt.Fprintf(w, "%s", b)
-		return
+		err = json.NewEncoder(w).Encode(s)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
+		}
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		err = json.NewEncoder(w).Encode(status.NewStatus(err.Error(), http.StatusInternalServerError))
+		if err != nil {
+			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
+		}
 	}
-
-	b, err := json.Marshal(status.NewStatus(err.Error(), http.StatusInternalServerError))
-	if err != nil {
-		http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintf(w, "%s", b)
 }
