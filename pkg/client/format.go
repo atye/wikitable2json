@@ -16,10 +16,8 @@ var (
 	errNumKeysValuesMismatch = errors.New("number of keys does not equal number of values")
 )
 
-type Matrix [][]string
-
-func formatMatrix(data verbose) Matrix {
-	matrix := make(Matrix, len(data))
+func formatMatrix(data verbose) [][]string {
+	matrix := make([][]string, len(data))
 
 	for i := 0; i < len(data); i++ {
 		row := data[i]
@@ -32,9 +30,7 @@ func formatMatrix(data verbose) Matrix {
 	return matrix
 }
 
-type KeyValue []map[string]string
-
-func formatKeyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error) {
+func formatKeyValue(data verbose, keyrows int, tableIndex int) ([]map[string]string, error) {
 	if len(data) > 1 && keyrows >= 1 {
 		var keys []string
 		for colNum := 0; colNum < len(data[0]); colNum++ {
@@ -55,7 +51,7 @@ func formatKeyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error)
 			}
 			keys = append(keys, b.String())
 		}
-		var kv KeyValue
+		var kv []map[string]string
 		for i := keyrows; i < len(data); i++ {
 			if len(keys) != len(data[i]) {
 				return nil, status.NewStatus(errNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{

@@ -24,8 +24,8 @@ var (
 )
 
 type TableGetter interface {
-	GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([]Matrix, error)
-	GetTablesKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([]KeyValue, error)
+	GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error)
+	GetTablesKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error)
 	SetUserAgent(string)
 }
 
@@ -60,7 +60,7 @@ func NewTableGetter(userAgent string, options ...Option) TableGetter {
 	return c
 }
 
-func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([]Matrix, error) {
+func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error) {
 	tableSelection, err := c.getTableSelection(ctx, page, lang, cleanRef)
 	if err != nil {
 		return nil, err
@@ -71,9 +71,9 @@ func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, 
 		return nil, err
 	}
 
-	var ret []Matrix
+	var ret [][][]string
 	for _, v := range matrix {
-		if m, ok := v.(Matrix); ok {
+		if m, ok := v.([][]string); ok {
 			ret = append(ret, m)
 		} else {
 			return nil, fmt.Errorf("unexpected return type %T", m)
@@ -83,7 +83,7 @@ func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, 
 	return ret, nil
 }
 
-func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([]KeyValue, error) {
+func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error) {
 	if keyRows < 1 {
 		return nil, fmt.Errorf("keyRows must be at least 1")
 	}
@@ -98,9 +98,9 @@ func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string
 		return nil, err
 	}
 
-	var ret []KeyValue
+	var ret [][]map[string]string
 	for _, v := range keyValue {
-		if k, ok := v.(KeyValue); ok {
+		if k, ok := v.([]map[string]string); ok {
 			ret = append(ret, k)
 		} else {
 			return nil, fmt.Errorf("unexpected return type %T", k)
