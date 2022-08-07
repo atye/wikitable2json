@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/atye/wikitable2json/internal/entrypoint"
-	"github.com/atye/wikitable2json/internal/server/api"
+	"github.com/atye/wikitable2json/pkg/cache"
+	"github.com/atye/wikitable2json/pkg/client"
 )
 
 func main() {
@@ -16,8 +18,8 @@ func main() {
 	}
 
 	c := entrypoint.Config{
-		Port:    port,
-		WikiAPI: api.NewWikiClient(api.BaseURL),
+		Port:   port,
+		Client: client.NewTableGetter("", client.WithCache(cache.New(10, 5*time.Second, 5*time.Second))),
 	}
 
 	if err := entrypoint.Run(c); err != nil {

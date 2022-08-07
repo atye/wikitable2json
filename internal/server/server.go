@@ -1,47 +1,28 @@
 package server
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/PuerkitoBio/goquery"
-	"github.com/atye/wikitable2json/internal/cache"
-	"github.com/atye/wikitable2json/internal/status"
+	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/pkg/client"
 )
 
 const (
-	defaultLang   = "en"
-	defaultFormat = "matrix"
+	defaultLang = "en"
 )
-
-var (
-	classes = []string{
-		"table.wikitable",
-		"table.standard",
-		"table.toccolours",
-	}
-)
-
-type WikiAPI interface {
-	GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error)
-}
 
 type Server struct {
-	wiki  WikiAPI
-	cache cache.Cache
+	client client.TableGetter
 }
 
-func NewServer(wiki WikiAPI) *Server {
+func NewServer(client client.TableGetter) *Server {
 	return &Server{
-		wiki:  wiki,
-		cache: *cache.New(10, 8*time.Second, 8*time.Second),
+		client: client,
 	}
 }
 
@@ -51,6 +32,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := r.Context()
+
 	page := strings.TrimPrefix(r.URL.Path, "/api/")
 
 	qv, err := parseParameters(r)
@@ -59,38 +42,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tables, ok := s.cache.Get(page)
-	if !ok {
-		data, err := s.wiki.GetPageBytes(r.Context(), page, qv.lang, r.Header.Get("User-Agent"))
+	s.client.SetUserAgent(r.Header.Get("User-Agent"))
+
+	var resp interface{}
+	if qv.keyRows >= 1 {
+		resp, err = s.client.GetTablesKeyValue(ctx, page, qv.lang, qv.cleanRef, qv.keyRows, qv.tables...)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
-
-		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(data))
+	} else {
+		resp, err = s.client.GetTablesMatrix(ctx, page, qv.lang, qv.cleanRef, qv.tables...)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
-		doc.Find(".mw-empty-elt").Remove()
-
-		tables = doc.Find(strings.Join(classes, ", "))
-		s.cache.Set(page, tables)
-	}
-
-	if qv.cleanRef {
-		cleanReferences(tables)
-	}
-
-	opts := parseOptions{
-		tables:  qv.tables,
-		keyrows: qv.keyRows,
-	}
-
-	resp, err := parse(r.Context(), tables, opts)
-	if err != nil {
-		writeError(w, err)
-		return
 	}
 
 	err = json.NewEncoder(w).Encode(resp)
@@ -98,22 +64,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, status.NewStatus(err.Error(), http.StatusInternalServerError))
 		return
 	}
-}
-
-func cleanReferences(tables *goquery.Selection) {
-	tables.Find(".reference").Remove()
-
-	tables.Find("sup").Each(func(_ int, s *goquery.Selection) {
-		s.Find("a").EachWithBreak(func(_ int, anchor *goquery.Selection) bool {
-			if v, ok := anchor.Attr("title"); ok {
-				if v == "Wikipedia:Citation needed" {
-					s.Remove()
-					return false
-				}
-			}
-			return true
-		})
-	})
 }
 
 type queryValues struct {

@@ -1,4 +1,4 @@
-package server
+package client
 
 import (
 	"errors"
@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/atye/wikitable2json/internal/status"
+	"github.com/atye/wikitable2json/internal/server/status"
 )
 
 type verbose map[int]map[int]cell
 
 var (
-	ErrNotEnoughRows         = errors.New("table needs at least two rows")
-	ErrNumKeysValuesMismatch = errors.New("number of keys does not equal number of values")
+	errNotEnoughRows         = errors.New("table needs at least two rows")
+	errNumKeysValuesMismatch = errors.New("number of keys does not equal number of values")
 )
 
 type Matrix [][]string
@@ -58,7 +58,7 @@ func formatKeyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error)
 		var kv KeyValue
 		for i := keyrows; i < len(data); i++ {
 			if len(keys) != len(data[i]) {
-				return nil, status.NewStatus(ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
+				return nil, status.NewStatus(errNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: tableIndex,
 					status.RowNumber:  i,
 					status.KeysLength: len(keys),
@@ -74,7 +74,7 @@ func formatKeyValue(data verbose, keyrows int, tableIndex int) (KeyValue, error)
 		}
 		return kv, nil
 	}
-	return nil, status.NewStatus(ErrNotEnoughRows.Error(), http.StatusBadRequest, status.WithDetails(status.Details{
+	return nil, status.NewStatus(errNotEnoughRows.Error(), http.StatusBadRequest, status.WithDetails(status.Details{
 		status.TableIndex: tableIndex,
 	}))
 }
