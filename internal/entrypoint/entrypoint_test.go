@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/atye/wikitable2json/internal/server"
 	"github.com/atye/wikitable2json/internal/server/api"
-	"github.com/atye/wikitable2json/internal/status"
+	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/pkg/client"
 )
 
 var (
@@ -69,9 +69,15 @@ func TestAPI(t *testing.T) {
 	}))
 	defer ts.Close()
 
+	originalBaseURL := api.BaseURL
+	api.BaseURL = ts.URL
+	defer func() {
+		api.BaseURL = originalBaseURL
+	}()
+
 	go Run(Config{
-		Port:    PORT,
-		WikiAPI: api.NewWikiClient(ts.URL),
+		Port:   PORT,
+		Client: client.NewTableGetter(""),
 	})
 
 	waitforServer()
@@ -127,7 +133,7 @@ func TestAPI(t *testing.T) {
 			t.Run("Simple", func(t *testing.T) {
 				addr := fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1", PORT)
 
-				want := []server.KeyValue{
+				want := []client.KeyValue{
 					{
 						{
 							"Rank":    "1",
@@ -136,7 +142,7 @@ func TestAPI(t *testing.T) {
 					},
 				}
 
-				var got []server.KeyValue
+				var got []client.KeyValue
 				execGetRequest(t, addr, &got)
 
 				if !reflect.DeepEqual(want, got) {
@@ -146,7 +152,7 @@ func TestAPI(t *testing.T) {
 				// do it again with table param for coverage
 				addr = fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1&table=0", PORT)
 
-				want = []server.KeyValue{
+				want = []client.KeyValue{
 					{
 						{
 							"Rank":    "1",
@@ -155,7 +161,7 @@ func TestAPI(t *testing.T) {
 					},
 				}
 
-				var resp []server.KeyValue
+				var resp []client.KeyValue
 				execGetRequest(t, addr, &resp)
 
 				if !reflect.DeepEqual(want, resp) {
@@ -166,7 +172,7 @@ func TestAPI(t *testing.T) {
 			t.Run("Complex", func(t *testing.T) {
 				addr := fmt.Sprintf("http://localhost:%s/api/complexKeyValue?keyRows=2&cleanRef=true", PORT)
 
-				want := []server.KeyValue{
+				want := []client.KeyValue{
 					{
 						{
 							"Date":              "18–24 April 2022",
@@ -216,7 +222,7 @@ func TestAPI(t *testing.T) {
 					},
 				}
 
-				var got []server.KeyValue
+				var got []client.KeyValue
 				execGetRequest(t, addr, &got)
 
 				if !reflect.DeepEqual(want, got) {
@@ -446,7 +452,7 @@ func TestAPI(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				want := status.NewStatus(server.ErrNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
+				want := status.NewStatus("number of keys does not equal number of values", http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
 					status.RowNumber:  float64(2),
 					status.KeysLength: float64(2),
@@ -470,7 +476,7 @@ func TestAPI(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				want := status.NewStatus(server.ErrNotEnoughRows.Error(), http.StatusBadRequest, status.WithDetails(status.Details{
+				want := status.NewStatus("table needs at least two rows", http.StatusBadRequest, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
 				}))
 

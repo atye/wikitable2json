@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/atye/wikitable2json/internal/status"
+	"github.com/atye/wikitable2json/internal/server/status"
 )
 
 type WikiClient struct {

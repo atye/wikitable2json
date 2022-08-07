@@ -7,20 +7,21 @@ import (
 	"net/http"
 
 	"github.com/atye/wikitable2json/internal/server"
+	"github.com/atye/wikitable2json/pkg/client"
 )
 
 //go:embed static/dist/*
 var swagger embed.FS
 
 type Config struct {
-	Port    string
-	WikiAPI server.WikiAPI
+	Port   string
+	Client client.TableGetter
 }
 
 func Run(c Config) error {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.StripPrefix("/", http.FileServer(getSwagger())))
-	mux.Handle("/api/", headerMW(server.NewServer(c.WikiAPI)))
+	mux.Handle("/api/", headerMW(server.NewServer(c.Client)))
 	return http.ListenAndServe(fmt.Sprintf(":%s", c.Port), mux)
 }
 
