@@ -133,7 +133,7 @@ func TestAPI(t *testing.T) {
 			t.Run("Simple", func(t *testing.T) {
 				addr := fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1", PORT)
 
-				want := []client.KeyValue{
+				want := [][]map[string]string{
 					{
 						{
 							"Rank":    "1",
@@ -142,7 +142,7 @@ func TestAPI(t *testing.T) {
 					},
 				}
 
-				var got []client.KeyValue
+				var got [][]map[string]string
 				execGetRequest(t, addr, &got)
 
 				if !reflect.DeepEqual(want, got) {
@@ -152,7 +152,7 @@ func TestAPI(t *testing.T) {
 				// do it again with table param for coverage
 				addr = fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1&table=0", PORT)
 
-				want = []client.KeyValue{
+				want = [][]map[string]string{
 					{
 						{
 							"Rank":    "1",
@@ -161,7 +161,7 @@ func TestAPI(t *testing.T) {
 					},
 				}
 
-				var resp []client.KeyValue
+				var resp [][]map[string]string
 				execGetRequest(t, addr, &resp)
 
 				if !reflect.DeepEqual(want, resp) {
@@ -172,7 +172,7 @@ func TestAPI(t *testing.T) {
 			t.Run("Complex", func(t *testing.T) {
 				addr := fmt.Sprintf("http://localhost:%s/api/complexKeyValue?keyRows=2&cleanRef=true", PORT)
 
-				want := []client.KeyValue{
+				want := [][]map[string]string{
 					{
 						{
 							"Date":              "18–24 April 2022",
@@ -222,7 +222,7 @@ func TestAPI(t *testing.T) {
 					},
 				}
 
-				var got []client.KeyValue
+				var got [][]map[string]string
 				execGetRequest(t, addr, &got)
 
 				if !reflect.DeepEqual(want, got) {
