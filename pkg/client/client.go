@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/atye/wikitable2json/internal/server/api"
+	"github.com/atye/wikitable2json/internal/api"
 	"github.com/atye/wikitable2json/internal/server/status"
 	"github.com/atye/wikitable2json/pkg/cache"
 	"golang.org/x/sync/errgroup"
