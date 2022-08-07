@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/atye/wikitable2json/internal/server/api"
+	"github.com/atye/wikitable2json/internal/api"
 	"github.com/atye/wikitable2json/internal/server/status"
 	"github.com/atye/wikitable2json/pkg/client"
 )
