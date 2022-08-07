@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -63,12 +64,12 @@ func NewTableGetter(userAgent string, options ...Option) TableGetter {
 func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error) {
 	tableSelection, err := c.getTableSelection(ctx, page, lang, cleanRef)
 	if err != nil {
-		return nil, err
+		return nil, handleErr(err)
 	}
 
 	matrix, err := parse(ctx, tableSelection, 0, tables...)
 	if err != nil {
-		return nil, err
+		return nil, handleErr(err)
 	}
 
 	var ret [][][]string
@@ -76,7 +77,7 @@ func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, 
 		if m, ok := v.([][]string); ok {
 			ret = append(ret, m)
 		} else {
-			return nil, fmt.Errorf("unexpected return type %T", m)
+			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
 		}
 	}
 
@@ -85,17 +86,17 @@ func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, 
 
 func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error) {
 	if keyRows < 1 {
-		return nil, fmt.Errorf("keyRows must be at least 1")
+		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
 	}
 
 	tableSelection, err := c.getTableSelection(ctx, page, lang, cleanRef)
 	if err != nil {
-		return nil, err
+		return nil, handleErr(err)
 	}
 
 	keyValue, err := parse(ctx, tableSelection, keyRows, tables...)
 	if err != nil {
-		return nil, err
+		return nil, handleErr(err)
 	}
 
 	var ret [][]map[string]string
@@ -103,7 +104,7 @@ func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string
 		if k, ok := v.([]map[string]string); ok {
 			ret = append(ret, k)
 		} else {
-			return nil, fmt.Errorf("unexpected return type %T", k)
+			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
 		}
 	}
 
@@ -150,7 +151,7 @@ func (c *client) getTableSelectionFromAPI(ctx context.Context, page string, lang
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
 	if err != nil {
-		return nil, err
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 	doc.Find(".mw-empty-elt").Remove()
 
@@ -337,4 +338,13 @@ func getSpan(values []string) (int, error) {
 		}
 	}
 	return 0, fmt.Errorf("no integer value in span attribute: %v", values)
+}
+
+func handleErr(err error) status.Status {
+	var s status.Status
+	if errors.As(err, &s) {
+		return s
+	} else {
+		return status.NewStatus(err.Error(), http.StatusInternalServerError)
+	}
 }
