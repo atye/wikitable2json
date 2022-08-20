@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/atye/wikitable2json/internal/entrypoint"
-	"github.com/atye/wikitable2json/pkg/cache"
 	"github.com/atye/wikitable2json/pkg/client"
 )
 
@@ -19,7 +18,7 @@ func main() {
 
 	c := entrypoint.Config{
 		Port:   port,
-		Client: client.NewTableGetter("", client.WithCache(cache.New(10, 5*time.Second, 5*time.Second))),
+		Client: client.NewTableGetter("", client.WithCache(10, 5*time.Second, 5*time.Second)),
 	}
 
 	if err := entrypoint.Run(c); err != nil {

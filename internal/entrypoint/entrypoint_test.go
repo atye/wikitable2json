@@ -12,7 +12,6 @@ import (
 
 	"github.com/atye/wikitable2json/internal/api"
 	"github.com/atye/wikitable2json/internal/server/status"
-	"github.com/atye/wikitable2json/pkg/cache"
 	"github.com/atye/wikitable2json/pkg/client"
 )
 
@@ -78,7 +77,7 @@ func TestAPI(t *testing.T) {
 
 	go Run(Config{
 		Port:   PORT,
-		Client: client.NewTableGetter("", client.WithCache(cache.New(3, 500*time.Millisecond, 500*time.Millisecond))),
+		Client: client.NewTableGetter("", client.WithCache(3, 500*time.Millisecond, 500*time.Millisecond)),
 	})
 
 	waitforServer()
