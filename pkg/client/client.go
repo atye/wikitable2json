@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable2json/internal/api"
 	"github.com/atye/wikitable2json/internal/server/status"
-	"github.com/atye/wikitable2json/pkg/cache"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -32,9 +32,9 @@ type TableGetter interface {
 
 type Option func(*client)
 
-func WithCache(cache *cache.Cache) Option {
+func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) Option {
 	return func(c *client) {
-		c.cache = cache
+		c.cache = newCache(capacity, itemExpiration, purgeEvery)
 	}
 }
 
@@ -45,7 +45,7 @@ type wikiAPI interface {
 type client struct {
 	wikiAPI   wikiAPI
 	userAgent string
-	cache     *cache.Cache
+	cache     *cache
 }
 
 func NewTableGetter(userAgent string, options ...Option) TableGetter {
