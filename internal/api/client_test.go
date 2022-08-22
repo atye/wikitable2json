@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 var data = []byte(`

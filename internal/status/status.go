@@ -11,12 +11,12 @@ type Details map[DetailKey]interface{}
 type DetailKey string
 
 var (
-	Page         DetailKey = "Page"
-	TableIndex   DetailKey = "TableIndex"
-	RowNumber    DetailKey = "RowNumber"
-	ColumnNumber DetailKey = "ColumnNumber"
-	KeysLength   DetailKey = "KeysLength"
-	RowLength    DetailKey = "RowLength"
+	Page        DetailKey = "Page"
+	TableIndex  DetailKey = "TableIndex"
+	RowIndex    DetailKey = "RowIndex"
+	ColumnIndex DetailKey = "ColumnIndex"
+	KeysLength  DetailKey = "KeysLength"
+	RowLength   DetailKey = "RowLength"
 )
 
 func (e Status) Error() string {

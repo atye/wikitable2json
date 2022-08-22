@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 type verbose map[int]map[int]cell
@@ -56,7 +56,7 @@ func formatKeyValue(data verbose, keyrows int, tableIndex int) ([]map[string]str
 			if len(keys) != len(data[i]) {
 				return nil, status.NewStatus(errNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: tableIndex,
-					status.RowNumber:  i,
+					status.RowIndex:   i,
 					status.KeysLength: len(keys),
 					status.RowLength:  len(data[i]),
 				}))

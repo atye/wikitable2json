@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/internal/status"
 )
 
 func TestParseParameters(t *testing.T) {
