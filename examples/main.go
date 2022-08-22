@@ -12,7 +12,7 @@ func main() {
 	tg := client.NewTableGetter("github.com/atye/wikitable2json/examples")
 
 	// You can also create a client with a cache (capacity, page expiration, interval to check expiration of each page)
-	// tg := client.NewTableGetter("github.com/atye/wikitable2json/examples", client.WithCache(client.NewCache(5, 5*time.Second, 5*time.Second)))
+	// tg = client.NewTableGetter("github.com/atye/wikitable2json/examples", client.WithCache(5, 5*time.Second, 5*time.Second))
 
 	matrix, err := tg.GetTablesMatrix(context.Background(), "Arhaan_Khan", "en", false)
 	if err != nil {
