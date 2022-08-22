@@ -7,8 +7,13 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
-	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/internal/status"
+)
+
+var (
+	BaseURL = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
 )
 
 type WikiClient struct {
@@ -16,18 +21,27 @@ type WikiClient struct {
 	endpoint string
 }
 
-var (
-	BaseURL = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
-)
+type Option func(c *WikiClient)
 
-func NewWikiClient(endpoint string) WikiClient {
-	return WikiClient{
-		client:   http.DefaultClient,
-		endpoint: endpoint,
+func WithHTTPClient(c *http.Client) Option {
+	return func(wc *WikiClient) {
+		wc.client = c
 	}
 }
 
-func (c WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error) {
+func NewWikiClient(endpoint string, options ...Option) *WikiClient {
+	wc := &WikiClient{
+		client:   &http.Client{Timeout: 10 * time.Second},
+		endpoint: endpoint,
+	}
+
+	for _, o := range options {
+		o(wc)
+	}
+	return wc
+}
+
+func (c *WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error) {
 	addr, err := buildURL(c.endpoint, page, lang)
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)

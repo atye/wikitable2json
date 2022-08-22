@@ -12,7 +12,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable2json/internal/api"
-	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/internal/status"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,6 +38,12 @@ func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Durat
 	}
 }
 
+func WithHTTPClient(c *http.Client) Option {
+	return func(tg *client) {
+		tg.wikiAPI = api.NewWikiClient(api.BaseURL, api.WithHTTPClient(c))
+	}
+}
+
 type wikiAPI interface {
 	GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error)
 }
@@ -57,7 +63,6 @@ func NewTableGetter(userAgent string, options ...Option) TableGetter {
 	for _, o := range options {
 		o(c)
 	}
-
 	return c
 }
 
@@ -262,9 +267,9 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 					rowSpan, err = getSpan(rowSpanTexts)
 					if err != nil {
 						errorStatus = status.NewStatus(err.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
-							status.TableIndex:   tableIndex,
-							status.RowNumber:    rowNum,
-							status.ColumnNumber: cellNum,
+							status.TableIndex:  tableIndex,
+							status.RowIndex:    rowNum,
+							status.ColumnIndex: cellNum,
 						}))
 						return false
 					}
@@ -276,9 +281,9 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 					colSpan, err = getSpan(colSpanTexts)
 					if err != nil {
 						errorStatus = status.NewStatus(err.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
-							status.TableIndex:   tableIndex,
-							status.RowNumber:    rowNum,
-							status.ColumnNumber: cellNum,
+							status.TableIndex:  tableIndex,
+							status.RowIndex:    rowNum,
+							status.ColumnIndex: cellNum,
 						}))
 						return false
 					}

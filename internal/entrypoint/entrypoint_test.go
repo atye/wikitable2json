@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/atye/wikitable2json/internal/api"
-	"github.com/atye/wikitable2json/internal/server/status"
+	"github.com/atye/wikitable2json/internal/status"
 	"github.com/atye/wikitable2json/pkg/client"
 )
 
@@ -357,9 +357,9 @@ func TestAPI(t *testing.T) {
 				fmt.Sprintf("http://localhost:%s/api/badRowSpan?table=0", PORT),
 				status.NewStatus("no integer value in span attribute: [x]", http.StatusInternalServerError, status.WithDetails(
 					status.Details{
-						status.TableIndex:   float64(0),
-						status.RowNumber:    float64(1),
-						status.ColumnNumber: float64(0),
+						status.TableIndex:  float64(0),
+						status.RowIndex:    float64(1),
+						status.ColumnIndex: float64(0),
 					},
 				)),
 			},
@@ -370,9 +370,9 @@ func TestAPI(t *testing.T) {
 					Message: "no integer value in span attribute: [x]",
 					Code:    http.StatusInternalServerError,
 					Details: status.Details{
-						status.TableIndex:   float64(0),
-						status.RowNumber:    float64(1),
-						status.ColumnNumber: float64(1),
+						status.TableIndex:  float64(0),
+						status.RowIndex:    float64(1),
+						status.ColumnIndex: float64(1),
 					},
 				},
 			},
@@ -454,7 +454,7 @@ func TestAPI(t *testing.T) {
 
 				want := status.NewStatus("number of keys does not equal number of values", http.StatusInternalServerError, status.WithDetails(status.Details{
 					status.TableIndex: float64(0),
-					status.RowNumber:  float64(2),
+					status.RowIndex:   float64(2),
 					status.KeysLength: float64(2),
 					status.RowLength:  float64(3),
 				}))
