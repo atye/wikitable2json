@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/atye/wikitable2json/internal/status"
 )
@@ -107,6 +108,15 @@ func TestWikiClient(t *testing.T) {
 			if tc.want != got {
 				t.Errorf("want %v, got %v", tc.want, got)
 			}
+		}
+	})
+
+	t.Run("WithHTTPClient", func(t *testing.T) {
+		sut := NewWikiClient("", WithHTTPClient(&http.Client{Timeout: 20 * time.Second}))
+
+		want := 20 * time.Second
+		if sut.client.Timeout != want {
+			t.Errorf("expected client timeout %v, got %v", want, sut.client.Timeout)
 		}
 	})
 }

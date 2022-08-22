@@ -77,7 +77,7 @@ func TestAPI(t *testing.T) {
 
 	go Run(Config{
 		Port:   PORT,
-		Client: client.NewTableGetter("", client.WithCache(3, 500*time.Millisecond, 500*time.Millisecond)),
+		Client: client.NewTableGetter("", client.WithCache(3, 500*time.Millisecond, 500*time.Millisecond), client.WithHTTPClient(http.DefaultClient)),
 	})
 
 	waitforServer()
