@@ -1,5 +1,10 @@
 package status
 
+import (
+	"fmt"
+	"strings"
+)
+
 type Status struct {
 	Message string  `json:"error"`
 	Code    int     `json:"code"`
@@ -20,7 +25,12 @@ var (
 )
 
 func (e Status) Error() string {
-	return e.Message
+	var s strings.Builder
+	s.WriteString(e.Message)
+	for k, v := range e.Details {
+		s.WriteString(fmt.Sprintf(", %s: %v", k, v))
+	}
+	return s.String()
 }
 
 type Option func(*Status)
