@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Wikipedia Table API
+  title: Wikipedia Table JSON API
   version: 1.0.0
   description: |
     [https://github.com/atye/wikitable2json](https://github.com/atye/wikitable2json/)
