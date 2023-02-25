@@ -181,10 +181,12 @@ func cleanReferences(tables *goquery.Selection) {
 }
 
 func parse(ctx context.Context, tableSelection *goquery.Selection, keyRows int, tables ...int) ([]interface{}, error) {
+	var ret []interface{}
+
 	var eg errgroup.Group
 	switch len(tables) {
 	case 0:
-		resp := make([]interface{}, tableSelection.Length())
+		ret = make([]interface{}, tableSelection.Length())
 		tableSelection.Each(func(i int, selection *goquery.Selection) {
 			eg.Go(func() error {
 				td, err := parseTable(selection, i)
@@ -202,17 +204,12 @@ func parse(ctx context.Context, tableSelection *goquery.Selection, keyRows int, 
 					tmp = formatMatrix(td)
 				}
 
-				resp[i] = tmp
+				ret[i] = tmp
 				return nil
 			})
 		})
-		err := eg.Wait()
-		if err != nil {
-			return nil, err
-		}
-		return resp, nil
 	default:
-		resp := make([]interface{}, len(tables))
+		ret = make([]interface{}, len(tables))
 		for i, tableIndex := range tables {
 			i := i
 			tableIndex := tableIndex
@@ -232,16 +229,17 @@ func parse(ctx context.Context, tableSelection *goquery.Selection, keyRows int, 
 					tmp = formatMatrix(td)
 				}
 
-				resp[i] = tmp
+				ret[i] = tmp
 				return nil
 			})
 		}
-		err := eg.Wait()
-		if err != nil {
-			return nil, err
-		}
-		return resp, nil
 	}
+
+	err := eg.Wait()
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 type cell struct {
