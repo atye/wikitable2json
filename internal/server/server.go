@@ -116,11 +116,12 @@ func parseParameters(r *http.Request) (queryValues, error) {
 func writeError(w http.ResponseWriter, err error) {
 	var s status.Status
 	if errors.As(err, &s) {
-		if s.Code != 0 {
-			w.WriteHeader(s.Code)
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
+		code := s.Code
+		if code == 0 {
+			code = http.StatusInternalServerError
 		}
+		w.WriteHeader(code)
+
 		err = json.NewEncoder(w).Encode(s)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error marshaling error response: %v", err), http.StatusInternalServerError)
