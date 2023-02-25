@@ -1,4 +1,4 @@
-package client
+package cache
 
 import (
 	"container/list"
@@ -14,7 +14,7 @@ type item struct {
 	expiresAt time.Time
 }
 
-type cache struct {
+type Cache struct {
 	mu             sync.Mutex
 	capacity       int
 	list           *list.List
@@ -23,8 +23,8 @@ type cache struct {
 	purgeEvery     time.Duration
 }
 
-func newCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) *cache {
-	c := &cache{
+func NewCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) *Cache {
+	c := &Cache{
 		mu:             sync.Mutex{},
 		capacity:       capacity,
 		itemExpiration: itemExpiration,
@@ -50,7 +50,7 @@ func newCache(capacity int, itemExpiration time.Duration, purgeEvery time.Durati
 	return c
 }
 
-func (c *cache) Get(key string) (*goquery.Selection, bool) {
+func (c *Cache) Get(key string) (*goquery.Selection, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -61,7 +61,7 @@ func (c *cache) Get(key string) (*goquery.Selection, bool) {
 	return nil, false
 }
 
-func (c *cache) Set(key string, s *goquery.Selection) {
+func (c *Cache) Set(key string, s *goquery.Selection) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

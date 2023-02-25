@@ -12,6 +12,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/atye/wikitable2json/internal/api"
+	"github.com/atye/wikitable2json/internal/cache"
 	"github.com/atye/wikitable2json/internal/status"
 	"golang.org/x/sync/errgroup"
 )
@@ -34,7 +35,7 @@ type Option func(*client)
 
 func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) Option {
 	return func(c *client) {
-		c.cache = newCache(capacity, itemExpiration, purgeEvery)
+		c.cache = cache.NewCache(capacity, itemExpiration, purgeEvery)
 	}
 }
 
@@ -51,7 +52,7 @@ type wikiAPI interface {
 type client struct {
 	wikiAPI   wikiAPI
 	userAgent string
-	cache     *cache
+	cache     *cache.Cache
 }
 
 func NewTableGetter(userAgent string, options ...Option) TableGetter {
