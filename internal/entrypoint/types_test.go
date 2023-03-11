@@ -82,4 +82,12 @@ var (
 			{"20–23 April 2022", "Ipsos", "Telephone/online", "2302", "32%", "34%", "12%", "4%", "3%", "8%", "8%", "45%", "55%"},
 		},
 	}
+
+	Issue77Matrix = [][][]string{
+		{
+			{"Lage", "Objekt", "Beschreibung", "Akten-Nr.", "Bild"},
+			{},
+			{"FeuchtHauptstraße 37(Standort)", "Ehemaliges Wirtschaftsgebäude", "Zweigeschossiger Satteldachbau mit Fachwerkobergeschoss, bezeichnet mit „1697“", "ehemals D-5-74-123-14 zugehörig", "weitere Bilder"},
+		},
+	}
 )

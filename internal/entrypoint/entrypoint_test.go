@@ -38,6 +38,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "issue34"))
 		case "/api/rest_v1/page/html/issue56":
 			w.Write(getPageBytes(t, "issue56"))
+		case "/api/rest_v1/page/html/issue77":
+			w.Write(getPageBytes(t, "issue77"))
 		case "/api/rest_v1/page/html/reference":
 			w.Write(getPageBytes(t, "reference"))
 		case "/api/rest_v1/page/html/simpleKeyValue":
@@ -113,6 +115,11 @@ func TestAPI(t *testing.T) {
 					"complexKeyValue",
 					"?cleanRef=true",
 					ComplexMatrix,
+				},
+				{
+					"issue77",
+					"",
+					Issue77Matrix,
 				},
 			}
 
