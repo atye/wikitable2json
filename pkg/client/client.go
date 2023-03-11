@@ -256,6 +256,9 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 	tableSelection.Find("tr").EachWithBreak(func(rowNum int, s *goquery.Selection) bool {
 		// find all th and td elements in the row
 		var col int
+		if _, ok := td[rowNum]; !ok {
+			td[rowNum] = make(map[int]cell)
+		}
 		s.Find("th, td").EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
 			rowSpan := 1
 			colSpan := 1
@@ -302,7 +305,6 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 					}
 
 					columns := td[row]
-
 					// check if column already is already set from a previous rowspan so we don't overrwite it
 					// loop until we get an availalbe column
 					// https://en.wikipedia.org/wiki/Help:Table#Combined_use_of_COLSPAN_and_ROWSPAN
