@@ -305,6 +305,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 					}
 
 					columns := td[row]
+
 					// check if column already is already set from a previous rowspan so we don't overrwite it
 					// loop until we get an availalbe column
 					// https://en.wikipedia.org/wiki/Help:Table#Combined_use_of_COLSPAN_and_ROWSPAN

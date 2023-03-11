@@ -128,6 +128,7 @@ func TestAPI(t *testing.T) {
 					addr := fmt.Sprintf("http://localhost:%s/api/%s%s", PORT, tc.page, tc.query)
 					var got [][][]string
 					execGetRequest(t, addr, &got)
+
 					if !reflect.DeepEqual(tc.want, got) {
 						t.Errorf("want %v\n got %v", tc.want, got)
 					}
