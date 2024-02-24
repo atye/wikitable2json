@@ -90,4 +90,48 @@ var (
 			{"FeuchtHauptstraße 37(Standort)", "Ehemaliges Wirtschaftsgebäude", "Zweigeschossiger Satteldachbau mit Fachwerkobergeschoss, bezeichnet mit „1697“", "ehemals D-5-74-123-14 zugehörig", "weitere Bilder"},
 		},
 	}
+
+	Issue85Matrix = [][][]string{
+		{
+			{"No.", "Title", "Original release date", "English release date"},
+			{"1", "Dog \u0026 ChainsawInu to Chensō (犬とチェンソー)",
+				"March 4, 2019[9]",
+				"October 6, 2020[15]978-1-9747-0993-9"},
+			{"\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" 力（パワー）, Pawā)\n\n\"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)",
+				"\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" 力（パワー）, Pawā)\n\n\"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)",
+				"\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" 力（パワー）, Pawā)\n\n\"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)",
+				"\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" 力（パワー）, Pawā)\n\n\"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)"},
+		},
+	}
+
+	Issue85KeyValue = [][]map[string]string{
+		{
+			{
+				"English release date":  "October 6, 2020[15]978-1-9747-0993-9",
+				"No.":                   "1",
+				"Original release date": "March 4, 2019[9] 978-4-08-881780-4",
+				"Title":                 "Dog \u0026 ChainsawInu to Chensō (犬とチェンソー)",
+			},
+			{
+				"English release date":  "\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" (力（パワー）, Pawā)\n                \n                \"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)",
+				"No.":                   "\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" (力（パワー）, Pawā)\n                \n                \"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)",
+				"Original release date": "\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" (力（パワー）, Pawā)\n                \n                \"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)",
+				"Title":                 "\"Dog \u0026 Chainsaw\" (犬とチェンソー, Inu to Chensō)\"The Place Where Pochita Is\" (ポチタの行方, Pochita no Yukue)\"Arrival in Tokyo\" (東京到着, Tōkyō Tōchaku)\"Power\" (力（パワー）, Pawā)\n                \n                \"A Way to Touch Some Boobs\" (胸を揉む方法, Mune o Momu Hōhō)\"Service\" (使役, Shieki)\"Meowy's Whereabouts\" (ニャーコの行方, Nyāko no Yukue)",
+			},
+		},
+	}
+
+	MismatchRowsKeyValue = [][]map[string]string{
+		{
+			{
+				"Rank":    "1",
+				"Account": "Alpha",
+			},
+			{
+				"Rank":    "1",
+				"Account": "Alpha",
+				"null2":   "Extra",
+			},
+		},
+	}
 )
