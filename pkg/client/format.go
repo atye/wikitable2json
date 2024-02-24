@@ -53,15 +53,6 @@ func formatKeyValue(data verbose, keyrows int, tableIndex int) ([]map[string]str
 		}
 		var kv []map[string]string
 		for i := keyrows; i < len(data); i++ {
-			/*if len(keys) != len(data[i]) {
-				return nil, status.NewStatus(errNumKeysValuesMismatch.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
-					status.TableIndex: tableIndex,
-					status.RowIndex:   i,
-					status.KeysLength: len(keys),
-					status.RowLength:  len(data[i]),
-				}))
-			}*/
-
 			pairs := make(map[string]string)
 			for j := 0; j < len(data[i]); j++ {
 				key := fmt.Sprintf("null%d", j)
