@@ -5,7 +5,7 @@ For Go users, you can use the client directly. See the `examples` folder.
 ## Support
 
 * Use it, star it, build something with it, spread the word!
-  - If you do build something open-source or otherwise publicly-visible, let me know so I can add it to the [Related Projects](##related-projects) section!
+  - If you do build something open-source or otherwise publicly-visible, let me know so I can add it to the [Related Projects](#related-projects) section!
 * Raise issues to improve the project
 * Sponsor the developer
   - BuyMeACoffee.com, below
