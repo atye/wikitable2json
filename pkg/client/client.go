@@ -259,7 +259,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 
 	errorStatus := status.Status{}
 	var err error
-	tableSelection.Find(fmt.Sprintf(".%s > thead > tr, .%s > tbody > tr", tableClass, tableClass)).EachWithBreak(func(rowNum int, row *goquery.Selection) bool {
+	tableSelection.Find(fmt.Sprintf("table.%s > thead > tr, table.%s > tbody > tr", tableClass, tableClass)).EachWithBreak(func(rowNum int, row *goquery.Selection) bool {
 		var col int
 		if _, ok := td[rowNum]; !ok {
 			td[rowNum] = make(map[int]cell)
