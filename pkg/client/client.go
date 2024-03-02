@@ -159,7 +159,9 @@ func (c *client) getTableSelectionFromAPI(ctx context.Context, page string, lang
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
+
 	doc.Find(".mw-empty-elt").Remove()
+	doc.Find("style").Remove()
 
 	return doc.Find(strings.Join(classes, ", ")), nil
 }
@@ -250,19 +252,22 @@ type cell struct {
 func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, error) {
 	td := make(verbose)
 
+	tableClass := getTableClass(tableSelection)
+	if tableClass == "" {
+		return td, nil
+	}
+
 	errorStatus := status.Status{}
 	var err error
-	// for each row in the table
-	tableSelection.Find("tr").EachWithBreak(func(rowNum int, s *goquery.Selection) bool {
-		// find all th and td elements in the row
+	tableSelection.Find(fmt.Sprintf(".%s > thead > tr, .%s > tbody > tr", tableClass, tableClass)).EachWithBreak(func(rowNum int, row *goquery.Selection) bool {
 		var col int
 		if _, ok := td[rowNum]; !ok {
 			td[rowNum] = make(map[int]cell)
 		}
-		s.Find("th, td").EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
+
+		row.Find(fmt.Sprintf("table.%s > thead > tr > th, table.%s > thead > tr > td, table.%s > tbody > tr > th, table.%s > tbody > tr > td", tableClass, tableClass, tableClass, tableClass)).EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
 			rowSpan := 1
 			colSpan := 1
-			// get the rowspan and colspan attributes
 			if attr := s.AttrOr("rowspan", ""); attr != "" {
 				rowSpanTexts := strings.Split(attr, " ")
 				if len(rowSpanTexts) > 0 {
@@ -329,6 +334,21 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 		return nil, errorStatus
 	}
 	return td, nil
+}
+
+func getTableClass(table *goquery.Selection) string {
+	v, ok := table.Attr("class")
+	if !ok {
+		return ""
+	}
+
+	values := strings.Split(v, " ")
+	for _, s := range values {
+		if s == "wikitable" || s == "toccolours" || s == "standard" {
+			return s
+		}
+	}
+	return ""
 }
 
 func parseText(s *goquery.Selection) string {

@@ -40,6 +40,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "issue56"))
 		case "/api/rest_v1/page/html/issue77":
 			w.Write(getPageBytes(t, "issue77"))
+		case "/api/rest_v1/page/html/issue85":
+			w.Write(getPageBytes(t, "issue85"))
 		case "/api/rest_v1/page/html/reference":
 			w.Write(getPageBytes(t, "reference"))
 		case "/api/rest_v1/page/html/simpleKeyValue":
@@ -236,6 +238,32 @@ func TestAPI(t *testing.T) {
 					t.Errorf("want %v\n got %v", want, got)
 				}
 			})
+
+			t.Run("Issue85", func(t *testing.T) {
+				addr := fmt.Sprintf("http://localhost:%s/api/issue85?keyRows=1", PORT)
+
+				want := Issue85KeyValue
+
+				var got [][]map[string]string
+				execGetRequest(t, addr, &got)
+
+				if !reflect.DeepEqual(want, got) {
+					t.Errorf("want %v\n got %v", want, got)
+				}
+			})
+
+			t.Run("MismatchRows", func(t *testing.T) {
+				addr := fmt.Sprintf("http://localhost:%s/api/keyValueBadRows?keyRows=1", PORT)
+
+				want := MismatchRowsKeyValue
+
+				var got [][]map[string]string
+				execGetRequest(t, addr, &got)
+
+				if !reflect.DeepEqual(want, got) {
+					t.Errorf("want %v\n got %v", want, got)
+				}
+			})
 		})
 
 		t.Run("WithParameters", func(t *testing.T) {
@@ -400,6 +428,17 @@ func TestAPI(t *testing.T) {
 				},
 			},
 			{
+				"Not enough rows",
+				fmt.Sprintf("http://localhost:%s/api/keyValueOneRow?keyRows=1", PORT),
+				status.Status{
+					Message: "table needs at least two rows",
+					Code:    http.StatusBadRequest,
+					Details: status.Details{
+						status.TableIndex: float64(0),
+					},
+				},
+			},
+			{
 				"KeyRows not a number",
 				fmt.Sprintf("http://localhost:%s/api/badKeyRows?keyRows=x", PORT),
 				status.Status{
@@ -443,54 +482,6 @@ func TestAPI(t *testing.T) {
 			if !reflect.DeepEqual(want, got) {
 				t.Errorf("expected %v, got %v", want, got)
 			}
-		})
-
-		t.Run("KeyValue", func(t *testing.T) {
-			t.Run("MismatchedRow", func(t *testing.T) {
-				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/keyValueBadRows?keyRows=1", PORT))
-				if err != nil {
-					t.Fatal(err)
-				}
-				defer resp.Body.Close()
-
-				var got status.Status
-				err = json.NewDecoder(resp.Body).Decode(&got)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				want := status.NewStatus("number of keys does not equal number of values", http.StatusInternalServerError, status.WithDetails(status.Details{
-					status.TableIndex: float64(0),
-					status.RowIndex:   float64(2),
-					status.KeysLength: float64(2),
-					status.RowLength:  float64(3),
-				}))
-				if !reflect.DeepEqual(want, got) {
-					t.Errorf("expected %v, got %v", want, got)
-				}
-			})
-
-			t.Run("OneRow", func(t *testing.T) {
-				resp, err := http.Get(fmt.Sprintf("http://localhost:%s/api/keyValueOneRow?keyRows=1", PORT))
-				if err != nil {
-					t.Fatal(err)
-				}
-				defer resp.Body.Close()
-
-				var got status.Status
-				err = json.NewDecoder(resp.Body).Decode(&got)
-				if err != nil {
-					t.Fatal(err)
-				}
-
-				want := status.NewStatus("table needs at least two rows", http.StatusBadRequest, status.WithDetails(status.Details{
-					status.TableIndex: float64(0),
-				}))
-
-				if !reflect.DeepEqual(want, got) {
-					t.Errorf("expected %v, got %v", want, got)
-				}
-			})
 		})
 	})
 }
