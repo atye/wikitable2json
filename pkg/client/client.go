@@ -265,7 +265,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 			td[rowNum] = make(map[int]cell)
 		}
 
-		row.Find(fmt.Sprintf(".%s > thead > tr > th, .%s > thead > tr > td, .%s > tbody > tr > th, .%s > tbody > tr > td", tableClass, tableClass, tableClass, tableClass)).EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
+		row.Find(fmt.Sprintf("table.%s > thead > tr > th, table.%s > thead > tr > td, table.%s > tbody > tr > th, table.%s > tbody > tr > td", tableClass, tableClass, tableClass, tableClass)).EachWithBreak(func(cellNum int, s *goquery.Selection) bool {
 			rowSpan := 1
 			colSpan := 1
 			if attr := s.AttrOr("rowspan", ""); attr != "" {
