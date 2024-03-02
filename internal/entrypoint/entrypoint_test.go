@@ -89,47 +89,61 @@ func TestAPI(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Run("Matrix", func(t *testing.T) {
 			tests := []struct {
-				page  string
-				query string
-				want  interface{}
+				name string
+				url  string
+				want [][][]string
 			}{
 				{
-					"golden",
-					"",
+					"Golden",
+					fmt.Sprintf("http://localhost:%s/api/golden", PORT),
 					GoldenMatrix,
 				},
 				{
-					"issueOne",
-					"",
+					"GoldenWithParameters",
+					fmt.Sprintf("http://localhost:%s/api/golden?lang=sp&format=matrix&table=0", PORT),
+					GoldenMatrix,
+				},
+				{
+					"AllTableClasses",
+					fmt.Sprintf("http://localhost:%s/api/allTableClasses", PORT),
+					AllTableClasses,
+				},
+				{
+					"CleanReference",
+					fmt.Sprintf("http://localhost:%s/api/reference?cleanRef=true", PORT),
+					ReferenceMatrix,
+				},
+				{
+					"IssueOne",
+					fmt.Sprintf("http://localhost:%s/api/issueOne", PORT),
 					IssueOneMatrix,
 				},
 				{
-					"dataSortValue",
-					"",
+					"DataSortValue",
+					fmt.Sprintf("http://localhost:%s/api/dataSortValue", PORT),
 					DataSortValueMatrix,
 				},
 				{
-					"issue34",
-					"",
+					"Issue34",
+					fmt.Sprintf("http://localhost:%s/api/issue34", PORT),
 					Issue34Matrix,
 				},
 				{
-					"complexKeyValue",
-					"?cleanRef=true",
-					ComplexMatrix,
+					"Issue56",
+					fmt.Sprintf("http://localhost:%s/api/issue56?cleanRef=true", PORT),
+					Issue56Matrix,
 				},
 				{
-					"issue77",
-					"",
+					"Issue77",
+					fmt.Sprintf("http://localhost:%s/api/issue77", PORT),
 					Issue77Matrix,
 				},
 			}
 
 			for _, tc := range tests {
-				t.Run(tc.page, func(t *testing.T) {
-					addr := fmt.Sprintf("http://localhost:%s/api/%s%s", PORT, tc.page, tc.query)
+				t.Run(tc.name, func(t *testing.T) {
 					var got [][][]string
-					execGetRequest(t, addr, &got)
+					execGetRequest(t, tc.url, &got)
 
 					if !reflect.DeepEqual(tc.want, got) {
 						t.Errorf("want %v\n got %v", tc.want, got)
@@ -139,184 +153,47 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("KeyValue", func(t *testing.T) {
-			t.Run("Simple", func(t *testing.T) {
-				addr := fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1", PORT)
-
-				want := [][]map[string]string{
-					{
-						{
-							"Rank":    "1",
-							"Account": "Alpha",
-						},
-					},
-				}
-
-				var got [][]map[string]string
-				execGetRequest(t, addr, &got)
-
-				if !reflect.DeepEqual(want, got) {
-					t.Errorf("want %v\n got %v", want, got)
-				}
-
-				// do it again with table param for coverage
-				addr = fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1&table=0", PORT)
-
-				want = [][]map[string]string{
-					{
-						{
-							"Rank":    "1",
-							"Account": "Alpha",
-						},
-					},
-				}
-
-				var resp [][]map[string]string
-				execGetRequest(t, addr, &resp)
-
-				if !reflect.DeepEqual(want, resp) {
-					t.Errorf("want %v\n got %v", want, resp)
-				}
-			})
-
-			t.Run("Complex", func(t *testing.T) {
-				addr := fmt.Sprintf("http://localhost:%s/api/complexKeyValue?keyRows=2&cleanRef=true", PORT)
-
-				want := [][]map[string]string{
-					{
-						{
-							"Date":              "18–24 April 2022",
-							"Brand":             "Roy Morgan",
-							"Interview mode":    "Telephone/online",
-							"Sample size":       "1393",
-							"Primary vote L/NP": "35.5%",
-							"Primary vote ALP":  "35%",
-							"Primary vote GRN":  "12%",
-							"Primary vote ONP":  "4.5%",
-							"Primary vote UAP":  "1.5%",
-							"Primary vote OTH":  "11.5%",
-							"UND":               "–",
-							"2pp vote L/NP":     "45.5%",
-							"2pp vote ALP":      "54.5%",
-						},
-						{
-							"Date":              "20–23 April 2022",
-							"Brand":             "Newspoll-YouGov",
-							"Interview mode":    "Online",
-							"Sample size":       "1538",
-							"Primary vote L/NP": "36%",
-							"Primary vote ALP":  "37%",
-							"Primary vote GRN":  "11%",
-							"Primary vote ONP":  "3%",
-							"Primary vote UAP":  "4%",
-							"Primary vote OTH":  "9%",
-							"UND":               "–",
-							"2pp vote L/NP":     "47%",
-							"2pp vote ALP":      "53%",
-						},
-						{
-							"Date":              "20–23 April 2022",
-							"Brand":             "Ipsos",
-							"Interview mode":    "Telephone/online",
-							"Sample size":       "2302",
-							"Primary vote L/NP": "32%",
-							"Primary vote ALP":  "34%",
-							"Primary vote GRN":  "12%",
-							"Primary vote ONP":  "4%",
-							"Primary vote UAP":  "3%",
-							"Primary vote OTH":  "8%",
-							"UND":               "8%",
-							"2pp vote L/NP":     "45%",
-							"2pp vote ALP":      "55%",
-						},
-					},
-				}
-
-				var got [][]map[string]string
-				execGetRequest(t, addr, &got)
-
-				if !reflect.DeepEqual(want, got) {
-					t.Errorf("want %v\n got %v", want, got)
-				}
-			})
-
-			t.Run("Issue85", func(t *testing.T) {
-				addr := fmt.Sprintf("http://localhost:%s/api/issue85?keyRows=1", PORT)
-
-				want := Issue85KeyValue
-
-				var got [][]map[string]string
-				execGetRequest(t, addr, &got)
-
-				if !reflect.DeepEqual(want, got) {
-					t.Errorf("want %v\n got %v", want, got)
-				}
-			})
-
-			t.Run("MismatchRows", func(t *testing.T) {
-				addr := fmt.Sprintf("http://localhost:%s/api/keyValueBadRows?keyRows=1", PORT)
-
-				want := MismatchRowsKeyValue
-
-				var got [][]map[string]string
-				execGetRequest(t, addr, &got)
-
-				if !reflect.DeepEqual(want, got) {
-					t.Errorf("want %v\n got %v", want, got)
-				}
-			})
-		})
-
-		t.Run("WithParameters", func(t *testing.T) {
-			addr := fmt.Sprintf("http://localhost:%s/api/golden?lang=sp&format=matrix&table=0", PORT)
-			want := GoldenMatrix
-
-			var got [][][]string
-			execGetRequest(t, addr, &got)
-
-			if !reflect.DeepEqual(want, got) {
-				t.Errorf("want %v\n got %v", want, got)
-			}
-		})
-
-		t.Run("AllTableClasses", func(t *testing.T) {
-			addr := fmt.Sprintf("http://localhost:%s/api/allTableClasses", PORT)
-			want := [][][]string{
-				GoldenMatrix[0],
-				GoldenMatrix[0],
-				GoldenMatrix[0],
+			tests := []struct {
+				name string
+				url  string
+				want [][]map[string]string
+			}{
+				{
+					"Simple",
+					fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1", PORT),
+					SimpleKeyValue,
+				},
+				{
+					"SimpleWithTableParameter",
+					fmt.Sprintf("http://localhost:%s/api/simpleKeyValue?keyRows=1&table=0", PORT),
+					SimpleKeyValue,
+				},
+				{
+					"Complex",
+					fmt.Sprintf("http://localhost:%s/api/complexKeyValue?keyRows=2&cleanRef=true", PORT),
+					ComplexKeyValue,
+				},
+				{
+					"Issue85",
+					fmt.Sprintf("http://localhost:%s/api/issue85?keyRows=1", PORT),
+					Issue85KeyValue,
+				},
+				{
+					"MismatchRows",
+					fmt.Sprintf("http://localhost:%s/api/keyValueBadRows?keyRows=1", PORT),
+					MismatchRowsKeyValue,
+				},
 			}
 
-			var got [][][]string
-			execGetRequest(t, addr, &got)
+			for _, tc := range tests {
+				t.Run(tc.name, func(t *testing.T) {
+					var got [][]map[string]string
+					execGetRequest(t, tc.url, &got)
 
-			if !reflect.DeepEqual(want, got) {
-				t.Errorf("want %v\n got %v", want, got)
-			}
-		})
-
-		t.Run("CleanReference", func(t *testing.T) {
-			addr := fmt.Sprintf("http://localhost:%s/api/reference?cleanRef=true", PORT)
-			want := [][][]string{
-				ReferenceMatrix[0],
-			}
-
-			var got [][][]string
-			execGetRequest(t, addr, &got)
-
-			if !reflect.DeepEqual(want, got) {
-				t.Errorf("want %v\n got %v", want, got)
-			}
-		})
-
-		t.Run("CleanReferenceCitationNeeded", func(t *testing.T) {
-			addr := fmt.Sprintf("http://localhost:%s/api/issue56?cleanRef=true", PORT)
-			want := Issue56Matrix
-
-			var got [][][]string
-			execGetRequest(t, addr, &got)
-
-			if !reflect.DeepEqual(want, got) {
-				t.Errorf("want %v\n got %v", want, got)
+					if !reflect.DeepEqual(tc.want, got) {
+						t.Errorf("want %v\n got %v", tc.want, got)
+					}
+				})
 			}
 		})
 
@@ -369,13 +246,11 @@ func TestAPI(t *testing.T) {
 	})
 
 	t.Run("Error", func(t *testing.T) {
-		type test struct {
+		tests := []struct {
 			name string
 			url  string
 			want status.Status
-		}
-
-		tests := []test{
+		}{
 			{
 				"GettingData",
 				fmt.Sprintf("http://localhost:%s/api/StatusRequestEntityTooLarge", PORT),

@@ -121,4 +121,69 @@ var (
 			},
 		},
 	}
+
+	AllTableClasses = [][][]string{
+		GoldenMatrix[0],
+		GoldenMatrix[0],
+		GoldenMatrix[0],
+	}
+
+	SimpleKeyValue = [][]map[string]string{
+		{
+			{
+				"Rank":    "1",
+				"Account": "Alpha",
+			},
+		},
+	}
+
+	ComplexKeyValue = [][]map[string]string{
+		{
+			{
+				"Date":              "18–24 April 2022",
+				"Brand":             "Roy Morgan",
+				"Interview mode":    "Telephone/online",
+				"Sample size":       "1393",
+				"Primary vote L/NP": "35.5%",
+				"Primary vote ALP":  "35%",
+				"Primary vote GRN":  "12%",
+				"Primary vote ONP":  "4.5%",
+				"Primary vote UAP":  "1.5%",
+				"Primary vote OTH":  "11.5%",
+				"UND":               "–",
+				"2pp vote L/NP":     "45.5%",
+				"2pp vote ALP":      "54.5%",
+			},
+			{
+				"Date":              "20–23 April 2022",
+				"Brand":             "Newspoll-YouGov",
+				"Interview mode":    "Online",
+				"Sample size":       "1538",
+				"Primary vote L/NP": "36%",
+				"Primary vote ALP":  "37%",
+				"Primary vote GRN":  "11%",
+				"Primary vote ONP":  "3%",
+				"Primary vote UAP":  "4%",
+				"Primary vote OTH":  "9%",
+				"UND":               "–",
+				"2pp vote L/NP":     "47%",
+				"2pp vote ALP":      "53%",
+			},
+			{
+				"Date":              "20–23 April 2022",
+				"Brand":             "Ipsos",
+				"Interview mode":    "Telephone/online",
+				"Sample size":       "2302",
+				"Primary vote L/NP": "32%",
+				"Primary vote ALP":  "34%",
+				"Primary vote GRN":  "12%",
+				"Primary vote ONP":  "4%",
+				"Primary vote UAP":  "3%",
+				"Primary vote OTH":  "8%",
+				"UND":               "8%",
+				"2pp vote L/NP":     "45%",
+				"2pp vote ALP":      "55%",
+			},
+		},
+	}
 )
