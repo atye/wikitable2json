@@ -12,8 +12,7 @@ import (
 type verbose map[int]map[int]cell
 
 var (
-	errNotEnoughRows         = errors.New("table needs at least two rows")
-	errNumKeysValuesMismatch = errors.New("number of keys does not equal number of values")
+	errNotEnoughRows = errors.New("table needs at least two rows")
 )
 
 func formatMatrix(data verbose) [][]string {
