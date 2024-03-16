@@ -68,12 +68,16 @@ func NewTableGetter(userAgent string, options ...Option) TableGetter {
 }
 
 func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error) {
-	tableSelection, err := c.getTableSelection(ctx, page, lang, cleanRef)
+	tableSelection, err := c.getTableSelection(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
-	matrix, err := parse(ctx, tableSelection, 0, tables...)
+	if cleanRef {
+		cleanReferences(tableSelection)
+	}
+
+	matrix, err := parse(tableSelection, 0, tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -95,12 +99,16 @@ func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string
 		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
 	}
 
-	tableSelection, err := c.getTableSelection(ctx, page, lang, cleanRef)
+	tableSelection, err := c.getTableSelection(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
-	keyValue, err := parse(ctx, tableSelection, keyRows, tables...)
+	if cleanRef {
+		cleanReferences(tableSelection)
+	}
+
+	keyValue, err := parse(tableSelection, keyRows, tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -121,7 +129,7 @@ func (c *client) SetUserAgent(agent string) {
 	c.userAgent = agent
 }
 
-func (c *client) getTableSelection(ctx context.Context, page string, lang string, cleanRef bool) (*goquery.Selection, error) {
+func (c *client) getTableSelection(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
 	var tableSelection *goquery.Selection
 	var err error
 
@@ -129,27 +137,23 @@ func (c *client) getTableSelection(ctx context.Context, page string, lang string
 		var ok bool
 		tableSelection, ok = c.cache.Get(page)
 		if !ok {
-			tableSelection, err = c.getTableSelectionFromAPI(ctx, page, lang, cleanRef)
+			tableSelection, err = c.getTableSelectionFromAPI(ctx, page, lang)
 			if err != nil {
 				return nil, err
 			}
 			c.cache.Set(page, tableSelection)
 		}
 	} else {
-		tableSelection, err = c.getTableSelectionFromAPI(ctx, page, lang, cleanRef)
+		tableSelection, err = c.getTableSelectionFromAPI(ctx, page, lang)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if cleanRef {
-		cleanReferences(tableSelection)
-	}
-
 	return tableSelection, nil
 }
 
-func (c *client) getTableSelectionFromAPI(ctx context.Context, page string, lang string, cleanRef bool) (*goquery.Selection, error) {
+func (c *client) getTableSelectionFromAPI(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
 	b, err := c.wikiAPI.GetPageBytes(ctx, page, lang, c.userAgent)
 	if err != nil {
 		return nil, err
@@ -182,7 +186,7 @@ func cleanReferences(tables *goquery.Selection) {
 	})
 }
 
-func parse(ctx context.Context, tableSelection *goquery.Selection, keyRows int, tables ...int) ([]interface{}, error) {
+func parse(tableSelection *goquery.Selection, keyRows int, tables ...int) ([]interface{}, error) {
 	var ret []interface{}
 
 	var eg errgroup.Group
