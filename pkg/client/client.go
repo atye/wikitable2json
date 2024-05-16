@@ -82,7 +82,7 @@ func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, 
 		return nil, handleErr(err)
 	}
 
-	var ret [][][]string
+	ret := [][][]string{}
 	for _, v := range matrix {
 		if m, ok := v.([][]string); ok {
 			ret = append(ret, m)
@@ -113,7 +113,7 @@ func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string
 		return nil, handleErr(err)
 	}
 
-	var ret [][]map[string]string
+	ret := [][]map[string]string{}
 	for _, v := range keyValue {
 		if k, ok := v.([]map[string]string); ok {
 			ret = append(ret, k)

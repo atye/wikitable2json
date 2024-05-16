@@ -3,6 +3,7 @@ package entrypoint
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -52,6 +53,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "keyValueBadRows"))
 		case "/api/rest_v1/page/html/keyValueOneRow":
 			w.Write(getPageBytes(t, "keyValueOneRow"))
+		case "/api/rest_v1/page/html/noTables":
+			w.Write(getPageBytes(t, "noTables"))
 		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
@@ -197,6 +200,29 @@ func TestAPI(t *testing.T) {
 			}
 		})
 
+		t.Run("NoTables", func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%s/api/noTables", PORT), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			want := "[]\n"
+			if string(b) != want {
+				t.Errorf("want %v, got %b", want, b)
+			}
+		})
+
 		t.Run("UserAgent", func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%s/api/UserAgent", PORT), nil)
 			if err != nil {
@@ -211,8 +237,7 @@ func TestAPI(t *testing.T) {
 		})
 
 		t.Run("NoUserAgent", func(t *testing.T) {
-			addr := fmt.Sprintf("http://localhost:%s/api/NoUserAgent", PORT)
-			req, err := http.NewRequest(http.MethodGet, addr, nil)
+			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%s/api/NoUserAgent", PORT), nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -347,15 +372,18 @@ func TestAPI(t *testing.T) {
 			}
 			defer resp.Body.Close()
 
-			var got status.Status
-			err = json.NewDecoder(resp.Body).Decode(&got)
+			b, err := io.ReadAll(resp.Body)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			want := status.NewStatus(fmt.Sprintf("method %s not allowed", http.MethodPost), http.StatusMethodNotAllowed)
-			if !reflect.DeepEqual(want, got) {
-				t.Errorf("expected %v, got %v", want, got)
+			if resp.StatusCode != http.StatusMethodNotAllowed {
+				t.Errorf("expected status code %d, got %d", http.StatusMethodNotAllowed, resp.StatusCode)
+			}
+
+			want := "Method Not Allowed\n"
+			if string(b) != want {
+				t.Errorf("expected %v, got %v", want, string(b))
 			}
 		})
 	})
