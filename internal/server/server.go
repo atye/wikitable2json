@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/atye/wikitable2json/internal/status"
 	"github.com/atye/wikitable2json/pkg/client"
@@ -27,14 +26,9 @@ func NewServer(client client.TableGetter) *Server {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeError(w, status.NewStatus(fmt.Sprintf("method %s not allowed", r.Method), http.StatusMethodNotAllowed))
-		return
-	}
-
 	ctx := r.Context()
 
-	page := strings.TrimPrefix(r.URL.Path, "/api/")
+	page := r.PathValue("page")
 
 	qv, err := parseParameters(r)
 	if err != nil {
