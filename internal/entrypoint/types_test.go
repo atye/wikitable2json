@@ -1,5 +1,7 @@
 package entrypoint
 
+import "github.com/atye/wikitable2json/pkg/client"
+
 var (
 	GoldenMatrix = [][][]string{
 		{
@@ -88,6 +90,51 @@ var (
 			{"Lage", "Objekt", "Beschreibung", "Akten-Nr.", "Bild"},
 			{},
 			{"FeuchtHauptstraße 37(Standort)", "Ehemaliges Wirtschaftsgebäude", "Zweigeschossiger Satteldachbau mit Fachwerkobergeschoss, bezeichnet mit „1697“", "ehemals D-5-74-123-14 zugehörig", "weitere Bilder"},
+		},
+	}
+
+	Issue77MatrixVerbose = [][][]client.Verbose{
+		{
+			{
+				{
+					Text: "Lage",
+				},
+				{
+					Text: "Objekt",
+				},
+				{
+					Text: "Beschreibung",
+				},
+				{
+					Text: "Akten-Nr.",
+				},
+				{
+					Text: "Bild",
+				},
+			},
+			{},
+			{
+				{
+					Text:  "FeuchtHauptstraße 37(Standort)",
+					Links: []string{"https://geohack.toolforge.org/geohack.php?pagename=Liste_der_Baudenkm%C3%A4ler_in_Feucht&language=de&params=49.37546_N_11.21422_E_region:DE-BY_type:building&title=Feucht%2C+Hauptstra%C3%9Fe+37%2C+Ehemaliges+Wirtschaftsgeb%C3%A4ude"},
+				},
+				{
+					Text: "Ehemaliges Wirtschaftsgebäude",
+				},
+				{
+					Text: "Zweigeschossiger Satteldachbau mit Fachwerkobergeschoss, bezeichnet mit „1697“",
+				},
+				{
+					Text: "ehemals D-5-74-123-14 zugehörig",
+				},
+				{
+					Text: "weitere Bilder",
+					Links: []string{
+						"Datei:2018_Feucht_Hauptstraße_37_02.jpg",
+						"https://commons.wikimedia.org/wiki/Category:Hauptstraße%2037%20(Ehemaliges%20Wirtschaftsgebäude,%20D-5-74-123-14)",
+					},
+				},
+			},
 		},
 	}
 
@@ -183,6 +230,22 @@ var (
 				"UND":               "8%",
 				"2pp vote L/NP":     "45%",
 				"2pp vote ALP":      "55%",
+			},
+		},
+	}
+
+	Issue93MatrixVerbose = [][][]client.Verbose{
+		{
+			{
+				{
+					Text: "test",
+				},
+			},
+			{
+				{
+					Text:  "Bolivia, Plurinational State of",
+					Links: []string{"Boliva"},
+				},
 			},
 		},
 	}

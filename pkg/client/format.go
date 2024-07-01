@@ -35,6 +35,7 @@ func formatMatrix(data parsed) [][]string {
 }
 
 func formatMatrixVerbose(data parsed) [][]Verbose {
+	fmt.Println(data)
 	matrix := make([][]Verbose, len(data))
 
 	for i := 0; i < len(data); i++ {
