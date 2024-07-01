@@ -28,10 +28,24 @@ func main() {
 
 	fmt.Println(matrix)
 
+	matrixVerbose, err := tg.GetMatrixVerbose(context.Background(), "Arhaan_Khan", "en", false)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(matrixVerbose)
+
 	keyValue, err := tg.GetKeyValue(context.Background(), "Arhaan_Khan", "en", false, 1, 1)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(keyValue)
+
+	keyValueVerbose, err := tg.GetKeyValueVerbose(context.Background(), "Arhaan_Khan", "en", false, 1, 1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(keyValueVerbose)
 }
