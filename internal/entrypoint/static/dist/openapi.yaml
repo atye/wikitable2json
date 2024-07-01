@@ -19,6 +19,9 @@ info:
     ### Get the second table on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in a key-value format using the first row as keys:
     [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1)
 
+    ### Get the second table on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in a key-value format with verbose output using the first row as keys:
+    [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1&verbose=true](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1&verbose=true)
+
     ### Get the second table on page [1970–71_Chester_F.C._season](https://en.wikipedia.org/wiki/1970–71_Chester_F.C._season) in a key-value format using the first two rows as key:
     [https://www.wikitable2json.com/api/1970–71_Chester_F.C._season?table=1&keyRows=2](https://www.wikitable2json.com/api/1970–71_Chester_F.C._season?table=1&keyRows=2)
 
@@ -73,6 +76,14 @@ paths:
           schema:
             type: string
             default: false
+        - name: verbose
+          description: |
+            Set to true to enable verbose output<br/>
+          in: query
+          required: false
+          schema:
+            type: string
+            default: false
       responses:
         "200":
           description: A successful response.
@@ -81,7 +92,9 @@ paths:
               schema:
                 oneOf:
                   - $ref: "#/components/schemas/matrix"
+                  - $ref: "#/components/schemas/matrixVerbose"
                   - $ref: "#/components/schemas/keyValue"
+                  - $ref: "#/components/schemas/keyValueVerbose"
         default:
           description: An error response.
           content:
@@ -99,9 +112,32 @@ components:
           type: array
           items:
             type: string
+    matrixVerbose:
+      description: List of tables in the default, 2D format with verbose output
+      type: array
+      items:
+        type: array
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
     keyValue:
       description: |
         List of tables in the key-value format with the keys being the first x rows specified in the keyRows query<br/>
+      type: array
+      items:
+        type: array
+        items:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+    keyValueVerbose:
+      description: |
+        List of tables in the key-value format with the keys being the first x rows specified in the keyRows query with verbose output<br/>
       type: array
       items:
         type: array
