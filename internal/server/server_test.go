@@ -18,6 +18,7 @@ func TestParseParameters(t *testing.T) {
 		params.Add("format", "keyValue")
 		params.Add("cleanRef", "true")
 		params.Add("keyRows", "2")
+		params.Add("verbose", "true")
 		r.URL.RawQuery = params.Encode()
 
 		qv, err := parseParameters(r)
@@ -29,11 +30,13 @@ func TestParseParameters(t *testing.T) {
 		gotTables := qv.tables
 		gotCleanRef := qv.cleanRef
 		gotKeyRows := qv.keyRows
+		gotVerbose := qv.verbose
 
 		wantLang := "sp"
 		wantTables := []int{0}
 		wantCleanRef := true
 		wantKeyRows := 2
+		wantVerbose := true
 
 		if wantLang != gotLang {
 			t.Errorf("want %v, got %v", wantLang, gotLang)
@@ -49,6 +52,10 @@ func TestParseParameters(t *testing.T) {
 
 		if wantKeyRows != gotKeyRows {
 			t.Errorf("want %d, got %d", wantKeyRows, gotKeyRows)
+		}
+
+		if wantVerbose != gotVerbose {
+			t.Errorf("want %v, got %v", wantVerbose, gotVerbose)
 		}
 	})
 

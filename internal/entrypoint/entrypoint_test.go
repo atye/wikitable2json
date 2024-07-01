@@ -43,6 +43,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "issue77"))
 		case "/api/rest_v1/page/html/issue85":
 			w.Write(getPageBytes(t, "issue85"))
+		case "/api/rest_v1/page/html/issue93":
+			w.Write(getPageBytes(t, "issue93"))
 		case "/api/rest_v1/page/html/reference":
 			w.Write(getPageBytes(t, "reference"))
 		case "/api/rest_v1/page/html/simpleKeyValue":
@@ -155,6 +157,36 @@ func TestAPI(t *testing.T) {
 			}
 		})
 
+		t.Run("MatrixVerbose", func(t *testing.T) {
+			tests := []struct {
+				name string
+				url  string
+				want [][][]client.Verbose
+			}{
+				{
+					"Issue77",
+					fmt.Sprintf("http://localhost:%s/api/issue77?verbose=true", PORT),
+					Issue77MatrixVerbose,
+				},
+				{
+					"Issue93",
+					fmt.Sprintf("http://localhost:%s/api/issue93?verbose=true", PORT),
+					Issue93MatrixVerbose,
+				},
+			}
+
+			for _, tc := range tests {
+				t.Run(tc.name, func(t *testing.T) {
+					var got [][][]client.Verbose
+					execGetRequest(t, tc.url, &got)
+
+					if !reflect.DeepEqual(tc.want, got) {
+						t.Errorf("want %v\n got %v", tc.want, got)
+					}
+				})
+			}
+		})
+
 		t.Run("KeyValue", func(t *testing.T) {
 			tests := []struct {
 				name string
@@ -191,6 +223,36 @@ func TestAPI(t *testing.T) {
 			for _, tc := range tests {
 				t.Run(tc.name, func(t *testing.T) {
 					var got [][]map[string]string
+					execGetRequest(t, tc.url, &got)
+
+					if !reflect.DeepEqual(tc.want, got) {
+						t.Errorf("want %v\n got %v", tc.want, got)
+					}
+				})
+			}
+		})
+
+		t.Run("KeyValueVerbose", func(t *testing.T) {
+			tests := []struct {
+				name string
+				url  string
+				want [][]map[string]client.Verbose
+			}{
+				{
+					"Issue77",
+					fmt.Sprintf("http://localhost:%s/api/issue77?keyRows=1&verbose=true", PORT),
+					Issue77KeyValueVerbose,
+				},
+				{
+					"Issue93",
+					fmt.Sprintf("http://localhost:%s/api/issue93?keyRows=1&verbose=true", PORT),
+					Issue93KeyValueVerbose,
+				},
+			}
+
+			for _, tc := range tests {
+				t.Run(tc.name, func(t *testing.T) {
+					var got [][]map[string]client.Verbose
 					execGetRequest(t, tc.url, &got)
 
 					if !reflect.DeepEqual(tc.want, got) {

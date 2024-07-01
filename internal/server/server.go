@@ -40,16 +40,32 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var resp interface{}
 	if qv.keyRows >= 1 {
-		resp, err = s.client.GetTablesKeyValue(ctx, page, qv.lang, qv.cleanRef, qv.keyRows, qv.tables...)
-		if err != nil {
-			writeError(w, err)
-			return
+		if qv.verbose {
+			resp, err = s.client.GetKeyValueVerbose(ctx, page, qv.lang, qv.cleanRef, qv.keyRows, qv.tables...)
+			if err != nil {
+				writeError(w, err)
+				return
+			}
+		} else {
+			resp, err = s.client.GetKeyValue(ctx, page, qv.lang, qv.cleanRef, qv.keyRows, qv.tables...)
+			if err != nil {
+				writeError(w, err)
+				return
+			}
 		}
 	} else {
-		resp, err = s.client.GetTablesMatrix(ctx, page, qv.lang, qv.cleanRef, qv.tables...)
-		if err != nil {
-			writeError(w, err)
-			return
+		if qv.verbose {
+			resp, err = s.client.GetMatrixVerbose(ctx, page, qv.lang, qv.cleanRef, qv.tables...)
+			if err != nil {
+				writeError(w, err)
+				return
+			}
+		} else {
+			resp, err = s.client.GetMatrix(ctx, page, qv.lang, qv.cleanRef, qv.tables...)
+			if err != nil {
+				writeError(w, err)
+				return
+			}
 		}
 	}
 
@@ -65,6 +81,7 @@ type queryValues struct {
 	tables   []int
 	cleanRef bool
 	keyRows  int
+	verbose  bool
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
@@ -89,6 +106,10 @@ func parseParameters(r *http.Request) (queryValues, error) {
 
 	if v := params.Get("cleanRef"); v == "true" {
 		qv.cleanRef = true
+	}
+
+	if v := params.Get("verbose"); v == "true" {
+		qv.verbose = true
 	}
 
 	if v := params.Get("keyRows"); v != "" {
