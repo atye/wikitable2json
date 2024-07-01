@@ -232,6 +232,36 @@ func TestAPI(t *testing.T) {
 			}
 		})
 
+		t.Run("KeyValueVerbose", func(t *testing.T) {
+			tests := []struct {
+				name string
+				url  string
+				want [][]map[string]client.Verbose
+			}{
+				{
+					"Issue77",
+					fmt.Sprintf("http://localhost:%s/api/issue77?keyRows=1&verbose=true", PORT),
+					Issue77KeyValueVerbose,
+				},
+				{
+					"Issue93",
+					fmt.Sprintf("http://localhost:%s/api/issue93?keyRows=1&verbose=true", PORT),
+					Issue93KeyValueVerbose,
+				},
+			}
+
+			for _, tc := range tests {
+				t.Run(tc.name, func(t *testing.T) {
+					var got [][]map[string]client.Verbose
+					execGetRequest(t, tc.url, &got)
+
+					if !reflect.DeepEqual(tc.want, got) {
+						t.Errorf("want %v\n got %v", tc.want, got)
+					}
+				})
+			}
+		})
+
 		t.Run("NoTables", func(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%s/api/noTables", PORT), nil)
 			if err != nil {
