@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -23,11 +24,15 @@ var (
 		"table.standard",
 		"table.toccolours",
 	}
+
+	hrefPrefix = regexp.MustCompile(`^\.*\/`)
 )
 
 type TableGetter interface {
-	GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error)
-	GetTablesKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error)
+	GetMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error)
+	GetMatrixVerbose(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]Verbose, error)
+	GetKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error)
+	GetKeyValueVerbose(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]Verbose, error)
 	SetUserAgent(string)
 }
 
@@ -67,7 +72,7 @@ func NewTableGetter(userAgent string, options ...Option) TableGetter {
 	return c
 }
 
-func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error) {
+func (c *client) GetMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error) {
 	tableSelection, err := c.getTableSelection(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
@@ -77,7 +82,7 @@ func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, 
 		cleanReferences(tableSelection)
 	}
 
-	matrix, err := parse(tableSelection, 0, tables...)
+	matrix, err := parse(tableSelection, 0, false, tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -94,7 +99,34 @@ func (c *client) GetTablesMatrix(ctx context.Context, page string, lang string, 
 	return ret, nil
 }
 
-func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error) {
+func (c *client) GetMatrixVerbose(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]Verbose, error) {
+	tableSelection, err := c.getTableSelection(ctx, page, lang)
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	if cleanRef {
+		cleanReferences(tableSelection)
+	}
+
+	matrix, err := parse(tableSelection, 0, true, tables...)
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	ret := [][][]Verbose{}
+	for _, v := range matrix {
+		if m, ok := v.([][]Verbose); ok {
+			ret = append(ret, m)
+		} else {
+			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+		}
+	}
+
+	return ret, nil
+}
+
+func (c *client) GetKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error) {
 	if keyRows < 1 {
 		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
 	}
@@ -108,7 +140,7 @@ func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string
 		cleanReferences(tableSelection)
 	}
 
-	keyValue, err := parse(tableSelection, keyRows, tables...)
+	keyValue, err := parse(tableSelection, keyRows, false, tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -116,6 +148,37 @@ func (c *client) GetTablesKeyValue(ctx context.Context, page string, lang string
 	ret := [][]map[string]string{}
 	for _, v := range keyValue {
 		if k, ok := v.([]map[string]string); ok {
+			ret = append(ret, k)
+		} else {
+			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+		}
+	}
+
+	return ret, nil
+}
+
+func (c *client) GetKeyValueVerbose(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]Verbose, error) {
+	if keyRows < 1 {
+		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
+	}
+
+	tableSelection, err := c.getTableSelection(ctx, page, lang)
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	if cleanRef {
+		cleanReferences(tableSelection)
+	}
+
+	keyValue, err := parse(tableSelection, keyRows, true, tables...)
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	ret := [][]map[string]Verbose{}
+	for _, v := range keyValue {
+		if k, ok := v.([]map[string]Verbose); ok {
 			ret = append(ret, k)
 		} else {
 			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
@@ -186,7 +249,7 @@ func cleanReferences(tables *goquery.Selection) {
 	})
 }
 
-func parse(tableSelection *goquery.Selection, keyRows int, tables ...int) ([]interface{}, error) {
+func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, tables ...int) ([]interface{}, error) {
 	var ret []interface{}
 
 	var eg errgroup.Group
@@ -202,12 +265,23 @@ func parse(tableSelection *goquery.Selection, keyRows int, tables ...int) ([]int
 
 				var tmp interface{}
 				if keyRows >= 1 {
-					tmp, err = formatKeyValue(td, keyRows, i)
-					if err != nil {
-						return err
+					if verbose {
+						tmp, err = formatKeyValueVerbose(td, keyRows, i)
+						if err != nil {
+							return err
+						}
+					} else {
+						tmp, err = formatKeyValue(td, keyRows, i)
+						if err != nil {
+							return err
+						}
 					}
 				} else {
-					tmp = formatMatrix(td)
+					if verbose {
+						tmp = formatMatrixVerbose(td)
+					} else {
+						tmp = formatMatrix(td)
+					}
 				}
 
 				ret[i] = tmp
@@ -227,12 +301,23 @@ func parse(tableSelection *goquery.Selection, keyRows int, tables ...int) ([]int
 
 				var tmp interface{}
 				if keyRows >= 1 {
-					tmp, err = formatKeyValue(td, keyRows, i)
-					if err != nil {
-						return err
+					if verbose {
+						tmp, err = formatKeyValueVerbose(td, keyRows, i)
+						if err != nil {
+							return err
+						}
+					} else {
+						tmp, err = formatKeyValue(td, keyRows, i)
+						if err != nil {
+							return err
+						}
 					}
 				} else {
-					tmp = formatMatrix(td)
+					if verbose {
+						tmp = formatMatrixVerbose(td)
+					} else {
+						tmp = formatMatrix(td)
+					}
 				}
 
 				ret[i] = tmp
@@ -250,11 +335,12 @@ func parse(tableSelection *goquery.Selection, keyRows int, tables ...int) ([]int
 
 type cell struct {
 	set   bool
-	value string
+	text  string
+	links []string
 }
 
-func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, error) {
-	td := make(verbose)
+func parseTable(tableSelection *goquery.Selection, tableIndex int) (parsed, error) {
+	td := make(parsed)
 
 	tableClass := getTableClass(tableSelection)
 	if tableClass == "" {
@@ -324,7 +410,10 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (verbose, err
 							col++
 						}
 					}
-					columns[startCol+j+nextAvailableCell] = cell{set: true, value: parseText(s)}
+					columns[startCol+j+nextAvailableCell] = cell{
+						set:   true,
+						text:  parseText(s),
+						links: parseLink(s)}
 					if i == 0 {
 						col++
 					}
@@ -359,6 +448,18 @@ func parseText(s *goquery.Selection) string {
 	return strings.TrimSpace(s.Text())
 }
 
+func parseLink(s *goquery.Selection) []string {
+	var ret []string
+	s.Find("a").Each(func(_ int, anchor *goquery.Selection) {
+		if v, ok := anchor.Attr("href"); ok {
+			if v != "" {
+				ret = append(ret, hrefPrefix.ReplaceAllString(v, ""))
+			}
+		}
+	})
+	return ret
+}
+
 func getSpan(values []string) (int, error) {
 	var err error
 	var span int
@@ -375,7 +476,6 @@ func handleErr(err error) status.Status {
 	var s status.Status
 	if errors.As(err, &s) {
 		return s
-	} else {
-		return status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
+	return status.NewStatus(err.Error(), http.StatusInternalServerError)
 }
