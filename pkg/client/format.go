@@ -12,8 +12,8 @@ import (
 type parsed map[int]map[int]cell
 
 type Verbose struct {
-	Text  string   `json:"text"`
-	Links []string `json:"links"`
+	Text  string   `json:"text,omitempty"`
+	Links []string `json:"links,omitempty"`
 }
 
 var (

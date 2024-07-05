@@ -5,28 +5,37 @@ info:
   description: |
     [https://github.com/atye/wikitable2json](https://github.com/atye/wikitable2json/)
 
-    - Tables with the HTML class `wikitable`, `standard`, and `toccolours` are returned
     - If you are making automated requests, set a unique `User-Agent` header with an email address or URL contact page per the [Wikimedia REST API](https://en.wikipedia.org/api/rest_v1/)
-
-    ## Examples: 
 
     ### Get all tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
     [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
 
+    <br>
+
     ### Get the first and second tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
     [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&table=2](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&table=2)
+
+    <br>
 
     ### Get the second table on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in a key-value format using the first row as keys:
     [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1)
 
+    <br>
+
     ### Get the second table on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in a key-value format with verbose output using the first row as keys:
     [https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1&verbose=true](https://www.wikitable2json.com/api/Arhaan_Khan?table=1&keyRows=1&verbose=true)
+
+    <br>
 
     ### Get the second table on page [1970–71_Chester_F.C._season](https://en.wikipedia.org/wiki/1970–71_Chester_F.C._season) in a key-value format using the first two rows as key:
     [https://www.wikitable2json.com/api/1970–71_Chester_F.C._season?table=1&keyRows=2](https://www.wikitable2json.com/api/1970–71_Chester_F.C._season?table=1&keyRows=2)
 
+    <br>
+
     ### Get all tables on German page [Liste_der_Baudenkmäler_in_Feucht](https://de.wikipedia.org/wiki/Liste_der_Baudenkmäler_in_Feucht) in the default matrix format: 
     [https://www.wikitable2json.com/api/Liste_der_Baudenkmäler_in_Feucht?lang=de](https://www.wikitable2json.com/api/Liste_der_Baudenkmäler_in_Feucht?lang=de)
+
+    <br>
 
     ### Get all tables on page [Template:COVID-19_pandemic_data](https://en.wikipedia.org/wiki/Template:COVID-19_pandemic_data) with reference link text removed:
     [https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true](https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true)
@@ -120,9 +129,7 @@ components:
         items:
           type: array
           items:
-            type: object
-            additionalProperties:
-              type: string
+            $ref: '#/components/schemas/verboseCell'
     keyValue:
       description: |
         List of tables in the key-value format with the keys being the first x rows specified in the keyRows query<br/>
@@ -132,9 +139,7 @@ components:
         items:
           type: object
           additionalProperties:
-            type: object
-            additionalProperties:
-              type: string
+            type: string
     keyValueVerbose:
       description: |
         List of tables in the key-value format with the keys being the first x rows specified in the keyRows query with verbose output<br/>
@@ -144,6 +149,15 @@ components:
         items:
           type: object
           additionalProperties:
+            $ref: '#/components/schemas/verboseCell'
+    verboseCell:
+      type: object
+      additionalProperties:
+        text:
+          type: string
+        links:
+          type: array
+          items:
             type: string
     error:
       description: Error schema with a message, status code, and any details
