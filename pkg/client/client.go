@@ -29,25 +29,44 @@ var (
 )
 
 type TableGetter interface {
-	GetMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error)
-	GetMatrixVerbose(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]Verbose, error)
-	GetKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error)
-	GetKeyValueVerbose(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]Verbose, error)
+	GetMatrix(ctx context.Context, page string, lang string, options ...TableOption) ([][][]string, error)
+	GetMatrixVerbose(ctx context.Context, page string, lang string, options ...TableOption) ([][][]Verbose, error)
+	GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]string, error)
+	GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]Verbose, error)
 	SetUserAgent(string)
 }
 
-type Option func(*client)
+type ClientOption func(*client)
 
-func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) Option {
+func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) ClientOption {
 	return func(c *client) {
 		c.cache = cache.NewCache(capacity, itemExpiration, purgeEvery)
 	}
 }
 
-func WithHTTPClient(c *http.Client) Option {
+func WithHTTPClient(c *http.Client) ClientOption {
 	return func(tg *client) {
 		tg.wikiAPI = api.NewWikiClient(api.BaseURL, api.WithHTTPClient(c))
 	}
+}
+
+type TableOption func(*tableOptions)
+
+func WithCleanReferences() TableOption {
+	return func(to *tableOptions) {
+		to.cleanRef = true
+	}
+}
+
+func WithTables(tables ...int) TableOption {
+	return func(to *tableOptions) {
+		to.tables = tables
+	}
+}
+
+type tableOptions struct {
+	cleanRef bool
+	tables   []int
 }
 
 type wikiAPI interface {
@@ -60,7 +79,7 @@ type client struct {
 	cache     *cache.Cache
 }
 
-func NewTableGetter(userAgent string, options ...Option) TableGetter {
+func NewTableGetter(userAgent string, options ...ClientOption) TableGetter {
 	c := &client{
 		wikiAPI:   api.NewWikiClient(api.BaseURL),
 		userAgent: userAgent,
@@ -72,17 +91,22 @@ func NewTableGetter(userAgent string, options ...Option) TableGetter {
 	return c
 }
 
-func (c *client) GetMatrix(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]string, error) {
+func (c *client) GetMatrix(ctx context.Context, page string, lang string, options ...TableOption) ([][][]string, error) {
 	tableSelection, err := c.getTableSelection(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
-	if cleanRef {
+	to := new(tableOptions)
+	for _, o := range options {
+		o(to)
+	}
+
+	if to.cleanRef {
 		cleanReferences(tableSelection)
 	}
 
-	matrix, err := parse(tableSelection, 0, false, tables...)
+	matrix, err := parse(tableSelection, 0, false, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -99,17 +123,22 @@ func (c *client) GetMatrix(ctx context.Context, page string, lang string, cleanR
 	return ret, nil
 }
 
-func (c *client) GetMatrixVerbose(ctx context.Context, page string, lang string, cleanRef bool, tables ...int) ([][][]Verbose, error) {
+func (c *client) GetMatrixVerbose(ctx context.Context, page string, lang string, options ...TableOption) ([][][]Verbose, error) {
 	tableSelection, err := c.getTableSelection(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
-	if cleanRef {
+	to := new(tableOptions)
+	for _, o := range options {
+		o(to)
+	}
+
+	if to.cleanRef {
 		cleanReferences(tableSelection)
 	}
 
-	matrix, err := parse(tableSelection, 0, true, tables...)
+	matrix, err := parse(tableSelection, 0, true, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -126,7 +155,7 @@ func (c *client) GetMatrixVerbose(ctx context.Context, page string, lang string,
 	return ret, nil
 }
 
-func (c *client) GetKeyValue(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]string, error) {
+func (c *client) GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]string, error) {
 	if keyRows < 1 {
 		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
 	}
@@ -136,11 +165,16 @@ func (c *client) GetKeyValue(ctx context.Context, page string, lang string, clea
 		return nil, handleErr(err)
 	}
 
-	if cleanRef {
+	to := new(tableOptions)
+	for _, o := range options {
+		o(to)
+	}
+
+	if to.cleanRef {
 		cleanReferences(tableSelection)
 	}
 
-	keyValue, err := parse(tableSelection, keyRows, false, tables...)
+	keyValue, err := parse(tableSelection, keyRows, false, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -157,7 +191,7 @@ func (c *client) GetKeyValue(ctx context.Context, page string, lang string, clea
 	return ret, nil
 }
 
-func (c *client) GetKeyValueVerbose(ctx context.Context, page string, lang string, cleanRef bool, keyRows int, tables ...int) ([][]map[string]Verbose, error) {
+func (c *client) GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]Verbose, error) {
 	if keyRows < 1 {
 		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
 	}
@@ -167,11 +201,16 @@ func (c *client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 		return nil, handleErr(err)
 	}
 
-	if cleanRef {
+	to := new(tableOptions)
+	for _, o := range options {
+		o(to)
+	}
+
+	if to.cleanRef {
 		cleanReferences(tableSelection)
 	}
 
-	keyValue, err := parse(tableSelection, keyRows, true, tables...)
+	keyValue, err := parse(tableSelection, keyRows, true, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}

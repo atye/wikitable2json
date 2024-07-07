@@ -36,18 +36,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	opts := []client.TableOption{
+		client.WithTables(qv.tables...),
+	}
+	if qv.cleanRef {
+		opts = append(opts, client.WithCleanReferences())
+	}
+
 	s.client.SetUserAgent(r.Header.Get("User-Agent"))
 
 	var resp interface{}
 	if qv.keyRows >= 1 {
 		if qv.verbose {
-			resp, err = s.client.GetKeyValueVerbose(ctx, page, qv.lang, qv.cleanRef, qv.keyRows, qv.tables...)
+			resp, err = s.client.GetKeyValueVerbose(ctx, page, qv.lang, qv.keyRows, opts...)
 			if err != nil {
 				writeError(w, err)
 				return
 			}
 		} else {
-			resp, err = s.client.GetKeyValue(ctx, page, qv.lang, qv.cleanRef, qv.keyRows, qv.tables...)
+			resp, err = s.client.GetKeyValue(ctx, page, qv.lang, qv.keyRows, opts...)
 			if err != nil {
 				writeError(w, err)
 				return
@@ -55,13 +62,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if qv.verbose {
-			resp, err = s.client.GetMatrixVerbose(ctx, page, qv.lang, qv.cleanRef, qv.tables...)
+			resp, err = s.client.GetMatrixVerbose(ctx, page, qv.lang, opts...)
 			if err != nil {
 				writeError(w, err)
 				return
 			}
 		} else {
-			resp, err = s.client.GetMatrix(ctx, page, qv.lang, qv.cleanRef, qv.tables...)
+			resp, err = s.client.GetMatrix(ctx, page, qv.lang, opts...)
 			if err != nil {
 				writeError(w, err)
 				return

@@ -25,6 +25,8 @@ func TestAPI(t *testing.T) {
 		switch r.URL.Path {
 		case "/api/rest_v1/page/html/golden":
 			w.Write(getPageBytes(t, "golden"))
+		case "/api/rest_v1/page/html/goldenDouble":
+			w.Write(getPageBytes(t, "goldenDouble"))
 		case "/api/rest_v1/page/html/issueOne":
 			w.Write(getPageBytes(t, "issueOne"))
 		case "/api/rest_v1/page/html/dataSortValue":
@@ -102,6 +104,11 @@ func TestAPI(t *testing.T) {
 					"Golden",
 					fmt.Sprintf("http://localhost:%s/api/golden", PORT),
 					GoldenMatrix,
+				},
+				{
+					"GoldenSecondTable",
+					fmt.Sprintf("http://localhost:%s/api/goldenDouble?table=1", PORT),
+					GoldenMatrixDouble,
 				},
 				{
 					"GoldenWithParameters",

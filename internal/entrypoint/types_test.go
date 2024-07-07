@@ -14,6 +14,17 @@ var (
 		},
 	}
 
+	GoldenMatrixDouble = [][][]string{
+		{
+			{"Column 1", "Column 2", "Column 3"},
+			{"A", "B", "B"},
+			{"A", "C", "D"},
+			{"E", "F", "F"},
+			{"G", "F", "F"},
+			{"H", "H", "H"},
+		},
+	}
+
 	GoldenKeyValue = [][]map[string]string{
 		{
 			{
