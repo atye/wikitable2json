@@ -60,25 +60,23 @@ func (c *WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent str
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
+			status.Page: page,
+		}))
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, status.NewStatus(err.Error(), resp.StatusCode, status.WithDetails(status.Details{
-				status.Page: page,
-			}))
-		}
-		return nil, status.NewStatus(string(body), resp.StatusCode, status.WithDetails(status.Details{
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
 			status.Page: page,
 		}))
 	}
 
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	if resp.StatusCode != http.StatusOK {
+		return nil, status.NewStatus(string(b), resp.StatusCode, status.WithDetails(status.Details{
+			status.Page: page,
+		}))
 	}
 
 	return b, nil
