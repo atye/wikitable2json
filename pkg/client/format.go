@@ -12,8 +12,13 @@ import (
 type parsed map[int]map[int]cell
 
 type Verbose struct {
-	Text  string   `json:"text,omitempty"`
-	Links []string `json:"links,omitempty"`
+	Text  string `json:"text,omitempty"`
+	Links []Link `json:"links,omitempty"`
+}
+
+type Link struct {
+	Href string `json:"href,omitempty"`
+	Text string `json:"text,omitempty"`
 }
 
 var (

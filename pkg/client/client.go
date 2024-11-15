@@ -383,7 +383,7 @@ func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLi
 type cell struct {
 	set   bool
 	text  string
-	links []string
+	links []Link
 }
 
 func parseTable(tableSelection *goquery.Selection, tableIndex int, brIsNewLine bool) (parsed, error) {
@@ -465,7 +465,7 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, brIsNewLine b
 					columns[startCol+j+nextAvailableCell] = cell{
 						set:   true,
 						text:  parseText(s, parseNonTextNodeFuncs...),
-						links: parseLink(s)}
+						links: parseLink(s, parseNonTextNodeFuncs...)}
 					if i == 0 {
 						col++
 					}
@@ -521,12 +521,12 @@ func parseText(s *goquery.Selection, parseNonTextNode ...func(*html.Node) string
 	return buf.String()
 }
 
-func parseLink(s *goquery.Selection) []string {
-	var ret []string
+func parseLink(s *goquery.Selection, parseNonTextNode ...func(*html.Node) string) []Link {
+	var ret []Link
 	s.Find("a").Each(func(_ int, anchor *goquery.Selection) {
 		if v, ok := anchor.Attr("href"); ok {
 			if v != "" {
-				ret = append(ret, hrefPrefix.ReplaceAllString(v, ""))
+				ret = append(ret, Link{Href: v, Text: parseText(anchor, parseNonTextNode...)})
 			}
 		}
 	})
