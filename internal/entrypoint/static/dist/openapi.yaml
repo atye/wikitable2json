@@ -41,6 +41,11 @@ info:
 
     ### Get all tables on page [Template:COVID-19_pandemic_data](https://en.wikipedia.org/wiki/Template:COVID-19_pandemic_data) with reference link text removed:
     [https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true](https://www.wikitable2json.com/api/Template:COVID-19_pandemic_data?cleanRef=true)
+
+    <br>
+
+    ### Get all tables on page [Candidates_in_the_2024_Irish_general_election](https://en.wikipedia.org/wiki/Candidates_in_the_2024_Irish_general_election) with `br` elements replaced with new lines:
+    [https://www.wikitable2json.com/api/Candidates_in_the_2024_Irish_general_election?brNewLine=true](https://www.wikitable2json.com/api/Candidates_in_the_2024_Irish_general_election?brNewLine=true)
 paths:
   "/api/{page}":
     get:
@@ -90,6 +95,14 @@ paths:
         - name: verbose
           description: |
             Set to true to enable verbose output<br/>
+          in: query
+          required: false
+          schema:
+            type: string
+            default: false
+        - name: brNewLine
+          description: |
+            Set to true to replace br elements with new lines<br/>
           in: query
           required: false
           schema:
@@ -158,9 +171,12 @@ components:
         text:
           type: string
         links:
-          type: array
-          items:
-            type: string
+          type: object
+          properties:
+            text:
+              type: string
+            href:
+              type: string
     error:
       description: Error schema with a message, status code, and any details
       type: object
