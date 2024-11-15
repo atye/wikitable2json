@@ -80,6 +80,12 @@ var (
 		},
 	}
 
+	Issue105Matrix = [][][]string{
+		{
+			{"test0\ntest1", "test2"},
+		},
+	}
+
 	ReferenceMatrix = [][][]string{
 		{
 			{"Roy Morgan"},

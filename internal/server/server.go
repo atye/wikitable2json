@@ -42,6 +42,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if qv.cleanRef {
 		opts = append(opts, client.WithCleanReferences())
 	}
+	if qv.brNewLine {
+		opts = append(opts, client.WithBRNewLine())
+	}
 
 	s.client.SetUserAgent(r.Header.Get("User-Agent"))
 
@@ -84,11 +87,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type queryValues struct {
-	lang     string
-	tables   []int
-	cleanRef bool
-	keyRows  int
-	verbose  bool
+	lang      string
+	tables    []int
+	cleanRef  bool
+	keyRows   int
+	verbose   bool
+	brNewLine bool
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
@@ -117,6 +121,10 @@ func parseParameters(r *http.Request) (queryValues, error) {
 
 	if v := params.Get("verbose"); v == "true" {
 		qv.verbose = true
+	}
+
+	if v := params.Get("brNewLine"); v == "true" {
+		qv.brNewLine = true
 	}
 
 	if v := params.Get("keyRows"); v != "" {
