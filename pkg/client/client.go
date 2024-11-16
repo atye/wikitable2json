@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -25,8 +24,6 @@ var (
 		"table.standard",
 		"table.toccolours",
 	}
-
-	hrefPrefix = regexp.MustCompile(`^\.*\/`)
 )
 
 type TableGetter interface {
