@@ -187,6 +187,11 @@ func TestAPI(t *testing.T) {
 					fmt.Sprintf("http://localhost:%s/api/issue93?verbose=true", PORT),
 					Issue93MatrixVerbose,
 				},
+				{
+					"Issue105",
+					fmt.Sprintf("http://localhost:%s/api/issue105?brNewLine=true&verbose=true", PORT),
+					Issue105MatrixVerbose,
+				},
 			}
 
 			for _, tc := range tests {

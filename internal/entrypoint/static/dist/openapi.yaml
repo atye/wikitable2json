@@ -142,8 +142,8 @@ components:
       items:
         type: array
         items:
-          type: array
-          items:
+          type: object
+          additionalProperties:
             $ref: '#/components/schemas/verboseCell'
     keyValue:
       description: |

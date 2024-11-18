@@ -86,6 +86,25 @@ var (
 		},
 	}
 
+	Issue105MatrixVerbose = [][][]client.Verbose{
+		{
+			[]client.Verbose{
+				{
+					Text: "test0\ntest1",
+					Links: []client.Link{
+						{
+							Href: "./test1",
+							Text: "test1",
+						},
+					},
+				},
+				{
+					Text: "test2",
+				},
+			},
+		},
+	}
+
 	ReferenceMatrix = [][][]string{
 		{
 			{"Roy Morgan"},
