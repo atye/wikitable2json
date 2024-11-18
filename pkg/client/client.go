@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +14,7 @@ import (
 	"github.com/atye/wikitable2json/internal/api"
 	"github.com/atye/wikitable2json/internal/cache"
 	"github.com/atye/wikitable2json/internal/status"
+	"golang.org/x/net/html"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -24,8 +24,6 @@ var (
 		"table.standard",
 		"table.toccolours",
 	}
-
-	hrefPrefix = regexp.MustCompile(`^\.*\/`)
 )
 
 type TableGetter interface {
@@ -58,6 +56,12 @@ func WithCleanReferences() TableOption {
 	}
 }
 
+func WithBRNewLine() TableOption {
+	return func(to *tableOptions) {
+		to.brNewLine = true
+	}
+}
+
 func WithTables(tables ...int) TableOption {
 	return func(to *tableOptions) {
 		to.tables = tables
@@ -65,8 +69,9 @@ func WithTables(tables ...int) TableOption {
 }
 
 type tableOptions struct {
-	cleanRef bool
-	tables   []int
+	cleanRef  bool
+	brNewLine bool
+	tables    []int
 }
 
 type wikiAPI interface {
@@ -106,7 +111,7 @@ func (c *client) GetMatrix(ctx context.Context, page string, lang string, option
 		cleanReferences(tableSelection)
 	}
 
-	matrix, err := parse(tableSelection, 0, false, to.tables...)
+	matrix, err := parse(tableSelection, 0, false, to.brNewLine, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -138,7 +143,7 @@ func (c *client) GetMatrixVerbose(ctx context.Context, page string, lang string,
 		cleanReferences(tableSelection)
 	}
 
-	matrix, err := parse(tableSelection, 0, true, to.tables...)
+	matrix, err := parse(tableSelection, 0, true, to.brNewLine, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -174,7 +179,7 @@ func (c *client) GetKeyValue(ctx context.Context, page string, lang string, keyR
 		cleanReferences(tableSelection)
 	}
 
-	keyValue, err := parse(tableSelection, keyRows, false, to.tables...)
+	keyValue, err := parse(tableSelection, keyRows, false, to.brNewLine, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -210,7 +215,7 @@ func (c *client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 		cleanReferences(tableSelection)
 	}
 
-	keyValue, err := parse(tableSelection, keyRows, true, to.tables...)
+	keyValue, err := parse(tableSelection, keyRows, true, to.brNewLine, to.tables...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -288,7 +293,7 @@ func cleanReferences(tables *goquery.Selection) {
 	})
 }
 
-func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, tables ...int) ([]interface{}, error) {
+func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLine bool, tables ...int) ([]interface{}, error) {
 	var ret []interface{}
 
 	var eg errgroup.Group
@@ -297,7 +302,7 @@ func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, tables 
 		ret = make([]interface{}, tableSelection.Length())
 		tableSelection.Each(func(i int, selection *goquery.Selection) {
 			eg.Go(func() error {
-				td, err := parseTable(selection, i)
+				td, err := parseTable(selection, i, brNewLine)
 				if err != nil {
 					return err
 				}
@@ -333,7 +338,7 @@ func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, tables 
 			i := i
 			tableIndex := tableIndex
 			eg.Go(func() error {
-				td, err := parseTable(tableSelection.Eq(tableIndex), tableIndex)
+				td, err := parseTable(tableSelection.Eq(tableIndex), tableIndex, brNewLine)
 				if err != nil {
 					return err
 				}
@@ -375,15 +380,20 @@ func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, tables 
 type cell struct {
 	set   bool
 	text  string
-	links []string
+	links []Link
 }
 
-func parseTable(tableSelection *goquery.Selection, tableIndex int) (parsed, error) {
+func parseTable(tableSelection *goquery.Selection, tableIndex int, brIsNewLine bool) (parsed, error) {
 	td := make(parsed)
 
 	tableClass := getTableClass(tableSelection)
 	if tableClass == "" {
 		return td, nil
+	}
+
+	parseNonTextNodeFuncs := []func(*html.Node) string{}
+	if brIsNewLine {
+		parseNonTextNodeFuncs = append(parseNonTextNodeFuncs, brNewLine)
 	}
 
 	errorStatus := status.Status{}
@@ -451,8 +461,8 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int) (parsed, erro
 					}
 					columns[startCol+j+nextAvailableCell] = cell{
 						set:   true,
-						text:  parseText(s),
-						links: parseLink(s)}
+						text:  parseText(s, parseNonTextNodeFuncs...),
+						links: parseLink(s, parseNonTextNodeFuncs...)}
 					if i == 0 {
 						col++
 					}
@@ -483,20 +493,48 @@ func getTableClass(table *goquery.Selection) string {
 	return ""
 }
 
-func parseText(s *goquery.Selection) string {
-	return strings.TrimSpace(s.Text())
+func parseText(s *goquery.Selection, parseNonTextNode ...func(*html.Node) string) string {
+	var buf bytes.Buffer
+
+	var f func(*html.Node)
+	f = func(n *html.Node) {
+		if n.Type == html.TextNode {
+			buf.WriteString(n.Data)
+		} else if len(parseNonTextNode) > 0 {
+			for _, parseFn := range parseNonTextNode {
+				buf.WriteString(parseFn(n))
+			}
+		}
+		if n.FirstChild != nil {
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				f(c)
+			}
+		}
+	}
+	for _, n := range s.Nodes {
+		f(n)
+	}
+
+	return buf.String()
 }
 
-func parseLink(s *goquery.Selection) []string {
-	var ret []string
+func parseLink(s *goquery.Selection, parseNonTextNode ...func(*html.Node) string) []Link {
+	var ret []Link
 	s.Find("a").Each(func(_ int, anchor *goquery.Selection) {
 		if v, ok := anchor.Attr("href"); ok {
 			if v != "" {
-				ret = append(ret, hrefPrefix.ReplaceAllString(v, ""))
+				ret = append(ret, Link{Href: v, Text: parseText(anchor, parseNonTextNode...)})
 			}
 		}
 	})
 	return ret
+}
+
+func brNewLine(n *html.Node) string {
+	if n.Data == "br" {
+		return "\n"
+	}
+	return ""
 }
 
 func getSpan(values []string) (int, error) {

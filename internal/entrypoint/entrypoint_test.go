@@ -47,6 +47,8 @@ func TestAPI(t *testing.T) {
 			w.Write(getPageBytes(t, "issue85"))
 		case "/api/rest_v1/page/html/issue93":
 			w.Write(getPageBytes(t, "issue93"))
+		case "/api/rest_v1/page/html/issue105":
+			w.Write(getPageBytes(t, "issue105"))
 		case "/api/rest_v1/page/html/reference":
 			w.Write(getPageBytes(t, "reference"))
 		case "/api/rest_v1/page/html/simpleKeyValue":
@@ -150,6 +152,11 @@ func TestAPI(t *testing.T) {
 					fmt.Sprintf("http://localhost:%s/api/issue77", PORT),
 					Issue77Matrix,
 				},
+				{
+					"Issue105",
+					fmt.Sprintf("http://localhost:%s/api/issue105?brNewLine=true", PORT),
+					Issue105Matrix,
+				},
 			}
 
 			for _, tc := range tests {
@@ -179,6 +186,11 @@ func TestAPI(t *testing.T) {
 					"Issue93",
 					fmt.Sprintf("http://localhost:%s/api/issue93?verbose=true", PORT),
 					Issue93MatrixVerbose,
+				},
+				{
+					"Issue105",
+					fmt.Sprintf("http://localhost:%s/api/issue105?brNewLine=true&verbose=true", PORT),
+					Issue105MatrixVerbose,
 				},
 			}
 
