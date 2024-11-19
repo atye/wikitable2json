@@ -44,7 +44,7 @@ func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Durat
 
 func WithHTTPClient(c *http.Client) ClientOption {
 	return func(tg *client) {
-		tg.wikiAPI = api.NewWikiClient(api.BaseURL, api.WithHTTPClient(c))
+		tg.wikiAPI = api.NewWikiClient(api.WithHTTPClient(c))
 	}
 }
 
@@ -86,7 +86,7 @@ type client struct {
 
 func NewTableGetter(userAgent string, options ...ClientOption) TableGetter {
 	c := &client{
-		wikiAPI:   api.NewWikiClient(api.BaseURL),
+		wikiAPI:   api.NewWikiClient(),
 		userAgent: userAgent,
 	}
 
@@ -307,25 +307,9 @@ func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLi
 					return err
 				}
 
-				var tmp interface{}
-				if keyRows >= 1 {
-					if verbose {
-						tmp, err = formatKeyValueVerbose(td, keyRows, i)
-						if err != nil {
-							return err
-						}
-					} else {
-						tmp, err = formatKeyValue(td, keyRows, i)
-						if err != nil {
-							return err
-						}
-					}
-				} else {
-					if verbose {
-						tmp = formatMatrixVerbose(td)
-					} else {
-						tmp = formatMatrix(td)
-					}
+				tmp, err := formatParsedTable(td, verbose, keyRows, i)
+				if err != nil {
+					return err
 				}
 
 				ret[i] = tmp
@@ -342,26 +326,9 @@ func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLi
 				if err != nil {
 					return err
 				}
-
-				var tmp interface{}
-				if keyRows >= 1 {
-					if verbose {
-						tmp, err = formatKeyValueVerbose(td, keyRows, i)
-						if err != nil {
-							return err
-						}
-					} else {
-						tmp, err = formatKeyValue(td, keyRows, i)
-						if err != nil {
-							return err
-						}
-					}
-				} else {
-					if verbose {
-						tmp = formatMatrixVerbose(td)
-					} else {
-						tmp = formatMatrix(td)
-					}
+				tmp, err := formatParsedTable(td, verbose, keyRows, i)
+				if err != nil {
+					return err
 				}
 
 				ret[i] = tmp
@@ -375,6 +342,31 @@ func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLi
 		return nil, err
 	}
 	return ret, nil
+}
+
+func formatParsedTable(data parsed, verbose bool, keyRows int, tableIndex int) (interface{}, error) {
+	var tmp interface{}
+	var err error
+	if keyRows >= 1 {
+		if verbose {
+			tmp, err = formatKeyValueVerbose(data, keyRows, tableIndex)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			tmp, err = formatKeyValue(data, keyRows, tableIndex)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else {
+		if verbose {
+			tmp = formatMatrixVerbose(data)
+		} else {
+			tmp = formatMatrix(data)
+		}
+	}
+	return tmp, nil
 }
 
 type cell struct {
