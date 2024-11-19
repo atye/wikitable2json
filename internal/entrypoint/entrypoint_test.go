@@ -23,54 +23,54 @@ var (
 func TestAPI(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/api/rest_v1/page/html/golden":
+		case "/golden":
 			w.Write(getPageBytes(t, "golden"))
-		case "/api/rest_v1/page/html/goldenDouble":
+		case "/goldenDouble":
 			w.Write(getPageBytes(t, "goldenDouble"))
-		case "/api/rest_v1/page/html/issueOne":
+		case "/issueOne":
 			w.Write(getPageBytes(t, "issueOne"))
-		case "/api/rest_v1/page/html/dataSortValue":
+		case "/dataSortValue":
 			w.Write(getPageBytes(t, "dataSortValue"))
-		case "/api/rest_v1/page/html/allTableClasses":
+		case "/allTableClasses":
 			w.Write(getPageBytes(t, "allTableClasses"))
-		case "/api/rest_v1/page/html/badRowSpan":
+		case "/badRowSpan":
 			w.Write(getPageBytes(t, "badRowSpan"))
-		case "/api/rest_v1/page/html/badColSpan":
+		case "/badColSpan":
 			w.Write(getPageBytes(t, "badColSpan"))
-		case "/api/rest_v1/page/html/issue34":
+		case "/issue34":
 			w.Write(getPageBytes(t, "issue34"))
-		case "/api/rest_v1/page/html/issue56":
+		case "/issue56":
 			w.Write(getPageBytes(t, "issue56"))
-		case "/api/rest_v1/page/html/issue77":
+		case "/issue77":
 			w.Write(getPageBytes(t, "issue77"))
-		case "/api/rest_v1/page/html/issue85":
+		case "/issue85":
 			w.Write(getPageBytes(t, "issue85"))
-		case "/api/rest_v1/page/html/issue93":
+		case "/issue93":
 			w.Write(getPageBytes(t, "issue93"))
-		case "/api/rest_v1/page/html/issue105":
+		case "/issue105":
 			w.Write(getPageBytes(t, "issue105"))
-		case "/api/rest_v1/page/html/reference":
+		case "/reference":
 			w.Write(getPageBytes(t, "reference"))
-		case "/api/rest_v1/page/html/simpleKeyValue":
+		case "/simpleKeyValue":
 			w.Write(getPageBytes(t, "simpleKeyValue"))
-		case "/api/rest_v1/page/html/complexKeyValue":
+		case "/complexKeyValue":
 			w.Write(getPageBytes(t, "complexKeyValue"))
-		case "/api/rest_v1/page/html/keyValueBadRows":
+		case "/keyValueBadRows":
 			w.Write(getPageBytes(t, "keyValueBadRows"))
-		case "/api/rest_v1/page/html/keyValueOneRow":
+		case "/keyValueOneRow":
 			w.Write(getPageBytes(t, "keyValueOneRow"))
-		case "/api/rest_v1/page/html/noTables":
+		case "/noTables":
 			w.Write(getPageBytes(t, "noTables"))
-		case "/api/rest_v1/page/html/StatusRequestEntityTooLarge":
+		case "/StatusRequestEntityTooLarge":
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 			w.Write([]byte("StatusRequestEntityTooLarge"))
-		case "/api/rest_v1/page/html/UserAgent":
+		case "/UserAgent":
 			got := r.Header.Get("User-Agent")
 			want := "test@mail.com"
 			if want != got {
 				t.Errorf("want %s, got %s", want, got)
 			}
-		case "/api/rest_v1/page/html/NoUserAgent":
+		case "/NoUserAgent":
 			got := r.Header.Get("User-Agent")
 			want := "github.com/atye/wikitable2json"
 			if want != got {
@@ -82,10 +82,10 @@ func TestAPI(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	originalBaseURL := api.BaseURL
-	api.BaseURL = ts.URL
+	originalGetEndpoint := api.GetEndpoint
+	api.GetEndpoint = func(_, page string) string { return fmt.Sprintf("%s/%s", ts.URL, page) }
 	defer func() {
-		api.BaseURL = originalBaseURL
+		api.GetEndpoint = originalGetEndpoint
 	}()
 
 	go Run(Config{

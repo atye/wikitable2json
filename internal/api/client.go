@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/atye/wikitable2json/internal/status"
@@ -16,9 +15,12 @@ var (
 	BaseURL = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
 )
 
+var GetEndpoint = func(lang, page string) string {
+	return fmt.Sprintf(BaseURL, lang, url.QueryEscape(page))
+}
+
 type WikiClient struct {
-	client   *http.Client
-	endpoint string
+	client *http.Client
 }
 
 type Option func(c *WikiClient)
@@ -29,10 +31,9 @@ func WithHTTPClient(c *http.Client) Option {
 	}
 }
 
-func NewWikiClient(endpoint string, options ...Option) *WikiClient {
+func NewWikiClient(options ...Option) *WikiClient {
 	wc := &WikiClient{
-		client:   &http.Client{Timeout: 10 * time.Second},
-		endpoint: endpoint,
+		client: &http.Client{Timeout: 10 * time.Second},
 	}
 
 	for _, o := range options {
@@ -42,12 +43,12 @@ func NewWikiClient(endpoint string, options ...Option) *WikiClient {
 }
 
 func (c *WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error) {
-	addr, err := buildURL(c.endpoint, page, lang)
+	u, err := url.Parse(GetEndpoint(lang, page))
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, addr, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
@@ -80,20 +81,4 @@ func (c *WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent str
 	}
 
 	return b, nil
-}
-
-func buildURL(endpoint, page, lang string) (string, error) {
-	if strings.Contains(endpoint, "wikipedia.org") {
-		u, err := url.Parse(fmt.Sprintf(BaseURL, lang, url.QueryEscape(page)))
-		if err != nil {
-			return "", err
-		}
-		return u.String(), nil
-	}
-
-	u, err := url.Parse(fmt.Sprintf("%s/api/rest_v1/page/html/%s", endpoint, url.QueryEscape(page)))
-	if err != nil {
-		return "", err
-	}
-	return u.String(), nil
 }
