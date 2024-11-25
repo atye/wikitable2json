@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/atye/wikitable2json/internal/server"
-	"github.com/atye/wikitable2json/pkg/client"
 )
 
 //go:embed static/dist/*
@@ -15,7 +14,7 @@ var swagger embed.FS
 
 type Config struct {
 	Port   string
-	Client client.TableGetter
+	Client server.TableGetter
 }
 
 func Run(c Config) error {

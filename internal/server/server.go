@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,11 +16,19 @@ const (
 	defaultLang = "en"
 )
 
-type Server struct {
-	client client.TableGetter
+type TableGetter interface {
+	GetMatrix(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]string, error)
+	GetMatrixVerbose(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]client.Verbose, error)
+	GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]string, error)
+	GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]client.Verbose, error)
+	SetUserAgent(string)
 }
 
-func NewServer(client client.TableGetter) *Server {
+type Server struct {
+	client TableGetter
+}
+
+func NewServer(client TableGetter) *Server {
 	return &Server{
 		client: client,
 	}
