@@ -44,7 +44,7 @@ func TestWikiClient(t *testing.T) {
 
 		sut := NewWikiClient()
 
-		got, err := sut.GetPageBytes(context.Background(), "test", "en", "")
+		got, err := sut.GetPage(context.Background(), "test", "en", "")
 		if err != nil {
 			t.Errorf("expected nil error, got %v", err)
 		}
@@ -76,7 +76,7 @@ func TestWikiClient(t *testing.T) {
 
 		sut := NewWikiClient()
 
-		_, got := sut.GetPageBytes(context.Background(), "test", "en", "")
+		_, got := sut.GetPage(context.Background(), "test", "en", "")
 
 		want := status.Status{
 			Message: "error",

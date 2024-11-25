@@ -42,7 +42,7 @@ func NewWikiClient(options ...Option) *WikiClient {
 	return wc
 }
 
-func (c *WikiClient) GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error) {
+func (c *WikiClient) GetPage(ctx context.Context, page, lang, userAgent string) ([]byte, error) {
 	u, err := url.Parse(GetEndpoint(lang, page))
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)

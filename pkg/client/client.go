@@ -24,16 +24,20 @@ var (
 		"table.standard",
 		"table.toccolours",
 	}
+
+	newPageGetter = func() pageGetter {
+		return api.NewWikiClient()
+	}
 )
 
-type wikiAPI interface {
-	GetPageBytes(ctx context.Context, page, lang, userAgent string) ([]byte, error)
+type pageGetter interface {
+	GetPage(ctx context.Context, page, lang, userAgent string) ([]byte, error)
 }
 
 type Client struct {
-	wikiAPI   wikiAPI
-	userAgent string
-	cache     *cache.Cache
+	pageGetter pageGetter
+	userAgent  string
+	cache      *cache.Cache
 }
 
 type ClientOption func(*Client)
@@ -46,8 +50,14 @@ func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Durat
 
 func WithHTTPClient(c *http.Client) ClientOption {
 	return func(tg *Client) {
-		tg.wikiAPI = api.NewWikiClient(api.WithHTTPClient(c))
+		tg.pageGetter = api.NewWikiClient(api.WithHTTPClient(c))
 	}
+}
+
+type tableOptions struct {
+	cleanRef  bool
+	brNewLine bool
+	tables    []int
 }
 
 type TableOption func(*tableOptions)
@@ -70,16 +80,10 @@ func WithTables(tables ...int) TableOption {
 	}
 }
 
-type tableOptions struct {
-	cleanRef  bool
-	brNewLine bool
-	tables    []int
-}
-
 func NewTableGetter(userAgent string, options ...ClientOption) *Client {
 	c := &Client{
-		wikiAPI:   api.NewWikiClient(),
-		userAgent: userAgent,
+		pageGetter: newPageGetter(),
+		userAgent:  userAgent,
 	}
 
 	for _, o := range options {
@@ -253,7 +257,7 @@ func (c *Client) getTableSelection(ctx context.Context, page string, lang string
 }
 
 func (c *Client) getTableSelectionFromAPI(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
-	b, err := c.wikiAPI.GetPageBytes(ctx, page, lang, c.userAgent)
+	b, err := c.pageGetter.GetPage(ctx, page, lang, c.userAgent)
 	if err != nil {
 		return nil, err
 	}
