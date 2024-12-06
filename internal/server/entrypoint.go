@@ -1,12 +1,10 @@
-package entrypoint
+package server
 
 import (
 	"embed"
 	"fmt"
 	"io/fs"
 	"net/http"
-
-	"github.com/atye/wikitable2json/internal/server"
 )
 
 //go:embed static/dist/*
@@ -14,22 +12,20 @@ var swagger embed.FS
 
 type Config struct {
 	Port   string
-	Client server.TableGetter
+	Client tableGetter
+	Cache  *cache
 }
 
 func Run(c Config) error {
-	mux := http.NewServeMux()
-	mux.Handle("GET /", http.StripPrefix("/", http.FileServer(getSwagger())))
-	mux.Handle("GET /api/{page}", headerMW(server.NewServer(c.Client)))
-	return http.ListenAndServe(fmt.Sprintf(":%s", c.Port), mux)
-}
-
-func getSwagger() http.FileSystem {
 	dist, err := fs.Sub(swagger, "static/dist")
 	if err != nil {
-		panic(err)
+		return err
 	}
-	return http.FS(dist)
+
+	mux := http.NewServeMux()
+	mux.Handle("GET /", http.StripPrefix("/", http.FileServer(http.FS(dist))))
+	mux.Handle("GET /api/{page}", headerMW(newServer(c.Client, c.Cache)))
+	return http.ListenAndServe(fmt.Sprintf(":%s", c.Port), mux)
 }
 
 func headerMW(next http.Handler) http.Handler {

@@ -8,15 +8,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/atye/wikitable2json/internal/status"
 	"github.com/atye/wikitable2json/pkg/client"
+	"github.com/atye/wikitable2json/pkg/client/status"
 )
 
 const (
 	defaultLang = "en"
 )
 
-type TableGetter interface {
+type tableGetter interface {
 	GetMatrix(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]string, error)
 	GetMatrixVerbose(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]client.Verbose, error)
 	GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]string, error)
@@ -25,12 +25,14 @@ type TableGetter interface {
 }
 
 type Server struct {
-	client TableGetter
+	client tableGetter
+	cache  *cache
 }
 
-func NewServer(client TableGetter) *Server {
+func newServer(client tableGetter, cache *cache) *Server {
 	return &Server{
 		client: client,
+		cache:  cache,
 	}
 }
 
@@ -42,6 +44,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	qv, err := parseParameters(r)
 	if err != nil {
 		writeError(w, err)
+		return
+	}
+
+	key := buildCacheKey(page, qv)
+	data, ok := s.cache.Get(key)
+	if ok {
+		err = json.NewEncoder(w).Encode(data)
+		if err != nil {
+			writeError(w, status.NewStatus(err.Error(), http.StatusInternalServerError))
+			return
+		}
 		return
 	}
 
@@ -61,32 +74,22 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if qv.keyRows >= 1 {
 		if qv.verbose {
 			resp, err = s.client.GetKeyValueVerbose(ctx, page, qv.lang, qv.keyRows, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		} else {
 			resp, err = s.client.GetKeyValue(ctx, page, qv.lang, qv.keyRows, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		}
 	} else {
 		if qv.verbose {
 			resp, err = s.client.GetMatrixVerbose(ctx, page, qv.lang, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		} else {
 			resp, err = s.client.GetMatrix(ctx, page, qv.lang, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		}
 	}
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	go s.cache.Set(key, resp)
 
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
@@ -102,6 +105,18 @@ type queryValues struct {
 	keyRows   int
 	verbose   bool
 	brNewLine bool
+}
+
+func (q queryValues) string() string {
+	tables := "all"
+	if len(q.tables) > 0 {
+		tmp := ""
+		for _, v := range q.tables {
+			tmp = tmp + strconv.Itoa(v)
+		}
+		tables = tmp
+	}
+	return fmt.Sprintf("%s-%s-%t-%d-%t-%t", q.lang, tables, q.cleanRef, q.keyRows, q.verbose, q.brNewLine)
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
@@ -150,6 +165,10 @@ func parseParameters(r *http.Request) (queryValues, error) {
 	}
 
 	return qv, nil
+}
+
+func buildCacheKey(page string, qv queryValues) string {
+	return fmt.Sprintf("%s-%s", page, qv.string())
 }
 
 func writeError(w http.ResponseWriter, err error) {
