@@ -1,6 +1,4 @@
-package entrypoint
-
-import "github.com/atye/wikitable2json/pkg/client"
+package client
 
 var (
 	GoldenMatrix = [][][]string{
@@ -55,6 +53,8 @@ var (
 		},
 	}
 
+	NoTablesMatrix = [][][]string{}
+
 	IssueOneMatrix = [][][]string{
 		{
 			{"Jeju", "South Korea", "official, in Jeju Island"},
@@ -86,12 +86,12 @@ var (
 		},
 	}
 
-	Issue105MatrixVerbose = [][][]client.Verbose{
+	Issue105MatrixVerbose = [][][]Verbose{
 		{
-			[]client.Verbose{
+			[]Verbose{
 				{
 					Text: "test0\ntest1",
-					Links: []client.Link{
+					Links: []Link{
 						{
 							Href: "./test1",
 							Text: "test1",
@@ -128,7 +128,7 @@ var (
 		},
 	}
 
-	Issue77MatrixVerbose = [][][]client.Verbose{
+	Issue77MatrixVerbose = [][][]Verbose{
 		{
 			{
 				{
@@ -150,7 +150,7 @@ var (
 			{
 				{
 					Text: "FeuchtHauptstraße 37(Standort)",
-					Links: []client.Link{
+					Links: []Link{
 						{
 							Text: "Standort",
 							Href: "https://geohack.toolforge.org/geohack.php?pagename=Liste_der_Baudenkm%C3%A4ler_in_Feucht&language=de&params=49.37546_N_11.21422_E_region:DE-BY_type:building&title=Feucht%2C+Hauptstra%C3%9Fe+37%2C+Ehemaliges+Wirtschaftsgeb%C3%A4ude",
@@ -168,7 +168,7 @@ var (
 				},
 				{
 					Text: "weitere Bilder",
-					Links: []client.Link{
+					Links: []Link{
 						{
 							Href: "./Datei:2018_Feucht_Hauptstraße_37_02.jpg",
 						},
@@ -182,12 +182,12 @@ var (
 		},
 	}
 
-	Issue77KeyValueVerbose = [][]map[string]client.Verbose{
+	Issue77KeyValueVerbose = [][]map[string]Verbose{
 		{
 			{
 				"Lage": {
 					Text: "FeuchtHauptstraße 37(Standort)",
-					Links: []client.Link{
+					Links: []Link{
 						{
 							Text: "Standort",
 							Href: "https://geohack.toolforge.org/geohack.php?pagename=Liste_der_Baudenkm%C3%A4ler_in_Feucht&language=de&params=49.37546_N_11.21422_E_region:DE-BY_type:building&title=Feucht%2C+Hauptstra%C3%9Fe+37%2C+Ehemaliges+Wirtschaftsgeb%C3%A4ude",
@@ -205,7 +205,7 @@ var (
 				},
 				"Bild": {
 					Text: "weitere Bilder",
-					Links: []client.Link{
+					Links: []Link{
 						{
 							Href: "./Datei:2018_Feucht_Hauptstraße_37_02.jpg",
 						},
@@ -315,7 +315,7 @@ var (
 		},
 	}
 
-	Issue93MatrixVerbose = [][][]client.Verbose{
+	Issue93MatrixVerbose = [][][]Verbose{
 		{
 			{
 				{
@@ -331,7 +331,7 @@ var (
 				},
 				{
 					Text: "Bolivia, Plurinational State of",
-					Links: []client.Link{
+					Links: []Link{
 						{
 							Text: "Bolivia, Plurinational State of",
 							Href: "./Bolivia",
@@ -342,7 +342,7 @@ var (
 		},
 	}
 
-	Issue93KeyValueVerbose = [][]map[string]client.Verbose{
+	Issue93KeyValueVerbose = [][]map[string]Verbose{
 		{
 			{
 				"header1": {
@@ -350,7 +350,7 @@ var (
 				},
 				"header2": {
 					Text: "Bolivia, Plurinational State of",
-					Links: []client.Link{
+					Links: []Link{
 						{
 							Text: "Bolivia, Plurinational State of",
 							Href: "./Bolivia",

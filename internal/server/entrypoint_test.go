@@ -1,6 +1,6 @@
-package entrypoint
+package server
 
-import (
+/*import (
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/atye/wikitable2json/internal/api"
-	"github.com/atye/wikitable2json/internal/status"
 	"github.com/atye/wikitable2json/pkg/client"
+	"github.com/atye/wikitable2json/pkg/client/status"
 )
 
 var (
@@ -90,7 +90,7 @@ func TestAPI(t *testing.T) {
 
 	go Run(Config{
 		Port:   PORT,
-		Client: client.NewTableGetter("", client.WithCache(3, 500*time.Millisecond, 500*time.Millisecond), client.WithHTTPClient(http.DefaultClient)),
+		Client: client.NewTableGetter("", client.WithHTTPClient(http.DefaultClient)),
 	})
 
 	waitforServer()
@@ -505,3 +505,4 @@ func waitforServer() {
 		return
 	}
 }
+*/

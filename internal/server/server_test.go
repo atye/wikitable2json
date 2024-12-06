@@ -6,8 +6,78 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/atye/wikitable2json/internal/status"
+	"github.com/atye/wikitable2json/pkg/client/status"
 )
+
+func TestBuildCacheKey(t *testing.T) {
+	tests := []struct {
+		name string
+		qv   queryValues
+		page string
+		want string
+	}{
+		{
+			"en-0-false-2-false-false",
+			queryValues{
+				lang:      "en",
+				tables:    []int{0},
+				cleanRef:  false,
+				keyRows:   2,
+				verbose:   false,
+				brNewLine: false,
+			},
+			"test",
+			"test-en-0-false-2-false-false",
+		},
+		{
+			"en-0-true-2-true-true",
+			queryValues{
+				lang:      "en",
+				tables:    []int{0},
+				cleanRef:  true,
+				keyRows:   2,
+				verbose:   true,
+				brNewLine: true,
+			},
+			"test",
+			"test-en-0-true-2-true-true",
+		},
+		{
+			"en-01-true-2-true-true",
+			queryValues{
+				lang:      "en",
+				tables:    []int{0, 1},
+				cleanRef:  true,
+				keyRows:   2,
+				verbose:   true,
+				brNewLine: true,
+			},
+			"test",
+			"test-en-01-true-2-true-true",
+		},
+		{
+			"en-all-true-2-true-true",
+			queryValues{
+				lang:      "en",
+				cleanRef:  true,
+				keyRows:   2,
+				verbose:   true,
+				brNewLine: true,
+			},
+			"test",
+			"test-en-all-true-2-true-true",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := buildCacheKey(tc.page, tc.qv)
+			if got != tc.want {
+				t.Errorf("want %v, got %v", tc.want, got)
+			}
+		})
+	}
+}
 
 func TestParseParameters(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {

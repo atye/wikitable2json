@@ -5,15 +5,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/atye/wikitable2json/internal/api"
-	"github.com/atye/wikitable2json/internal/cache"
-	"github.com/atye/wikitable2json/internal/status"
+	"github.com/atye/wikitable2json/pkg/client/status"
 	"golang.org/x/net/html"
 	"golang.org/x/sync/errgroup"
 )
@@ -25,32 +24,22 @@ var (
 		"table.toccolours",
 	}
 
-	newPageGetter = func() pageGetter {
-		return api.NewWikiClient()
-	}
+	defaultUserAgent = "github.com/atye/wikitable2json"
+
+	apiURL      = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
+	getApiURLFn = getApiURL
 )
 
-type pageGetter interface {
-	GetPage(ctx context.Context, page, lang, userAgent string) ([]byte, error)
-}
-
 type Client struct {
-	pageGetter pageGetter
-	userAgent  string
-	cache      *cache.Cache
+	http      *http.Client
+	userAgent string
 }
 
 type ClientOption func(*Client)
 
-func WithCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) ClientOption {
-	return func(c *Client) {
-		c.cache = cache.NewCache(capacity, itemExpiration, purgeEvery)
-	}
-}
-
 func WithHTTPClient(c *http.Client) ClientOption {
 	return func(tg *Client) {
-		tg.pageGetter = api.NewWikiClient(api.WithHTTPClient(c))
+		tg.http = c
 	}
 }
 
@@ -80,10 +69,10 @@ func WithTables(tables ...int) TableOption {
 	}
 }
 
-func NewTableGetter(userAgent string, options ...ClientOption) *Client {
+func NewClient(userAgent string, options ...ClientOption) *Client {
 	c := &Client{
-		pageGetter: newPageGetter(),
-		userAgent:  userAgent,
+		http:      http.DefaultClient,
+		userAgent: userAgent,
 	}
 
 	for _, o := range options {
@@ -93,7 +82,7 @@ func NewTableGetter(userAgent string, options ...ClientOption) *Client {
 }
 
 func (c *Client) GetMatrix(ctx context.Context, page string, lang string, options ...TableOption) ([][][]string, error) {
-	tableSelection, err := c.getTableSelection(ctx, page, lang)
+	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -125,7 +114,7 @@ func (c *Client) GetMatrix(ctx context.Context, page string, lang string, option
 }
 
 func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string, options ...TableOption) ([][][]Verbose, error) {
-	tableSelection, err := c.getTableSelection(ctx, page, lang)
+	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -161,7 +150,7 @@ func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyR
 		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
 	}
 
-	tableSelection, err := c.getTableSelection(ctx, page, lang)
+	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -197,7 +186,7 @@ func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
 	}
 
-	tableSelection, err := c.getTableSelection(ctx, page, lang)
+	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -228,36 +217,12 @@ func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 	return ret, nil
 }
 
-func (c *Client) SetUserAgent(agent string) {
-	c.userAgent = agent
-}
-
-func (c *Client) getTableSelection(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
-	var tableSelection *goquery.Selection
-	var err error
-
-	if c.cache != nil {
-		var ok bool
-		tableSelection, ok = c.cache.Get(page)
-		if !ok {
-			tableSelection, err = c.getTableSelectionFromAPI(ctx, page, lang)
-			if err != nil {
-				return nil, err
-			}
-			c.cache.Set(page, tableSelection)
-		}
-	} else {
-		tableSelection, err = c.getTableSelectionFromAPI(ctx, page, lang)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return tableSelection, nil
+func (c *Client) SetUserAgent(userAgent string) {
+	c.userAgent = userAgent
 }
 
 func (c *Client) getTableSelectionFromAPI(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
-	b, err := c.pageGetter.GetPage(ctx, page, lang, c.userAgent)
+	b, err := c.getPageData(ctx, page, lang)
 	if err != nil {
 		return nil, err
 	}
@@ -269,8 +234,48 @@ func (c *Client) getTableSelectionFromAPI(ctx context.Context, page string, lang
 
 	doc.Find(".mw-empty-elt").Remove()
 	doc.Find("style").Remove()
-
 	return doc.Find(strings.Join(classes, ", ")), nil
+}
+
+func (c *Client) getPageData(ctx context.Context, page string, lang string) ([]byte, error) {
+	u, err := url.Parse(getApiURLFn(lang, page))
+	if err != nil {
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
+	}
+
+	agent := defaultUserAgent
+	if c.userAgent != "" {
+		agent = c.userAgent
+	}
+	req.Header.Add("User-Agent", agent)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
+			status.Page: page,
+		}))
+	}
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError, status.WithDetails(status.Details{
+			status.Page: page,
+		}))
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, status.NewStatus(string(b), resp.StatusCode, status.WithDetails(status.Details{
+			status.Page: page,
+		}))
+	}
+
+	return b, nil
 }
 
 func cleanReferences(tables *goquery.Selection) {
@@ -543,4 +548,8 @@ func handleErr(err error) status.Status {
 		return s
 	}
 	return status.NewStatus(err.Error(), http.StatusInternalServerError)
+}
+
+func getApiURL(lang, page string) string {
+	return fmt.Sprintf(apiURL, lang, page)
 }

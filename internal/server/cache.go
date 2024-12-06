@@ -1,20 +1,18 @@
-package cache
+package server
 
 import (
 	"container/list"
 	"sync"
 	"time"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
 type item struct {
 	key       string
-	selection *goquery.Selection
+	data      any
 	expiresAt time.Time
 }
 
-type Cache struct {
+type cache struct {
 	mu             sync.Mutex
 	capacity       int
 	list           *list.List
@@ -23,8 +21,8 @@ type Cache struct {
 	purgeEvery     time.Duration
 }
 
-func NewCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) *Cache {
-	c := &Cache{
+func NewCache(capacity int, itemExpiration time.Duration, purgeEvery time.Duration) *cache {
+	c := &cache{
 		mu:             sync.Mutex{},
 		capacity:       capacity,
 		itemExpiration: itemExpiration,
@@ -50,23 +48,23 @@ func NewCache(capacity int, itemExpiration time.Duration, purgeEvery time.Durati
 	return c
 }
 
-func (c *Cache) Get(key string) (*goquery.Selection, bool) {
+func (c *cache) Get(key string) (any, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if element, ok := c.elements[key]; ok {
 		c.list.MoveToFront(element)
-		return element.Value.(*list.Element).Value.(item).selection, true
+		return element.Value.(*list.Element).Value.(item).data, true
 	}
 	return nil, false
 }
 
-func (c *Cache) Set(key string, s *goquery.Selection) {
+func (c *cache) Set(key string, s any) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	if element, ok := c.elements[key]; ok {
-		element.Value.(*list.Element).Value = item{key: key, selection: s, expiresAt: element.Value.(*list.Element).Value.(item).expiresAt}
+		element.Value.(*list.Element).Value = item{key: key, data: s, expiresAt: element.Value.(*list.Element).Value.(item).expiresAt}
 		c.list.MoveToFront(element)
 	} else {
 		if c.list.Len() == c.capacity {
@@ -79,7 +77,7 @@ func (c *Cache) Set(key string, s *goquery.Selection) {
 		element := &list.Element{
 			Value: item{
 				key:       key,
-				selection: s,
+				data:      s,
 				expiresAt: time.Now().Add(c.itemExpiration),
 			},
 		}

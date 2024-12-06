@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/atye/wikitable2json/internal/status"
+	"github.com/atye/wikitable2json/pkg/client/status"
 )
 
 type parsed map[int]map[int]cell
