@@ -30,6 +30,9 @@ type Server struct {
 }
 
 func newServer(client tableGetter, cache *cache) *Server {
+	if client == nil || cache == nil {
+		panic("client or cache is nil")
+	}
 	return &Server{
 		client: client,
 		cache:  cache,
@@ -40,6 +43,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	page := r.PathValue("page")
+	if page == "" {
+		writeError(w, status.NewStatus("page value must be supplied in /api/{page}", http.StatusBadRequest))
+		return
+	}
 
 	qv, err := parseParameters(r)
 	if err != nil {
