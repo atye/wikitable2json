@@ -22,7 +22,7 @@ func TestServeHTTP_CacheMissGetMatrix(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrix: wantData}
-	sut := newServer(tg, NewCache(10, 10*time.Second, 10*time.Second))
+	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page", nil)
@@ -69,7 +69,7 @@ func TestServeHTTP_CacheMissGetMatrixVerbose(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrixVerbose: wantData}
-	sut := newServer(tg, NewCache(10, 10*time.Second, 10*time.Second))
+	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page?verbose=true", nil)
@@ -106,7 +106,7 @@ func TestServeHTTP_CacheMissGetKeyValue(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getKeyValue: wantData}
-	sut := newServer(tg, NewCache(10, 10*time.Second, 10*time.Second))
+	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page?keyRows=1", nil)
@@ -153,7 +153,7 @@ func TestServeHTTP_CacheMissGetKeyValueVerbose(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getKeyValueVerbose: wantData}
-	sut := newServer(tg, NewCache(10, 10*time.Second, 10*time.Second))
+	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page?keyRows=1&verbose=true&cleanRef=true&brNewLine=true", nil)
@@ -188,11 +188,17 @@ func TestServeHTTP_CacheHit(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrix: wantData}
-	sut := newServer(tg, NewCache(10, 10*time.Second, 10*time.Second))
-	sut.cache.Set("page-en-all-false-0-false-false", wantData)
+	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page", nil)
+	r.SetPathValue("page", "page")
+	sut.ServeHTTP(w, r)
+
+	tg.getMatrixCalled = false
+
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest("GET", "/api/page", nil)
 	r.SetPathValue("page", "page")
 	sut.ServeHTTP(w, r)
 
@@ -221,7 +227,7 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 		Code:    http.StatusBadRequest,
 	}
 
-	sut := newServer(&mockTableGetter{}, &cache{})
+	sut := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api", nil)
@@ -243,7 +249,7 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 }
 
 func TestServeHTTP_InvalidQuery(t *testing.T) {
-	sut := newServer(&mockTableGetter{}, &cache{})
+	sut := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second))
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page?table=x", nil)
@@ -258,8 +264,9 @@ func TestServeHTTP_InvalidQuery(t *testing.T) {
 func TestServeHTTP_ClientError(t *testing.T) {
 	err := status.NewStatus("error", http.StatusInternalServerError)
 
+	cache := NewCache(10, 10*time.Second)
 	tg := &mockTableGetter{getMatrix: nil, err: err}
-	sut := newServer(tg, NewCache(10, 10*time.Second, 10*time.Second))
+	sut := NewServer(tg, cache)
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page", nil)
@@ -268,6 +275,10 @@ func TestServeHTTP_ClientError(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Errorf("want code %d, got %d", http.StatusInternalServerError, w.Code)
+	}
+
+	if _, ok := cache.Get("page-en-all-false-0-false-false"); ok {
+		t.Errorf("expected cache miss, got page-en-x-false-0-false-false")
 	}
 }
 

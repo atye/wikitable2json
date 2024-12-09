@@ -16,7 +16,7 @@ const (
 	defaultLang = "en"
 )
 
-type tableGetter interface {
+type TableGetter interface {
 	GetMatrix(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]string, error)
 	GetMatrixVerbose(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]client.Verbose, error)
 	GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]string, error)
@@ -25,11 +25,11 @@ type tableGetter interface {
 }
 
 type Server struct {
-	client tableGetter
-	cache  *cache
+	client TableGetter
+	cache  *Cache
 }
 
-func newServer(client tableGetter, cache *cache) *Server {
+func NewServer(client TableGetter, cache *Cache) *Server {
 	if client == nil || cache == nil {
 		panic("client or cache is nil")
 	}
@@ -96,7 +96,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go s.cache.Set(key, resp)
+	defer func() {
+		_ = s.cache.Add(key, resp)
+	}()
 
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
