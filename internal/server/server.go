@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/atye/wikitable2json/internal/status"
 	"github.com/atye/wikitable2json/pkg/client"
+	"github.com/atye/wikitable2json/pkg/client/status"
 )
 
 const (
@@ -26,11 +26,16 @@ type TableGetter interface {
 
 type Server struct {
 	client TableGetter
+	cache  *Cache
 }
 
-func NewServer(client TableGetter) *Server {
+func NewServer(client TableGetter, cache *Cache) *Server {
+	if client == nil || cache == nil {
+		panic("client or cache is nil")
+	}
 	return &Server{
 		client: client,
+		cache:  cache,
 	}
 }
 
@@ -38,10 +43,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	page := r.PathValue("page")
+	if page == "" {
+		writeError(w, status.NewStatus("page value must be supplied in /api/{page}", http.StatusBadRequest))
+		return
+	}
 
 	qv, err := parseParameters(r)
 	if err != nil {
 		writeError(w, err)
+		return
+	}
+
+	key := buildCacheKey(page, qv)
+	data, ok := s.cache.Get(key)
+	if ok {
+		err = json.NewEncoder(w).Encode(data)
+		if err != nil {
+			writeError(w, status.NewStatus(err.Error(), http.StatusInternalServerError))
+			return
+		}
 		return
 	}
 
@@ -61,32 +81,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if qv.keyRows >= 1 {
 		if qv.verbose {
 			resp, err = s.client.GetKeyValueVerbose(ctx, page, qv.lang, qv.keyRows, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		} else {
 			resp, err = s.client.GetKeyValue(ctx, page, qv.lang, qv.keyRows, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		}
 	} else {
 		if qv.verbose {
 			resp, err = s.client.GetMatrixVerbose(ctx, page, qv.lang, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		} else {
 			resp, err = s.client.GetMatrix(ctx, page, qv.lang, opts...)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
 		}
 	}
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+
+	defer func() {
+		_ = s.cache.Add(key, resp)
+	}()
 
 	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
@@ -102,6 +114,18 @@ type queryValues struct {
 	keyRows   int
 	verbose   bool
 	brNewLine bool
+}
+
+func (q queryValues) string() string {
+	tables := "all"
+	if len(q.tables) > 0 {
+		tmp := ""
+		for _, v := range q.tables {
+			tmp = tmp + strconv.Itoa(v)
+		}
+		tables = tmp
+	}
+	return fmt.Sprintf("%s-%s-%t-%d-%t-%t", q.lang, tables, q.cleanRef, q.keyRows, q.verbose, q.brNewLine)
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
@@ -150,6 +174,10 @@ func parseParameters(r *http.Request) (queryValues, error) {
 	}
 
 	return qv, nil
+}
+
+func buildCacheKey(page string, qv queryValues) string {
+	return fmt.Sprintf("%s-%s", page, qv.string())
 }
 
 func writeError(w http.ResponseWriter, err error) {

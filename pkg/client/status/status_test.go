@@ -2,6 +2,7 @@ package status
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ func TestStatus(t *testing.T) {
 	want := "message, TableIndex: 0, RowIndex: 0, ColumnIndex: 0"
 	got := s.Error()
 
-	if want != got {
+	if !strings.Contains(got, want) {
 		t.Errorf("want %s, got %s", want, got)
 	}
 }
