@@ -4,11 +4,9 @@ go 1.22
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.3
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	golang.org/x/net v0.32.0
 	golang.org/x/sync v0.10.0
 )
 
-require (
-	github.com/andybalholm/cascadia v1.3.2 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
-)
+require github.com/andybalholm/cascadia v1.3.2 // indirect
