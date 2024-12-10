@@ -20,30 +20,27 @@ import (
 //go:embed static/dist/*
 var swagger embed.FS
 
+var (
+	defaultCacheSize       = 20
+	defaultCacheExpiration = 60 * time.Second
+)
+
 func main() {
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		handleErr(fmt.Errorf("PORT env not set"))
 	}
 
-	cacheSize, ok := os.LookupEnv("CACHE_SIZE")
-	if !ok {
-		handleErr(fmt.Errorf("CACHE_SIZE env not set"))
+	cacheSize, err := strconv.Atoi(os.Getenv("CACHE_SIZE"))
+	if err != nil || cacheSize == 0 {
+		log.Printf("CACHE_SIZE is empty or invalid with error: %v; using %d", err, defaultCacheSize)
+		cacheSize = defaultCacheSize
 	}
 
-	cacheExpiration, ok := os.LookupEnv("CACHE_EXPIRATION")
-	if !ok {
-		handleErr(fmt.Errorf("CACHE_EXPIRATION env not set"))
-	}
-
-	size, err := strconv.Atoi(cacheSize)
-	if err != nil {
-		handleErr(fmt.Errorf("parsing CACHE_SIZE %s: %v", cacheSize, err))
-	}
-
-	dur, err := time.ParseDuration(cacheExpiration)
-	if err != nil {
-		handleErr(fmt.Errorf("parsing CACHE_EXPIRATION %s: %v", cacheExpiration, err))
+	cacheExpiration, err := time.ParseDuration(os.Getenv("CACHE_EXPIRATION"))
+	if err != nil || cacheExpiration == 0 {
+		log.Printf("CACHE_EXPIRATION is empty or invalid with error: %v; using %s", err, defaultCacheExpiration)
+		cacheExpiration = defaultCacheExpiration
 	}
 
 	dist, err := fs.Sub(swagger, "static/dist")
@@ -53,7 +50,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /", http.StripPrefix("/", http.FileServer(http.FS(dist))))
-	mux.Handle("GET /api/{page}", server.HeaderMW(server.NewServer(client.NewClient("", client.WithHTTPClient(&http.Client{Timeout: 10 * time.Second})), server.NewCache(size, dur))))
+	mux.Handle("GET /api/{page}", server.HeaderMW(server.NewServer(client.NewClient("", client.WithHTTPClient(&http.Client{Timeout: 10 * time.Second})), server.NewCache(cacheSize, cacheExpiration))))
 	svr := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
 		Handler: mux,
