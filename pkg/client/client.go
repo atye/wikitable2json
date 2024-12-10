@@ -238,7 +238,7 @@ func (c *Client) getTableSelectionFromAPI(ctx context.Context, page string, lang
 }
 
 func (c *Client) getPageData(ctx context.Context, page string, lang string) ([]byte, error) {
-	u, err := url.Parse(getApiURLFn(lang, page))
+	u, err := url.Parse(getApiURLFn(lang, url.QueryEscape(page)))
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
@@ -551,5 +551,5 @@ func handleErr(err error) status.Status {
 }
 
 func getApiURL(lang, page string) string {
-	return fmt.Sprintf(apiURL, lang, url.QueryEscape(page))
+	return fmt.Sprintf(apiURL, page)
 }
