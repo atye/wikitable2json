@@ -551,5 +551,5 @@ func handleErr(err error) status.Status {
 }
 
 func getApiURL(lang, page string) string {
-	return fmt.Sprintf(apiURL, page)
+	return fmt.Sprintf(apiURL, lang, page)
 }
