@@ -1,7 +1,6 @@
 module github.com/atye/wikitable2json
 
-go 1.22
-toolchain go1.23.7
+go 1.24
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.3
