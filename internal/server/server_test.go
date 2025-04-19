@@ -24,9 +24,11 @@ func TestServeHTTP_CacheMissGetMatrix(t *testing.T) {
 	tg := &mockTableGetter{getMatrix: wantData}
 	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
+	ctx := context.WithValue(context.Background(), pageKey, "page")
+	ctx = context.WithValue(ctx, queryKey, queryValues{})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page", nil)
-	r.SetPathValue("page", "page")
+	r = r.WithContext(ctx)
 	sut.ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {
@@ -71,9 +73,11 @@ func TestServeHTTP_CacheMissGetMatrixVerbose(t *testing.T) {
 	tg := &mockTableGetter{getMatrixVerbose: wantData}
 	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
+	ctx := context.WithValue(context.Background(), pageKey, "page")
+	ctx = context.WithValue(ctx, queryKey, queryValues{verbose: true})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page?verbose=true", nil)
-	r.SetPathValue("page", "page")
+	r = r.WithContext(ctx)
 	sut.ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {
@@ -108,9 +112,11 @@ func TestServeHTTP_CacheMissGetKeyValue(t *testing.T) {
 	tg := &mockTableGetter{getKeyValue: wantData}
 	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
+	ctx := context.WithValue(context.Background(), pageKey, "page")
+	ctx = context.WithValue(ctx, queryKey, queryValues{keyRows: 1})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page?keyRows=1", nil)
-	r.SetPathValue("page", "page")
+	r = r.WithContext(ctx)
 	sut.ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {
@@ -155,9 +161,11 @@ func TestServeHTTP_CacheMissGetKeyValueVerbose(t *testing.T) {
 	tg := &mockTableGetter{getKeyValueVerbose: wantData}
 	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
+	ctx := context.WithValue(context.Background(), pageKey, "page")
+	ctx = context.WithValue(ctx, queryKey, queryValues{keyRows: 1, verbose: true, cleanRef: true, brNewLine: true})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page?keyRows=1&verbose=true&cleanRef=true&brNewLine=true", nil)
-	r.SetPathValue("page", "page")
+	r = r.WithContext(ctx)
 	sut.ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {
@@ -190,16 +198,18 @@ func TestServeHTTP_CacheHit(t *testing.T) {
 	tg := &mockTableGetter{getMatrix: wantData}
 	sut := NewServer(tg, NewCache(10, 10*time.Second))
 
+	ctx := context.WithValue(context.Background(), pageKey, "page")
+	ctx = context.WithValue(ctx, queryKey, queryValues{})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page", nil)
-	r.SetPathValue("page", "page")
+	r = r.WithContext(ctx)
 	sut.ServeHTTP(w, r)
 
 	tg.getMatrixCalled = false
 
 	w = httptest.NewRecorder()
 	r = httptest.NewRequest("GET", "/api/page", nil)
-	r.SetPathValue("page", "page")
+	r = r.WithContext(ctx)
 	sut.ServeHTTP(w, r)
 
 	if w.Code != http.StatusOK {
@@ -223,8 +233,8 @@ func TestServeHTTP_CacheHit(t *testing.T) {
 
 func TestServeHTTP_EmptyPage(t *testing.T) {
 	wantData := status.Status{
-		Message: "page value must be supplied in /api/{page}",
-		Code:    http.StatusBadRequest,
+		Message: "something went wrong. no page in request context",
+		Code:    http.StatusInternalServerError,
 	}
 
 	sut := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second))
@@ -233,7 +243,7 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 	r := httptest.NewRequest("GET", "/api", nil)
 	sut.ServeHTTP(w, r)
 
-	if w.Code != http.StatusBadRequest {
+	if w.Code != http.StatusInternalServerError {
 		t.Errorf("want code %d, got %d", http.StatusBadRequest, w.Code)
 	}
 
@@ -248,19 +258,6 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 	}
 }
 
-func TestServeHTTP_InvalidQuery(t *testing.T) {
-	sut := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second))
-
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/api/page?table=x", nil)
-	r.SetPathValue("page", "page")
-	sut.ServeHTTP(w, r)
-
-	if w.Code != http.StatusBadRequest {
-		t.Errorf("want code %d, got %d", http.StatusBadRequest, w.Code)
-	}
-}
-
 func TestServeHTTP_ClientError(t *testing.T) {
 	err := status.NewStatus("error", http.StatusInternalServerError)
 
@@ -268,9 +265,11 @@ func TestServeHTTP_ClientError(t *testing.T) {
 	tg := &mockTableGetter{getMatrix: nil, err: err}
 	sut := NewServer(tg, cache)
 
+	ctx := context.WithValue(context.Background(), pageKey, "page")
+	ctx = context.WithValue(ctx, queryKey, queryValues{})
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api/page", nil)
-	r.SetPathValue("page", "page")
+	r = r.WithContext(ctx)
 	sut.ServeHTTP(w, r)
 
 	if w.Code != http.StatusInternalServerError {

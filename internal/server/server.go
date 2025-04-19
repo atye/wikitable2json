@@ -41,16 +41,17 @@ func NewServer(client TableGetter, cache *Cache) *Server {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	var err error
 
-	page := r.PathValue("page")
-	if page == "" {
-		writeError(w, status.NewStatus("page value must be supplied in /api/{page}", http.StatusBadRequest))
+	page, ok := ctx.Value(pageKey).(string)
+	if !ok {
+		writeError(w, status.NewStatus("something went wrong. no page in request context", http.StatusInternalServerError))
 		return
 	}
 
-	qv, err := parseParameters(r)
-	if err != nil {
-		writeError(w, err)
+	qv, ok := ctx.Value(queryKey).(queryValues)
+	if !ok {
+		writeError(w, status.NewStatus("something went wrong. no query values in request context", http.StatusInternalServerError))
 		return
 	}
 

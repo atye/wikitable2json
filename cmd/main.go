@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/atye/wikitable2json/internal/server"
+	"github.com/atye/wikitable2json/internal/server/metrics"
 	"github.com/atye/wikitable2json/pkg/client"
 )
 
@@ -43,6 +44,17 @@ func main() {
 		cacheExpiration = defaultCacheExpiration
 	}
 
+	googleMeasurementId := os.Getenv("GOOGLE_MEASUREMENT_ID")
+	googleAPISecret := os.Getenv("GOOGLE_API_SECRET")
+
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+
+	var mp server.MetricsPublisher
+	mp = metrics.NewNoOpClient()
+	if googleMeasurementId != "" && googleAPISecret != "" {
+		mp = metrics.NewGoogleClient(googleMeasurementId, googleAPISecret, httpClient)
+	}
+
 	dist, err := fs.Sub(swagger, "static/dist")
 	if err != nil {
 		handleErr(err)
@@ -50,7 +62,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /", http.StripPrefix("/", http.FileServer(http.FS(dist))))
-	mux.Handle("GET /api/{page}", server.HeaderMW(server.NewServer(client.NewClient("", client.WithHTTPClient(&http.Client{Timeout: 10 * time.Second})), server.NewCache(cacheSize, cacheExpiration))))
+	mux.Handle("GET /api/{page}",
+		server.HeaderMW(server.RequestValidationAndMetricsMW(
+			server.NewServer(client.NewClient("", client.WithHTTPClient(httpClient)), server.NewCache(cacheSize, cacheExpiration)), mp)))
 	svr := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
 		Handler: mux,
@@ -73,7 +87,7 @@ func main() {
 		defer cancel()
 		err := svr.Shutdown(ctx)
 		if err != nil {
-			log.Printf("main: shutting down server: %v", err)
+			log.Printf("main: shutting down server: %v\n", err)
 			_ = svr.Close()
 		}
 	}
