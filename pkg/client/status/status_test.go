@@ -16,7 +16,19 @@ func TestStatus(t *testing.T) {
 	want := "message, TableIndex: 0, RowIndex: 0, ColumnIndex: 0"
 	got := s.Error()
 
-	if !strings.Contains(got, want) {
-		t.Errorf("want %s, got %s", want, got)
+	if !strings.Contains(got, "message") {
+		t.Errorf("want %s to contain %s", want, "message")
+	}
+
+	if !strings.Contains(got, "TableIndex: 0") {
+		t.Errorf("want %s to contain %s", want, "TableIndex: 0")
+	}
+
+	if !strings.Contains(got, "RowIndex: 0") {
+		t.Errorf("want %s to contain %s", want, "RowIndex: 0")
+	}
+
+	if !strings.Contains(got, "ColumnIndex: 0") {
+		t.Errorf("want %s to contain %s", want, "ColumnIndex: 0")
 	}
 }
