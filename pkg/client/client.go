@@ -99,13 +99,18 @@ func (c *Client) GetMatrix(ctx context.Context, page string, lang string, option
 		return nil, handleErr(err)
 	}
 
+	tables := to.tables
+	if len(to.sections) > 0 {
+		tables = []int{}
+	}
+
 	ret := [][][]string{}
 	for _, selection := range tableSelections {
 		if to.cleanRef {
 			cleanReferences(selection)
 		}
 
-		matrix, err := parse(selection, 0, false, to.brNewLine, to.tables...)
+		matrix, err := parse(selection, 0, false, to.brNewLine, tables...)
 		if err != nil {
 			return nil, handleErr(err)
 		}
@@ -132,13 +137,18 @@ func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string,
 		return nil, handleErr(err)
 	}
 
+	tables := to.tables
+	if len(to.sections) > 0 {
+		tables = []int{}
+	}
+
 	ret := [][][]Verbose{}
 	for _, selection := range tableSelections {
 		if to.cleanRef {
 			cleanReferences(selection)
 		}
 
-		matrix, err := parse(selection, 0, true, to.brNewLine, to.tables...)
+		matrix, err := parse(selection, 0, true, to.brNewLine, tables...)
 		if err != nil {
 			return nil, handleErr(err)
 		}
@@ -165,13 +175,18 @@ func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyR
 		return nil, handleErr(err)
 	}
 
+	tables := to.tables
+	if len(to.sections) > 0 {
+		tables = []int{}
+	}
+
 	ret := [][]map[string]string{}
 	for _, selection := range tableSelections {
 		if to.cleanRef {
 			cleanReferences(selection)
 		}
 
-		keyValue, err := parse(selection, keyRows, false, to.brNewLine, to.tables...)
+		keyValue, err := parse(selection, keyRows, false, to.brNewLine, tables...)
 		if err != nil {
 			return nil, handleErr(err)
 		}
@@ -198,13 +213,18 @@ func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 		return nil, handleErr(err)
 	}
 
+	tables := to.tables
+	if len(to.sections) > 0 {
+		tables = []int{}
+	}
+
 	ret := [][]map[string]Verbose{}
 	for _, selection := range tableSelections {
 		if to.cleanRef {
 			cleanReferences(selection)
 		}
 
-		keyValue, err := parse(selection, keyRows, true, to.brNewLine, to.tables...)
+		keyValue, err := parse(selection, keyRows, true, to.brNewLine, tables...)
 		if err != nil {
 			return nil, handleErr(err)
 		}
@@ -259,7 +279,7 @@ func (c *Client) getSectionTableSelections(ctx context.Context, page string, lan
 
 	var tables []*goquery.Selection
 	for _, section := range sections {
-		header := doc.Find(fmt.Sprintf(":header#%s", section))
+		header := doc.Find(fmt.Sprintf("#%s", section))
 		if header.Length() == 0 {
 			continue
 		}
@@ -269,9 +289,15 @@ func (c *Client) getSectionTableSelections(ctx context.Context, page string, lan
 			continue
 		}
 
+		selector := strings.Join(classes, ", ")
 		for sibling := heading.Next(); sibling.Length() > 0; sibling = sibling.Next() {
 			if sibling.HasClass("mw-heading") {
 				break
+			}
+
+			if sibling.Is(selector) {
+				tables = append(tables, sibling)
+				continue
 			}
 
 			if selection := sibling.Find(strings.Join(classes, ", ")); selection.Length() > 0 {
@@ -279,7 +305,6 @@ func (c *Client) getSectionTableSelections(ctx context.Context, page string, lan
 			}
 		}
 	}
-
 	return tables, nil
 }
 

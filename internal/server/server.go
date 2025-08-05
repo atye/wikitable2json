@@ -128,7 +128,16 @@ func (q queryValues) string() string {
 		}
 		tables = tmp
 	}
-	return fmt.Sprintf("%s-%s-%s-%t-%d-%t-%t", q.lang, tables, q.sections, q.cleanRef, q.keyRows, q.verbose, q.brNewLine)
+
+	sections := "nil"
+	if len(q.sections) > 0 {
+		tmp := ""
+		for _, v := range q.sections {
+			tmp = tmp + v
+		}
+		sections = tmp
+	}
+	return fmt.Sprintf("%s-%s-%s-%t-%d-%t-%t", q.lang, tables, sections, q.cleanRef, q.keyRows, q.verbose, q.brNewLine)
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
