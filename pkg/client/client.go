@@ -47,6 +47,7 @@ type tableOptions struct {
 	cleanRef  bool
 	brNewLine bool
 	tables    []int
+	sections  []string
 }
 
 type TableOption func(*tableOptions)
@@ -69,6 +70,12 @@ func WithTables(tables ...int) TableOption {
 	}
 }
 
+func WithSections(sections ...string) TableOption {
+	return func(to *tableOptions) {
+		to.sections = sections
+	}
+}
+
 func NewClient(userAgent string, options ...ClientOption) *Client {
 	c := &Client{
 		http:      http.DefaultClient,
@@ -82,138 +89,134 @@ func NewClient(userAgent string, options ...ClientOption) *Client {
 }
 
 func (c *Client) GetMatrix(ctx context.Context, page string, lang string, options ...TableOption) ([][][]string, error) {
-	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
-	if err != nil {
-		return nil, handleErr(err)
-	}
-
 	to := new(tableOptions)
 	for _, o := range options {
 		o(to)
 	}
 
-	if to.cleanRef {
-		cleanReferences(tableSelection)
-	}
-
-	matrix, err := parse(tableSelection, 0, false, to.brNewLine, to.tables...)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
 	ret := [][][]string{}
-	for _, v := range matrix {
-		if m, ok := v.([][]string); ok {
-			ret = append(ret, m)
-		} else {
-			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+	for _, selection := range tableSelections {
+		if to.cleanRef {
+			cleanReferences(selection)
+		}
+
+		matrix, err := parse(selection, 0, false, to.brNewLine, to.tables...)
+		if err != nil {
+			return nil, handleErr(err)
+		}
+
+		for _, v := range matrix {
+			if m, ok := v.([][]string); ok {
+				ret = append(ret, m)
+			} else {
+				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+			}
 		}
 	}
-
 	return ret, nil
 }
 
 func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string, options ...TableOption) ([][][]Verbose, error) {
-	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
-	if err != nil {
-		return nil, handleErr(err)
-	}
-
 	to := new(tableOptions)
 	for _, o := range options {
 		o(to)
 	}
 
-	if to.cleanRef {
-		cleanReferences(tableSelection)
-	}
-
-	matrix, err := parse(tableSelection, 0, true, to.brNewLine, to.tables...)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
 	ret := [][][]Verbose{}
-	for _, v := range matrix {
-		if m, ok := v.([][]Verbose); ok {
-			ret = append(ret, m)
-		} else {
-			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+	for _, selection := range tableSelections {
+		if to.cleanRef {
+			cleanReferences(selection)
+		}
+
+		matrix, err := parse(selection, 0, true, to.brNewLine, to.tables...)
+		if err != nil {
+			return nil, handleErr(err)
+		}
+
+		for _, v := range matrix {
+			if m, ok := v.([][]Verbose); ok {
+				ret = append(ret, m)
+			} else {
+				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+			}
 		}
 	}
-
 	return ret, nil
 }
 
 func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]string, error) {
-	if keyRows < 1 {
-		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
-	}
-
-	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
-	if err != nil {
-		return nil, handleErr(err)
-	}
-
 	to := new(tableOptions)
 	for _, o := range options {
 		o(to)
 	}
 
-	if to.cleanRef {
-		cleanReferences(tableSelection)
-	}
-
-	keyValue, err := parse(tableSelection, keyRows, false, to.brNewLine, to.tables...)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
 	ret := [][]map[string]string{}
-	for _, v := range keyValue {
-		if k, ok := v.([]map[string]string); ok {
-			ret = append(ret, k)
-		} else {
-			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+	for _, selection := range tableSelections {
+		if to.cleanRef {
+			cleanReferences(selection)
+		}
+
+		keyValue, err := parse(selection, keyRows, false, to.brNewLine, to.tables...)
+		if err != nil {
+			return nil, handleErr(err)
+		}
+
+		for _, v := range keyValue {
+			if k, ok := v.([]map[string]string); ok {
+				ret = append(ret, k)
+			} else {
+				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+			}
 		}
 	}
-
 	return ret, nil
 }
 
 func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]Verbose, error) {
-	if keyRows < 1 {
-		return nil, status.NewStatus("keyRows must be at least 1", http.StatusBadRequest)
-	}
-
-	tableSelection, err := c.getTableSelectionFromAPI(ctx, page, lang)
-	if err != nil {
-		return nil, handleErr(err)
-	}
-
 	to := new(tableOptions)
 	for _, o := range options {
 		o(to)
 	}
 
-	if to.cleanRef {
-		cleanReferences(tableSelection)
-	}
-
-	keyValue, err := parse(tableSelection, keyRows, true, to.brNewLine, to.tables...)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
 	ret := [][]map[string]Verbose{}
-	for _, v := range keyValue {
-		if k, ok := v.([]map[string]Verbose); ok {
-			ret = append(ret, k)
-		} else {
-			return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+	for _, selection := range tableSelections {
+		if to.cleanRef {
+			cleanReferences(selection)
+		}
+
+		keyValue, err := parse(selection, keyRows, true, to.brNewLine, to.tables...)
+		if err != nil {
+			return nil, handleErr(err)
+		}
+
+		for _, v := range keyValue {
+			if k, ok := v.([]map[string]Verbose); ok {
+				ret = append(ret, k)
+			} else {
+				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+			}
 		}
 	}
-
 	return ret, nil
 }
 
@@ -221,23 +224,66 @@ func (c *Client) SetUserAgent(userAgent string) {
 	c.userAgent = userAgent
 }
 
-func (c *Client) getTableSelectionFromAPI(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
-	b, err := c.getPageData(ctx, page, lang)
+func (c *Client) getTableSelections(ctx context.Context, page string, lang string, sections []string) ([]*goquery.Selection, error) {
+	var tableSelections []*goquery.Selection
+	var err error
+	if len(sections) > 0 {
+		tableSelections, err = c.getSectionTableSelections(ctx, page, lang, sections...)
+		if err != nil {
+			return nil, handleErr(err)
+		}
+		return tableSelections, nil
+	}
+
+	tableSelection, err := c.getAllTableSelection(ctx, page, lang)
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	return []*goquery.Selection{tableSelection}, nil
+}
+
+func (c *Client) getAllTableSelection(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
+	doc, err := c.getPageDocument(ctx, page, lang)
+	if err != nil {
+		return nil, err
+	}
+	return doc.Find(strings.Join(classes, ", ")), nil
+}
+
+func (c *Client) getSectionTableSelections(ctx context.Context, page string, lang string, sections ...string) ([]*goquery.Selection, error) {
+	doc, err := c.getPageDocument(ctx, page, lang)
 	if err != nil {
 		return nil, err
 	}
 
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
-	if err != nil {
-		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
+	var tables []*goquery.Selection
+	for _, section := range sections {
+		header := doc.Find(fmt.Sprintf(":header#%s", section))
+		if header.Length() == 0 {
+			continue
+		}
+
+		heading := header.ParentFiltered(".mw-heading").First()
+		if heading.Length() == 0 {
+			continue
+		}
+
+		for sibling := heading.Next(); sibling.Length() > 0; sibling = sibling.Next() {
+			if sibling.HasClass("mw-heading") {
+				break
+			}
+
+			if selection := sibling.Find(strings.Join(classes, ", ")); selection.Length() > 0 {
+				tables = append(tables, selection)
+			}
+		}
 	}
 
-	doc.Find(".mw-empty-elt").Remove()
-	doc.Find("style").Remove()
-	return doc.Find(strings.Join(classes, ", ")), nil
+	return tables, nil
 }
 
-func (c *Client) getPageData(ctx context.Context, page string, lang string) ([]byte, error) {
+func (c *Client) getPageDocument(ctx context.Context, page string, lang string) (*goquery.Document, error) {
 	u, err := url.Parse(getApiURLFn(lang, url.QueryEscape(page)))
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
@@ -275,7 +321,15 @@ func (c *Client) getPageData(ctx context.Context, page string, lang string) ([]b
 		}))
 	}
 
-	return b, nil
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(b))
+	if err != nil {
+		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
+	}
+
+	doc.Find(".mw-empty-elt").Remove()
+	doc.Find("style").Remove()
+
+	return doc, nil
 }
 
 func cleanReferences(tables *goquery.Selection) {

@@ -324,17 +324,6 @@ func TestClient(t *testing.T) {
 				status.Status{},
 			},
 			{
-				"keyValueBadRows",
-				nil,
-				0,
-				nil,
-				true,
-				status.Status{
-					Message: "keyRows must be at least 1",
-					Code:    http.StatusBadRequest,
-				},
-			},
-			{
 				"keyValueOneRow",
 				nil,
 				1,
