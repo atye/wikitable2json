@@ -161,7 +161,7 @@ func parseParameters(r *http.Request) (queryValues, error) {
 	}
 
 	if v, ok := params["section"]; ok {
-		qv.sections = append(qv.sections, v...)
+		qv.sections = v
 	}
 
 	if v := params.Get("cleanRef"); v == "true" {
