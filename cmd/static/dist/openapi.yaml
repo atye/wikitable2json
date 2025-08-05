@@ -8,7 +8,7 @@ info:
     - If you are making automated requests, set a unique `User-Agent` header with an email address or URL contact page per the [Wikimedia REST API](https://en.wikipedia.org/api/rest_v1/)
 
     <br>
-    
+
     ### Get all tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
     [https://www.wikitable2json.com/api/Arhaan_Khan](https://www.wikitable2json.com/api/Arhaan_Khan)
 
@@ -31,6 +31,11 @@ info:
 
     ### Get the second table on page [1970–71_Chester_F.C._season](https://en.wikipedia.org/wiki/1970–71_Chester_F.C._season) in a key-value format using the first two rows as key:
     [https://www.wikitable2json.com/api/1970–71_Chester_F.C._season?table=1&keyRows=2](https://www.wikitable2json.com/api/1970–71_Chester_F.C._season?table=1&keyRows=2)
+
+    <br>
+
+    ### Get the table under the Film section on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
+    [https://www.wikitable2json.com/api/Arhaan_Khan?section=Film](https://www.wikitable2json.com/api/Arhaan_Khan?section=Film)
 
     <br>
 
@@ -70,6 +75,15 @@ paths:
             items:
               type: integer
               format: int64
+        - name: section
+          description: Specific tables to get by section name
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
         - name: lang
           description: Wikipedia language code of the page
           in: query
@@ -144,7 +158,7 @@ components:
         items:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/verboseCell'
+            $ref: "#/components/schemas/verboseCell"
     keyValue:
       description: |
         List of tables in the key-value format with the keys being the first x rows specified in the keyRows query<br/>
@@ -164,7 +178,7 @@ components:
         items:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/verboseCell'
+            $ref: "#/components/schemas/verboseCell"
     verboseCell:
       type: object
       properties:
