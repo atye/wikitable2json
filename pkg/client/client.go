@@ -94,14 +94,9 @@ func (c *Client) GetMatrix(ctx context.Context, page string, lang string, option
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
-	}
-
-	tables := to.tables
-	if len(to.sections) > 0 {
-		tables = []int{}
 	}
 
 	results := make([][][][]string, len(tableSelections))
@@ -112,7 +107,7 @@ func (c *Client) GetMatrix(ctx context.Context, page string, lang string, option
 				cleanReferences(selection)
 			}
 
-			matrix, err := parse(selection, 0, false, to.brNewLine, tables...)
+			matrix, err := parse(selection, 0, false, to.brNewLine)
 			if err != nil {
 				return handleErr(err)
 			}
@@ -148,14 +143,9 @@ func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string,
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
-	}
-
-	tables := to.tables
-	if len(to.sections) > 0 {
-		tables = []int{}
 	}
 
 	results := make([][][][]Verbose, len(tableSelections))
@@ -166,7 +156,7 @@ func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string,
 				cleanReferences(selection)
 			}
 
-			matrix, err := parse(selection, 0, true, to.brNewLine, tables...)
+			matrix, err := parse(selection, 0, true, to.brNewLine)
 			if err != nil {
 				return handleErr(err)
 			}
@@ -202,14 +192,9 @@ func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyR
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
-	}
-
-	tables := to.tables
-	if len(to.sections) > 0 {
-		tables = []int{}
 	}
 
 	results := make([][][]map[string]string, len(tableSelections))
@@ -220,7 +205,7 @@ func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyR
 				cleanReferences(selection)
 			}
 
-			keyValue, err := parse(selection, keyRows, false, to.brNewLine, tables...)
+			keyValue, err := parse(selection, keyRows, false, to.brNewLine)
 			if err != nil {
 				return handleErr(err)
 			}
@@ -256,14 +241,9 @@ func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
 	if err != nil {
 		return nil, handleErr(err)
-	}
-
-	tables := to.tables
-	if len(to.sections) > 0 {
-		tables = []int{}
 	}
 
 	results := make([][][]map[string]Verbose, len(tableSelections))
@@ -274,7 +254,7 @@ func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 				cleanReferences(selection)
 			}
 
-			keyValue, err := parse(selection, keyRows, true, to.brNewLine, tables...)
+			keyValue, err := parse(selection, keyRows, true, to.brNewLine)
 			if err != nil {
 				return handleErr(err)
 			}
@@ -308,31 +288,54 @@ func (c *Client) SetUserAgent(userAgent string) {
 	c.userAgent = userAgent
 }
 
-func (c *Client) getTableSelections(ctx context.Context, page string, lang string, sections []string) ([]*goquery.Selection, error) {
-	var tableSelections []*goquery.Selection
-	var err error
-	if len(sections) > 0 {
-		tableSelections, err = c.getSectionTableSelections(ctx, page, lang, sections...)
-		if err != nil {
-			return nil, handleErr(err)
-		}
-		return tableSelections, nil
-	}
-
-	tableSelection, err := c.getAllTableSelection(ctx, page, lang)
+func (c *Client) getTableSelections(ctx context.Context, page string, lang string, index []int, sections []string) ([]*goquery.Selection, error) {
+	indexTableSelection, err := c.getIndexedTableSelection(ctx, page, lang, index)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
-	return []*goquery.Selection{tableSelection}, nil
+	sectionTableSelections, err := c.getSectionTableSelections(ctx, page, lang, sections...)
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	// no section: return all or indexed tables
+	if len(sections) == 0 {
+		return indexTableSelection, nil
+	}
+
+	// section, no index: return sectioned tables
+	if len(sections) > 0 && len(index) == 0 {
+		return sectionTableSelections, nil
+	}
+
+	// section, index: return indexed and sectioned tables
+	if len(sections) > 0 && len(index) > 0 {
+		return append(indexTableSelection, sectionTableSelections...), nil
+	}
+
+	// should never reach here
+	return []*goquery.Selection{}, nil
 }
 
-func (c *Client) getAllTableSelection(ctx context.Context, page string, lang string) (*goquery.Selection, error) {
+func (c *Client) getIndexedTableSelection(ctx context.Context, page string, lang string, index []int) ([]*goquery.Selection, error) {
 	doc, err := c.getPageDocument(ctx, page, lang)
 	if err != nil {
 		return nil, err
 	}
-	return doc.Find(strings.Join(classes, ", ")), nil
+
+	tables := doc.Find(strings.Join(classes, ", "))
+
+	switch len(index) {
+	case 0:
+		return []*goquery.Selection{tables}, nil
+	default:
+		ret := []*goquery.Selection{}
+		for i := range index {
+			ret = append(ret, tables.Eq(i))
+		}
+		return ret, nil
+	}
 }
 
 func (c *Client) getSectionTableSelections(ctx context.Context, page string, lang string, sections ...string) ([]*goquery.Selection, error) {
@@ -440,49 +443,26 @@ func cleanReferences(tables *goquery.Selection) {
 	})
 }
 
-func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLine bool, tables ...int) ([]interface{}, error) {
-	var ret []interface{}
+func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLine bool) ([]interface{}, error) {
 
 	var eg errgroup.Group
-	switch len(tables) {
-	case 0:
-		ret = make([]interface{}, tableSelection.Length())
-		tableSelection.Each(func(i int, selection *goquery.Selection) {
-			eg.Go(func() error {
-				td, err := parseTable(selection, i, brNewLine)
-				if err != nil {
-					return err
-				}
+	ret := make([]interface{}, tableSelection.Length())
+	tableSelection.Each(func(i int, selection *goquery.Selection) {
+		eg.Go(func() error {
+			td, err := parseTable(selection, i, brNewLine)
+			if err != nil {
+				return err
+			}
 
-				tmp, err := formatParsedTable(td, verbose, keyRows, i)
-				if err != nil {
-					return err
-				}
+			tmp, err := formatParsedTable(td, verbose, keyRows, i)
+			if err != nil {
+				return err
+			}
 
-				ret[i] = tmp
-				return nil
-			})
+			ret[i] = tmp
+			return nil
 		})
-	default:
-		ret = make([]interface{}, len(tables))
-		for i, tableIndex := range tables {
-			i := i
-			tableIndex := tableIndex
-			eg.Go(func() error {
-				td, err := parseTable(tableSelection.Eq(tableIndex), tableIndex, brNewLine)
-				if err != nil {
-					return err
-				}
-				tmp, err := formatParsedTable(td, verbose, keyRows, i)
-				if err != nil {
-					return err
-				}
-
-				ret[i] = tmp
-				return nil
-			})
-		}
-	}
+	})
 
 	err := eg.Wait()
 	if err != nil {

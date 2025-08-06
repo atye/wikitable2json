@@ -107,8 +107,22 @@ func TestClient(t *testing.T) {
 			},
 			{
 				"goldenDouble",
+				[]TableOption{WithTables(0)},
+				GoldenMatrix,
+				false,
+				status.Status{},
+			},
+			{
+				"goldenDouble",
 				[]TableOption{WithTables(1)},
 				GoldenMatrix,
+				false,
+				status.Status{},
+			},
+			{
+				"goldenDouble",
+				[]TableOption{WithTables(0, 1)},
+				GoldenMatrixDouble,
 				false,
 				status.Status{},
 			},
