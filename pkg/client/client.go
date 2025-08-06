@@ -104,24 +104,40 @@ func (c *Client) GetMatrix(ctx context.Context, page string, lang string, option
 		tables = []int{}
 	}
 
-	ret := [][][]string{}
-	for _, selection := range tableSelections {
-		if to.cleanRef {
-			cleanReferences(selection)
-		}
-
-		matrix, err := parse(selection, 0, false, to.brNewLine, tables...)
-		if err != nil {
-			return nil, handleErr(err)
-		}
-
-		for _, v := range matrix {
-			if m, ok := v.([][]string); ok {
-				ret = append(ret, m)
-			} else {
-				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+	results := make([][][][]string, len(tableSelections))
+	var eg errgroup.Group
+	for i, selection := range tableSelections {
+		eg.Go(func() error {
+			if to.cleanRef {
+				cleanReferences(selection)
 			}
-		}
+
+			matrix, err := parse(selection, 0, false, to.brNewLine, tables...)
+			if err != nil {
+				return handleErr(err)
+			}
+
+			tmp := [][][]string{}
+			for _, v := range matrix {
+				if m, ok := v.([][]string); ok {
+					tmp = append(tmp, m)
+				} else {
+					return status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+				}
+			}
+			results[i] = tmp
+			return nil
+		})
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	ret := [][][]string{}
+	for _, result := range results {
+		ret = append(ret, result...)
 	}
 	return ret, nil
 }
@@ -142,24 +158,40 @@ func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string,
 		tables = []int{}
 	}
 
-	ret := [][][]Verbose{}
-	for _, selection := range tableSelections {
-		if to.cleanRef {
-			cleanReferences(selection)
-		}
-
-		matrix, err := parse(selection, 0, true, to.brNewLine, tables...)
-		if err != nil {
-			return nil, handleErr(err)
-		}
-
-		for _, v := range matrix {
-			if m, ok := v.([][]Verbose); ok {
-				ret = append(ret, m)
-			} else {
-				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+	results := make([][][][]Verbose, len(tableSelections))
+	var eg errgroup.Group
+	for i, selection := range tableSelections {
+		eg.Go(func() error {
+			if to.cleanRef {
+				cleanReferences(selection)
 			}
-		}
+
+			matrix, err := parse(selection, 0, true, to.brNewLine, tables...)
+			if err != nil {
+				return handleErr(err)
+			}
+
+			tmp := [][][]Verbose{}
+			for _, v := range matrix {
+				if m, ok := v.([][]Verbose); ok {
+					tmp = append(tmp, m)
+				} else {
+					return status.NewStatus(fmt.Sprintf("unexpected return type %T", m), http.StatusInternalServerError)
+				}
+			}
+			results[i] = tmp
+			return nil
+		})
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	var ret [][][]Verbose
+	for _, result := range results {
+		ret = append(ret, result...)
 	}
 	return ret, nil
 }
@@ -180,24 +212,40 @@ func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyR
 		tables = []int{}
 	}
 
-	ret := [][]map[string]string{}
-	for _, selection := range tableSelections {
-		if to.cleanRef {
-			cleanReferences(selection)
-		}
-
-		keyValue, err := parse(selection, keyRows, false, to.brNewLine, tables...)
-		if err != nil {
-			return nil, handleErr(err)
-		}
-
-		for _, v := range keyValue {
-			if k, ok := v.([]map[string]string); ok {
-				ret = append(ret, k)
-			} else {
-				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+	results := make([][][]map[string]string, len(tableSelections))
+	var eg errgroup.Group
+	for i, selection := range tableSelections {
+		eg.Go(func() error {
+			if to.cleanRef {
+				cleanReferences(selection)
 			}
-		}
+
+			keyValue, err := parse(selection, keyRows, false, to.brNewLine, tables...)
+			if err != nil {
+				return handleErr(err)
+			}
+
+			tmp := [][]map[string]string{}
+			for _, v := range keyValue {
+				if k, ok := v.([]map[string]string); ok {
+					tmp = append(tmp, k)
+				} else {
+					return status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+				}
+			}
+			results[i] = tmp
+			return nil
+		})
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	ret := [][]map[string]string{}
+	for _, result := range results {
+		ret = append(ret, result...)
 	}
 	return ret, nil
 }
@@ -218,24 +266,40 @@ func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 		tables = []int{}
 	}
 
-	ret := [][]map[string]Verbose{}
-	for _, selection := range tableSelections {
-		if to.cleanRef {
-			cleanReferences(selection)
-		}
-
-		keyValue, err := parse(selection, keyRows, true, to.brNewLine, tables...)
-		if err != nil {
-			return nil, handleErr(err)
-		}
-
-		for _, v := range keyValue {
-			if k, ok := v.([]map[string]Verbose); ok {
-				ret = append(ret, k)
-			} else {
-				return nil, status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+	results := make([][][]map[string]Verbose, len(tableSelections))
+	var eg errgroup.Group
+	for i, selection := range tableSelections {
+		eg.Go(func() error {
+			if to.cleanRef {
+				cleanReferences(selection)
 			}
-		}
+
+			keyValue, err := parse(selection, keyRows, true, to.brNewLine, tables...)
+			if err != nil {
+				return handleErr(err)
+			}
+
+			tmp := [][]map[string]Verbose{}
+			for _, v := range keyValue {
+				if k, ok := v.([]map[string]Verbose); ok {
+					tmp = append(tmp, k)
+				} else {
+					return status.NewStatus(fmt.Sprintf("unexpected return type %T", k), http.StatusInternalServerError)
+				}
+			}
+			results[i] = tmp
+			return nil
+		})
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	ret := [][]map[string]Verbose{}
+	for _, result := range results {
+		ret = append(ret, result...)
 	}
 	return ret, nil
 }
