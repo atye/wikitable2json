@@ -444,7 +444,6 @@ func cleanReferences(tables *goquery.Selection) {
 }
 
 func parse(tableSelection *goquery.Selection, keyRows int, verbose bool, brNewLine bool) ([]interface{}, error) {
-
 	var eg errgroup.Group
 	ret := make([]interface{}, tableSelection.Length())
 	tableSelection.Each(func(i int, selection *goquery.Selection) {
