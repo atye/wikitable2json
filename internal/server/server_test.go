@@ -276,8 +276,8 @@ func TestServeHTTP_ClientError(t *testing.T) {
 		t.Errorf("want code %d, got %d", http.StatusInternalServerError, w.Code)
 	}
 
-	if _, ok := cache.Get("page-en-all-false-0-false-false"); ok {
-		t.Errorf("expected cache miss, got page-en-x-false-0-false-false")
+	if v, ok := cache.Get("page-en-all-nil-false-0-false-false"); ok {
+		t.Errorf("expected cache miss, got %v", v)
 	}
 }
 
