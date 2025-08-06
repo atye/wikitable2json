@@ -278,29 +278,28 @@ func (c *Client) getSectionTableSelections(ctx context.Context, page string, lan
 	}
 
 	var tables []*goquery.Selection
+	selector := strings.Join(classes, ", ")
 	for _, section := range sections {
 		header := doc.Find(fmt.Sprintf("#%s", section))
 		if header.Length() == 0 {
 			continue
 		}
 
-		heading := header.ParentFiltered(".mw-heading").First()
-		if heading.Length() == 0 {
+		section := header.Closest("section")
+		if section.Length() == 0 {
 			continue
 		}
 
-		selector := strings.Join(classes, ", ")
-		for sibling := heading.Next(); sibling.Length() > 0; sibling = sibling.Next() {
-			if sibling.HasClass("mw-heading") {
+		if selection := section.Find(selector); selection.Length() > 0 {
+			tables = append(tables, selection)
+		}
+
+		for sibling := section.Next(); sibling.Length() > 0; sibling = sibling.Next() {
+			if sibling.Is("section") {
 				break
 			}
 
-			if sibling.Is(selector) {
-				tables = append(tables, sibling)
-				continue
-			}
-
-			if selection := sibling.Find(strings.Join(classes, ", ")); selection.Length() > 0 {
+			if selection := sibling.Find(selector); selection.Length() > 0 {
 				tables = append(tables, selection)
 			}
 		}
