@@ -299,6 +299,10 @@ func (c *Client) getSectionTableSelections(ctx context.Context, page string, lan
 				break
 			}
 
+			if sibling.Is(selector) {
+				tables = append(tables, sibling)
+			}
+
 			if selection := sibling.Find(selector); selection.Length() > 0 {
 				tables = append(tables, selection)
 			}
