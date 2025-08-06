@@ -148,6 +148,13 @@ func TestClient(t *testing.T) {
 				status.Status{},
 			},
 			{
+				"goldenDouble",
+				[]TableOption{WithTables(0), WithSections("Second_Table")},
+				GoldenMatrixDouble,
+				false,
+				status.Status{},
+			},
+			{
 				"allTableClasses",
 				nil,
 				AllTableClasses,
