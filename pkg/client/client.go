@@ -289,12 +289,17 @@ func (c *Client) SetUserAgent(userAgent string) {
 }
 
 func (c *Client) getTableSelections(ctx context.Context, page string, lang string, index []int, sections []string) ([]*goquery.Selection, error) {
-	indexTableSelection, err := c.getIndexedTableSelection(ctx, page, lang, index)
+	doc, err := c.getPageDocument(ctx, page, lang)
 	if err != nil {
 		return nil, handleErr(err)
 	}
 
-	sectionTableSelections, err := c.getSectionTableSelections(ctx, page, lang, sections...)
+	indexTableSelection, err := c.getIndexedTableSelection(doc, index...)
+	if err != nil {
+		return nil, handleErr(err)
+	}
+
+	sectionTableSelections, err := c.getSectionTableSelections(doc, sections...)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -318,12 +323,7 @@ func (c *Client) getTableSelections(ctx context.Context, page string, lang strin
 	return []*goquery.Selection{}, nil
 }
 
-func (c *Client) getIndexedTableSelection(ctx context.Context, page string, lang string, index []int) ([]*goquery.Selection, error) {
-	doc, err := c.getPageDocument(ctx, page, lang)
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Client) getIndexedTableSelection(doc *goquery.Document, index ...int) ([]*goquery.Selection, error) {
 	tables := doc.Find(strings.Join(classes, ", "))
 
 	switch len(index) {
@@ -338,12 +338,7 @@ func (c *Client) getIndexedTableSelection(ctx context.Context, page string, lang
 	}
 }
 
-func (c *Client) getSectionTableSelections(ctx context.Context, page string, lang string, sections ...string) ([]*goquery.Selection, error) {
-	doc, err := c.getPageDocument(ctx, page, lang)
-	if err != nil {
-		return nil, err
-	}
-
+func (c *Client) getSectionTableSelections(doc *goquery.Document, sections ...string) ([]*goquery.Selection, error) {
 	var tables []*goquery.Selection
 	selector := strings.Join(classes, ", ")
 	for _, section := range sections {
