@@ -299,14 +299,14 @@ func (c *Client) getTableSelections(ctx context.Context, page string, lang strin
 		return nil, handleErr(err)
 	}
 
-	sectionTableSelections, err := c.getSectionTableSelections(doc, sections...)
-	if err != nil {
-		return nil, handleErr(err)
-	}
-
 	// no section: return all or indexed tables
 	if len(sections) == 0 {
 		return indexTableSelection, nil
+	}
+
+	sectionTableSelections, err := c.getSectionTableSelections(doc, sections...)
+	if err != nil {
+		return nil, handleErr(err)
 	}
 
 	// section, no index: return sectioned tables
