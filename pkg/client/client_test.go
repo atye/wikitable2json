@@ -115,7 +115,7 @@ func TestClient(t *testing.T) {
 			{
 				"goldenDouble",
 				[]TableOption{WithTables(1)},
-				GoldenMatrix,
+				GoldenMatrixSecond,
 				false,
 				status.Status{},
 			},
@@ -136,7 +136,7 @@ func TestClient(t *testing.T) {
 			{
 				"goldenDouble",
 				[]TableOption{WithSections("Second_Table")},
-				GoldenMatrix,
+				GoldenMatrixSecond,
 				false,
 				status.Status{},
 			},

@@ -331,7 +331,7 @@ func (c *Client) getIndexedTableSelection(doc *goquery.Document, index ...int) (
 		return []*goquery.Selection{tables}, nil
 	default:
 		ret := []*goquery.Selection{}
-		for i := range index {
+		for _, i := range index {
 			ret = append(ret, tables.Eq(i))
 		}
 		return ret, nil

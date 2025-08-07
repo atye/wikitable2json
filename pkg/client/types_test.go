@@ -12,6 +12,17 @@ var (
 		},
 	}
 
+	GoldenMatrixSecond = [][][]string{
+		{
+			{"Column 1", "Column 2", "Column 3"},
+			{"A", "B", "B"},
+			{"A", "C", "D"},
+			{"E", "F", "F"},
+			{"G", "F", "F"},
+			{"I", "I", "I"},
+		},
+	}
+
 	GoldenMatrixDouble = [][][]string{
 		{
 			{"Column 1", "Column 2", "Column 3"},
@@ -27,7 +38,7 @@ var (
 			{"A", "C", "D"},
 			{"E", "F", "F"},
 			{"G", "F", "F"},
-			{"H", "H", "H"},
+			{"I", "I", "I"},
 		},
 	}
 
