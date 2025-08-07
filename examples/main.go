@@ -25,6 +25,13 @@ func main() {
 
 	fmt.Println(matrix)
 
+	matrix, err = tg.GetMatrix(context.Background(), "Arhaan_Khan", "en", client.WithSections("Film"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(matrix)
+
 	matrixVerbose, err := tg.GetMatrixVerbose(context.Background(), "Arhaan_Khan", "en")
 	if err != nil {
 		log.Fatal(err)

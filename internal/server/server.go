@@ -68,6 +68,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	opts := []client.TableOption{
 		client.WithTables(qv.tables...),
+		client.WithSections(qv.sections...),
 	}
 	if qv.cleanRef {
 		opts = append(opts, client.WithCleanReferences())
@@ -111,6 +112,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type queryValues struct {
 	lang      string
 	tables    []int
+	sections  []string
 	cleanRef  bool
 	keyRows   int
 	verbose   bool
@@ -126,7 +128,16 @@ func (q queryValues) string() string {
 		}
 		tables = tmp
 	}
-	return fmt.Sprintf("%s-%s-%t-%d-%t-%t", q.lang, tables, q.cleanRef, q.keyRows, q.verbose, q.brNewLine)
+
+	sections := "nil"
+	if len(q.sections) > 0 {
+		tmp := ""
+		for _, v := range q.sections {
+			tmp = tmp + v
+		}
+		sections = tmp
+	}
+	return fmt.Sprintf("%s-%s-%s-%t-%d-%t-%t", q.lang, tables, sections, q.cleanRef, q.keyRows, q.verbose, q.brNewLine)
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
@@ -147,6 +158,10 @@ func parseParameters(r *http.Request) (queryValues, error) {
 			}
 			qv.tables = append(qv.tables, t)
 		}
+	}
+
+	if v, ok := params["section"]; ok {
+		qv.sections = v
 	}
 
 	if v := params.Get("cleanRef"); v == "true" {

@@ -276,8 +276,8 @@ func TestServeHTTP_ClientError(t *testing.T) {
 		t.Errorf("want code %d, got %d", http.StatusInternalServerError, w.Code)
 	}
 
-	if _, ok := cache.Get("page-en-all-false-0-false-false"); ok {
-		t.Errorf("expected cache miss, got page-en-x-false-0-false-false")
+	if v, ok := cache.Get("page-en-all-nil-false-0-false-false"); ok {
+		t.Errorf("expected cache miss, got %v", v)
 	}
 }
 
@@ -289,7 +289,7 @@ func TestBuildCacheKey(t *testing.T) {
 		want string
 	}{
 		{
-			"en-0-false-2-false-false",
+			"test-en-0-test-false-2-false-false",
 			queryValues{
 				lang:      "en",
 				tables:    []int{0},
@@ -297,12 +297,13 @@ func TestBuildCacheKey(t *testing.T) {
 				keyRows:   2,
 				verbose:   false,
 				brNewLine: false,
+				sections:  []string{"test"},
 			},
 			"test",
-			"test-en-0-false-2-false-false",
+			"test-en-0-test-false-2-false-false",
 		},
 		{
-			"en-0-true-2-true-true",
+			"test-en-0-nil-true-2-true-true",
 			queryValues{
 				lang:      "en",
 				tables:    []int{0},
@@ -312,10 +313,10 @@ func TestBuildCacheKey(t *testing.T) {
 				brNewLine: true,
 			},
 			"test",
-			"test-en-0-true-2-true-true",
+			"test-en-0-nil-true-2-true-true",
 		},
 		{
-			"en-01-true-2-true-true",
+			"test-en-01-testtest2-true-2-true-true",
 			queryValues{
 				lang:      "en",
 				tables:    []int{0, 1},
@@ -323,12 +324,13 @@ func TestBuildCacheKey(t *testing.T) {
 				keyRows:   2,
 				verbose:   true,
 				brNewLine: true,
+				sections:  []string{"test", "test2"},
 			},
 			"test",
-			"test-en-01-true-2-true-true",
+			"test-en-01-testtest2-true-2-true-true",
 		},
 		{
-			"en-all-true-2-true-true",
+			"test-en-all-nil-true-2-true-true",
 			queryValues{
 				lang:      "en",
 				cleanRef:  true,
@@ -337,10 +339,10 @@ func TestBuildCacheKey(t *testing.T) {
 				brNewLine: true,
 			},
 			"test",
-			"test-en-all-true-2-true-true",
+			"test-en-all-nil-true-2-true-true",
 		},
 		{
-			"en-all-true-2-true-true",
+			"test-en-all-nil-true-0-true-true",
 			queryValues{
 				lang:      "en",
 				cleanRef:  true,
@@ -349,7 +351,7 @@ func TestBuildCacheKey(t *testing.T) {
 				brNewLine: true,
 			},
 			"test",
-			"test-en-all-true-0-true-true",
+			"test-en-all-nil-true-0-true-true",
 		},
 	}
 
@@ -373,6 +375,7 @@ func TestParseParameters(t *testing.T) {
 		params.Add("cleanRef", "true")
 		params.Add("keyRows", "2")
 		params.Add("verbose", "true")
+		params.Add("section", "test")
 		r.URL.RawQuery = params.Encode()
 
 		qv, err := parseParameters(r)
@@ -385,12 +388,14 @@ func TestParseParameters(t *testing.T) {
 		gotCleanRef := qv.cleanRef
 		gotKeyRows := qv.keyRows
 		gotVerbose := qv.verbose
+		gotSections := qv.sections
 
 		wantLang := "sp"
 		wantTables := []int{0}
 		wantCleanRef := true
 		wantKeyRows := 2
 		wantVerbose := true
+		wantSections := []string{"test"}
 
 		if wantLang != gotLang {
 			t.Errorf("want %v, got %v", wantLang, gotLang)
@@ -410,6 +415,10 @@ func TestParseParameters(t *testing.T) {
 
 		if wantVerbose != gotVerbose {
 			t.Errorf("want %v, got %v", wantVerbose, gotVerbose)
+		}
+
+		if !reflect.DeepEqual(wantSections, gotSections) {
+			t.Errorf("want %v, got %v", wantSections, gotSections)
 		}
 	})
 
