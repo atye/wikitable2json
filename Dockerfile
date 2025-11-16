@@ -1,4 +1,4 @@
-FROM golang:1.24 AS staging
+FROM golang:1.25 AS staging
 RUN apt update -y && apt install -y curl unzip ca-certificates && update-ca-certificates
 
 WORKDIR /wikitable2json
