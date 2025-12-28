@@ -50,7 +50,6 @@ func main() {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 
 	var mp server.MetricsPublisher
-	mp = metrics.NewNoOpClient()
 	if googleMeasurementId != "" && googleAPISecret != "" {
 		mp = metrics.NewGoogleClient(googleMeasurementId, googleAPISecret, httpClient)
 	}

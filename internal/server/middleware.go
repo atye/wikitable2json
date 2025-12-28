@@ -49,12 +49,14 @@ func RequestValidationAndMetricsMW(main http.Handler, mp MetricsPublisher) http.
 		rec := &statusRecorder{ResponseWriter: w, Status: http.StatusOK}
 		main.ServeHTTP(rec, r)
 
-		go func() {
-			err := mp.Publish(rec.Status, r.RemoteAddr, page, qv.lang)
-			if err != nil {
-				log.Printf("publishing metric: %v\n", err)
-			}
-		}()
+		if mp != nil {
+			go func() {
+				err := mp.Publish(rec.Status, r.RemoteAddr, page, qv.lang)
+				if err != nil {
+					log.Printf("publishing metric: %v\n", err)
+				}
+			}()
+		}
 	})
 }
 
