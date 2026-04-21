@@ -16,6 +16,7 @@ import (
 	"github.com/atye/wikitable2json/internal/server"
 	"github.com/atye/wikitable2json/internal/server/metrics"
 	"github.com/atye/wikitable2json/pkg/client"
+	"golang.org/x/time/rate"
 )
 
 //go:embed static/dist/*
@@ -25,6 +26,18 @@ var (
 	defaultCacheSize       = 20
 	defaultCacheExpiration = 60 * time.Second
 )
+
+type rateLimitedTransport struct {
+	base    http.RoundTripper
+	limiter *rate.Limiter
+}
+
+func (t *rateLimitedTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	if err := t.limiter.Wait(r.Context()); err != nil {
+		return nil, err
+	}
+	return t.base.RoundTrip(r)
+}
 
 func main() {
 	port, ok := os.LookupEnv("PORT")
@@ -47,7 +60,13 @@ func main() {
 	googleMeasurementId := os.Getenv("GOOGLE_MEASUREMENT_ID")
 	googleAPISecret := os.Getenv("GOOGLE_API_SECRET")
 
-	httpClient := &http.Client{Timeout: 10 * time.Second}
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &rateLimitedTransport{
+			base:    http.DefaultTransport,
+			limiter: rate.NewLimiter(rate.Limit(200), 200),
+		},
+	}
 
 	var mp server.MetricsPublisher
 	if googleMeasurementId != "" && googleAPISecret != "" {
