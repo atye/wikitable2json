@@ -34,9 +34,15 @@ type rateLimitedTransport struct {
 
 func (t *rateLimitedTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	if err := t.limiter.Wait(r.Context()); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("waiting for rate limiter: %w", err)
 	}
-	return t.base.RoundTrip(r)
+
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+
+	return base.RoundTrip(r)
 }
 
 func main() {
@@ -63,8 +69,12 @@ func main() {
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &rateLimitedTransport{
-			base:    http.DefaultTransport,
-			limiter: rate.NewLimiter(rate.Limit(200), 200),
+			base: &http.Transport{
+				MaxIdleConns:        500,
+				MaxIdleConnsPerHost: 200,
+				MaxConnsPerHost:     200,
+			},
+			limiter: rate.NewLimiter(rate.Limit(200), 10),
 		},
 	}
 
