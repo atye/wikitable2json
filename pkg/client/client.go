@@ -575,7 +575,8 @@ func parseTable(tableSelection *goquery.Selection, tableIndex int, brIsNewLine b
 					columns[startCol+j+nextAvailableCell] = cell{
 						set:   true,
 						text:  parseText(s, parseNonTextNodeFuncs...),
-						links: parseLink(s, parseNonTextNodeFuncs...)}
+						links: parseLink(s, parseNonTextNodeFuncs...),
+					}
 					if i == 0 {
 						col++
 					}
