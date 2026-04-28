@@ -80,7 +80,7 @@ func main() {
 
 	var mp server.MetricsPublisher
 	if googleMeasurementId != "" && googleAPISecret != "" {
-		mp = metrics.NewGoogleClient(googleMeasurementId, googleAPISecret, httpClient)
+		mp = metrics.NewGoogleClient(googleMeasurementId, googleAPISecret, &http.Client{Timeout: 5 * time.Second})
 	}
 
 	dist, err := fs.Sub(swagger, "static/dist")
