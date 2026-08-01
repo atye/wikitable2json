@@ -24,8 +24,6 @@ var (
 		"table.toccolours",
 	}
 
-	defaultUserAgent = "github.com/atye/wikitable2json"
-
 	apiURL      = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
 	getApiURLFn = getApiURL
 
@@ -404,7 +402,7 @@ func (c *Client) getPageDocument(ctx context.Context, page string, lang string) 
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
-	req.Header.Add("User-Agent", defaultUserAgent)
+	req.Header.Add("User-Agent", c.userAgent)
 
 	resp, err := c.http.Do(req)
 	if err != nil {
