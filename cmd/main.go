@@ -25,6 +25,8 @@ var (
 	defaultCacheSize       = 20
 	defaultCacheExpiration = 60 * time.Second
 	defaultRateLimit       = 200
+
+	defaultUserAgent = "github.com/atye/wikitable2json"
 )
 
 func main() {
@@ -35,20 +37,26 @@ func main() {
 
 	cacheSize, err := strconv.Atoi(os.Getenv("CACHE_SIZE"))
 	if err != nil || cacheSize == 0 {
-		log.Printf("CACHE_SIZE is empty or invalid with error: %v; using %d", err, defaultCacheSize)
+		log.Printf("CACHE_SIZE env is empty or invalid with error: %v; using %d", err, defaultCacheSize)
 		cacheSize = defaultCacheSize
 	}
 
 	cacheExpiration, err := time.ParseDuration(os.Getenv("CACHE_EXPIRATION"))
 	if err != nil || cacheExpiration == 0 {
-		log.Printf("CACHE_EXPIRATION is empty or invalid with error: %v; using %s", err, defaultCacheExpiration)
+		log.Printf("CACHE_EXPIRATION env is empty or invalid with error: %v; using %s", err, defaultCacheExpiration)
 		cacheExpiration = defaultCacheExpiration
 	}
 
 	rateLimit, err := strconv.Atoi(os.Getenv("RATE_LIMIT"))
 	if err != nil || rateLimit == 0 {
-		log.Printf("RATE_LIMIT is empty or invalid with error: %v; using %d", err, 200)
+		log.Printf("RATE_LIMIT env is empty or invalid with error: %v; using %d", err, 200)
 		rateLimit = defaultRateLimit
+	}
+
+	userAgent := os.Getenv("USER_AGENT")
+	if userAgent == "" {
+		log.Printf("USER_AGENT env is empty; using %s", defaultUserAgent)
+		userAgent = defaultUserAgent
 	}
 
 	googleMeasurementId := os.Getenv("GOOGLE_MEASUREMENT_ID")
@@ -68,7 +76,7 @@ func main() {
 		Timeout: 10 * time.Second,
 	}
 
-	app, err := server.NewServer(client.NewClient("", client.WithHTTPClient(httpClient)), server.NewCache(cacheSize, cacheExpiration), rateLimit)
+	app, err := server.NewServer(client.NewClient(userAgent, client.WithHTTPClient(httpClient)), server.NewCache(cacheSize, cacheExpiration), rateLimit)
 	if err != nil {
 		handleErr(err)
 	}

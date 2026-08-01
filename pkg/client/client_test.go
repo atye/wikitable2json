@@ -59,7 +59,7 @@ func TestClient(t *testing.T) {
 			w.Write([]byte("StatusRequestEntityTooLarge"))
 		case "/UserAgent":
 			got := r.Header.Get("User-Agent")
-			want := "github.com/atye/wikitable2json"
+			want := "test@email.com"
 			if want != got {
 				t.Errorf("want %s, got %s", want, got)
 			}
@@ -75,7 +75,7 @@ func TestClient(t *testing.T) {
 		getApiURLFn = originalgetApiURLFn
 	}()
 
-	sut := NewClient("", WithHTTPClient(&http.Client{Timeout: 1 * time.Second}))
+	sut := NewClient("test@email.com", WithHTTPClient(&http.Client{Timeout: 1 * time.Second}))
 
 	t.Run("Matrix", func(t *testing.T) {
 		tests := []struct {
