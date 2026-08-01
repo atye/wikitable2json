@@ -10,6 +10,7 @@ import (
 
 	"github.com/atye/wikitable2json/pkg/client"
 	"github.com/atye/wikitable2json/pkg/client/status"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -21,27 +22,38 @@ type TableGetter interface {
 	GetMatrixVerbose(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]client.Verbose, error)
 	GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]string, error)
 	GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]client.Verbose, error)
-	SetUserAgent(string)
 }
 
 type Server struct {
-	client TableGetter
-	cache  *Cache
+	client  TableGetter
+	cache   *Cache
+	limiter *rate.Limiter
 }
 
-func NewServer(client TableGetter, cache *Cache) *Server {
-	if client == nil || cache == nil {
-		panic("client or cache is nil")
+func NewServer(client TableGetter, cache *Cache, limit int) (*Server, error) {
+	if client == nil {
+		return nil, fmt.Errorf("client not set")
+	}
+
+	if cache == nil {
+		return nil, fmt.Errorf("cache not set")
 	}
 	return &Server{
-		client: client,
-		cache:  cache,
-	}
+		client:  client,
+		cache:   cache,
+		limiter: rate.NewLimiter(rate.Limit(limit), 1),
+	}, nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var err error
+
+	// Apply rate limiting before any expensive operation
+	err := s.limiter.Wait(ctx)
+	if err != nil {
+		writeError(w, status.NewStatus(err.Error(), http.StatusTooManyRequests))
+		return
+	}
 
 	page, ok := ctx.Value(pageKey).(string)
 	if !ok {
@@ -55,7 +67,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key := buildCacheKey(page, qv)
+	key, err := buildCacheKey(page, qv)
+	if err != nil {
+		writeError(w, status.NewStatus(err.Error(), http.StatusInternalServerError))
+		return
+	}
+
 	data, ok := s.cache.Get(key)
 	if ok {
 		err = json.NewEncoder(w).Encode(data)
@@ -76,8 +93,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if qv.brNewLine {
 		opts = append(opts, client.WithBRNewLine())
 	}
-
-	s.client.SetUserAgent(r.Header.Get("User-Agent"))
 
 	var resp interface{}
 	if qv.keyRows >= 1 {
@@ -192,8 +207,24 @@ func parseParameters(r *http.Request) (queryValues, error) {
 	return qv, nil
 }
 
-func buildCacheKey(page string, qv queryValues) string {
-	return fmt.Sprintf("%s-%s", page, qv.string())
+func buildCacheKey(page string, qv queryValues) (string, error) {
+	key := cacheKey{
+		Page:      page,
+		Lang:      qv.lang,
+		Tables:    qv.tables,
+		Sections:  qv.sections,
+		CleanRef:  qv.cleanRef,
+		KeyRows:   qv.keyRows,
+		Verbose:   qv.verbose,
+		BrNewLine: qv.brNewLine,
+	}
+
+	b, err := json.Marshal(key)
+	if err != nil {
+		return "", fmt.Errorf("marshalling cache key: %v", err)
+	}
+
+	return string(b), nil
 }
 
 func writeError(w http.ResponseWriter, err error) {

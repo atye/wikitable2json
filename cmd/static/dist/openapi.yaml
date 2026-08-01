@@ -5,8 +5,6 @@ info:
   description: |
     [https://github.com/atye/wikitable2json](https://github.com/atye/wikitable2json/)
 
-    - If you are making automated requests, set a unique `User-Agent` header with an email address or URL contact page per the [Wikimedia REST API](https://en.wikipedia.org/api/rest_v1/)
-
     <br>
 
     ### Get all tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:

@@ -59,12 +59,6 @@ func TestClient(t *testing.T) {
 			w.Write([]byte("StatusRequestEntityTooLarge"))
 		case "/UserAgent":
 			got := r.Header.Get("User-Agent")
-			want := "test@mail.com"
-			if want != got {
-				t.Errorf("want %s, got %s", want, got)
-			}
-		case "/NoUserAgent":
-			got := r.Header.Get("User-Agent")
 			want := "github.com/atye/wikitable2json"
 			if want != got {
 				t.Errorf("want %s, got %s", want, got)
@@ -464,17 +458,7 @@ func TestClient(t *testing.T) {
 	})
 
 	t.Run("UserAgent", func(t *testing.T) {
-		sut.SetUserAgent("test@mail.com")
-		defer sut.SetUserAgent("")
-
 		_, err := sut.GetMatrix(context.Background(), "UserAgent", "en")
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("NoUserAgent", func(t *testing.T) {
-		_, err := sut.GetMatrix(context.Background(), "NoUserAgent", "en")
 		if err != nil {
 			t.Fatal(err)
 		}

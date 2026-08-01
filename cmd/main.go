@@ -16,7 +16,6 @@ import (
 	"github.com/atye/wikitable2json/internal/server"
 	"github.com/atye/wikitable2json/internal/server/metrics"
 	"github.com/atye/wikitable2json/pkg/client"
-	"golang.org/x/time/rate"
 )
 
 //go:embed static/dist/*
@@ -25,25 +24,8 @@ var swagger embed.FS
 var (
 	defaultCacheSize       = 20
 	defaultCacheExpiration = 60 * time.Second
+	defaultRateLimit       = 200
 )
-
-type rateLimitedTransport struct {
-	base    http.RoundTripper
-	limiter *rate.Limiter
-}
-
-func (t *rateLimitedTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	if err := t.limiter.Wait(r.Context()); err != nil {
-		return nil, fmt.Errorf("waiting for rate limiter: %w", err)
-	}
-
-	base := t.base
-	if base == nil {
-		base = http.DefaultTransport
-	}
-
-	return base.RoundTrip(r)
-}
 
 func main() {
 	port, ok := os.LookupEnv("PORT")
@@ -63,20 +45,14 @@ func main() {
 		cacheExpiration = defaultCacheExpiration
 	}
 
+	rateLimit, err := strconv.Atoi(os.Getenv("RATE_LIMIT"))
+	if err != nil || rateLimit == 0 {
+		log.Printf("RATE_LIMIT is empty or invalid with error: %v; using %d", err, 200)
+		rateLimit = defaultRateLimit
+	}
+
 	googleMeasurementId := os.Getenv("GOOGLE_MEASUREMENT_ID")
 	googleAPISecret := os.Getenv("GOOGLE_API_SECRET")
-
-	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &rateLimitedTransport{
-			base: &http.Transport{
-				MaxIdleConns:        500,
-				MaxIdleConnsPerHost: 200,
-				MaxConnsPerHost:     200,
-			},
-			limiter: rate.NewLimiter(rate.Limit(200), 10),
-		},
-	}
 
 	var mp server.MetricsPublisher
 	if googleMeasurementId != "" && googleAPISecret != "" {
@@ -88,11 +64,18 @@ func main() {
 		handleErr(err)
 	}
 
+	httpClient := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	app, err := server.NewServer(client.NewClient("", client.WithHTTPClient(httpClient)), server.NewCache(cacheSize, cacheExpiration), rateLimit)
+	if err != nil {
+		handleErr(err)
+	}
+
 	mux := http.NewServeMux()
 	mux.Handle("GET /", http.StripPrefix("/", http.FileServer(http.FS(dist))))
-	mux.Handle("GET /api/{page}",
-		server.HeaderMW(server.RequestValidationAndMetricsMW(
-			server.NewServer(client.NewClient("", client.WithHTTPClient(httpClient)), server.NewCache(cacheSize, cacheExpiration)), mp)))
+	mux.Handle("GET /api/{page}", server.HeaderMW(server.RequestValidationAndMetricsMW(app, mp)))
 	svr := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
 		Handler: mux,

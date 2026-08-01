@@ -404,11 +404,7 @@ func (c *Client) getPageDocument(ctx context.Context, page string, lang string) 
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
 
-	agent := defaultUserAgent
-	if c.userAgent != "" {
-		agent = c.userAgent
-	}
-	req.Header.Add("User-Agent", agent)
+	req.Header.Add("User-Agent", defaultUserAgent)
 
 	resp, err := c.http.Do(req)
 	if err != nil {
