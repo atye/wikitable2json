@@ -11,6 +11,17 @@ type Cache struct {
 	lru *expirable.LRU[string, any]
 }
 
+type cacheKey struct {
+	Page      string
+	Lang      string
+	Tables    []int
+	Sections  []string
+	CleanRef  bool
+	KeyRows   int
+	Verbose   bool
+	BrNewLine bool
+}
+
 func NewCache(size int, expiration time.Duration) *Cache {
 	return &Cache{
 		lru: expirable.NewLRU[string, any](size, onEvict, expiration),

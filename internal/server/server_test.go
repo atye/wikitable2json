@@ -22,7 +22,10 @@ func TestServeHTTP_CacheMissGetMatrix(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrix: wantData}
-	sut := NewServer(tg, NewCache(10, 10*time.Second))
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
 
 	ctx := context.WithValue(context.Background(), pageKey, "page")
 	ctx = context.WithValue(ctx, queryKey, queryValues{})
@@ -40,7 +43,7 @@ func TestServeHTTP_CacheMissGetMatrix(t *testing.T) {
 	}
 
 	var got [][][]string
-	err := json.Unmarshal(w.Body.Bytes(), &got)
+	err = json.Unmarshal(w.Body.Bytes(), &got)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +74,10 @@ func TestServeHTTP_CacheMissGetMatrixVerbose(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrixVerbose: wantData}
-	sut := NewServer(tg, NewCache(10, 10*time.Second))
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
 
 	ctx := context.WithValue(context.Background(), pageKey, "page")
 	ctx = context.WithValue(ctx, queryKey, queryValues{verbose: true})
@@ -89,7 +95,7 @@ func TestServeHTTP_CacheMissGetMatrixVerbose(t *testing.T) {
 	}
 
 	var got [][][]client.Verbose
-	err := json.Unmarshal(w.Body.Bytes(), &got)
+	err = json.Unmarshal(w.Body.Bytes(), &got)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,7 +116,10 @@ func TestServeHTTP_CacheMissGetKeyValue(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getKeyValue: wantData}
-	sut := NewServer(tg, NewCache(10, 10*time.Second))
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
 
 	ctx := context.WithValue(context.Background(), pageKey, "page")
 	ctx = context.WithValue(ctx, queryKey, queryValues{keyRows: 1})
@@ -128,7 +137,7 @@ func TestServeHTTP_CacheMissGetKeyValue(t *testing.T) {
 	}
 
 	var got [][]map[string]string
-	err := json.Unmarshal(w.Body.Bytes(), &got)
+	err = json.Unmarshal(w.Body.Bytes(), &got)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,7 +168,10 @@ func TestServeHTTP_CacheMissGetKeyValueVerbose(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getKeyValueVerbose: wantData}
-	sut := NewServer(tg, NewCache(10, 10*time.Second))
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
 
 	ctx := context.WithValue(context.Background(), pageKey, "page")
 	ctx = context.WithValue(ctx, queryKey, queryValues{keyRows: 1, verbose: true, cleanRef: true, brNewLine: true})
@@ -177,7 +189,7 @@ func TestServeHTTP_CacheMissGetKeyValueVerbose(t *testing.T) {
 	}
 
 	var got [][]map[string]client.Verbose
-	err := json.Unmarshal(w.Body.Bytes(), &got)
+	err = json.Unmarshal(w.Body.Bytes(), &got)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +208,10 @@ func TestServeHTTP_CacheHit(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrix: wantData}
-	sut := NewServer(tg, NewCache(10, 10*time.Second))
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
 
 	ctx := context.WithValue(context.Background(), pageKey, "page")
 	ctx = context.WithValue(ctx, queryKey, queryValues{})
@@ -221,7 +236,7 @@ func TestServeHTTP_CacheHit(t *testing.T) {
 	}
 
 	var got [][][]string
-	err := json.Unmarshal(w.Body.Bytes(), &got)
+	err = json.Unmarshal(w.Body.Bytes(), &got)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +252,10 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 		Code:    http.StatusInternalServerError,
 	}
 
-	sut := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second))
+	sut, err := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second), 200)
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("GET", "/api", nil)
@@ -248,7 +266,7 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 	}
 
 	var got status.Status
-	err := json.Unmarshal(w.Body.Bytes(), &got)
+	err = json.Unmarshal(w.Body.Bytes(), &got)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,11 +277,14 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 }
 
 func TestServeHTTP_ClientError(t *testing.T) {
-	err := status.NewStatus("error", http.StatusInternalServerError)
+	statusErr := status.NewStatus("error", http.StatusInternalServerError)
 
 	cache := NewCache(10, 10*time.Second)
-	tg := &mockTableGetter{getMatrix: nil, err: err}
-	sut := NewServer(tg, cache)
+	tg := &mockTableGetter{getMatrix: nil, err: statusErr}
+	sut, err := NewServer(tg, cache, 200)
+	if err != nil {
+		t.Fatalf("failed to create server: %v", err)
+	}
 
 	ctx := context.WithValue(context.Background(), pageKey, "page")
 	ctx = context.WithValue(ctx, queryKey, queryValues{})
@@ -276,9 +297,30 @@ func TestServeHTTP_ClientError(t *testing.T) {
 		t.Errorf("want code %d, got %d", http.StatusInternalServerError, w.Code)
 	}
 
-	if v, ok := cache.Get("page-en-all-nil-false-0-false-false"); ok {
+	if v, ok := cache.Get(expectedCacheKey(t, "page", queryValues{})); ok {
 		t.Errorf("expected cache miss, got %v", v)
 	}
+}
+
+func expectedCacheKey(t *testing.T, page string, qv queryValues) string {
+	t.Helper()
+
+	key := cacheKey{
+		Page:      page,
+		Lang:      qv.lang,
+		Tables:    qv.tables,
+		Sections:  qv.sections,
+		CleanRef:  qv.cleanRef,
+		KeyRows:   qv.keyRows,
+		Verbose:   qv.verbose,
+		BrNewLine: qv.brNewLine,
+	}
+
+	b, err := json.Marshal(key)
+	if err != nil {
+		t.Fatalf("marshal cache key: %v", err)
+	}
+	return string(b)
 }
 
 func TestBuildCacheKey(t *testing.T) {
@@ -300,7 +342,15 @@ func TestBuildCacheKey(t *testing.T) {
 				sections:  []string{"test"},
 			},
 			"test",
-			"test-en-0-test-false-2-false-false",
+			expectedCacheKey(t, "test", queryValues{
+				lang:      "en",
+				tables:    []int{0},
+				cleanRef:  false,
+				keyRows:   2,
+				verbose:   false,
+				brNewLine: false,
+				sections:  []string{"test"},
+			}),
 		},
 		{
 			"test-en-0-nil-true-2-true-true",
@@ -313,7 +363,14 @@ func TestBuildCacheKey(t *testing.T) {
 				brNewLine: true,
 			},
 			"test",
-			"test-en-0-nil-true-2-true-true",
+			expectedCacheKey(t, "test", queryValues{
+				lang:      "en",
+				tables:    []int{0},
+				cleanRef:  true,
+				keyRows:   2,
+				verbose:   true,
+				brNewLine: true,
+			}),
 		},
 		{
 			"test-en-01-testtest2-true-2-true-true",
@@ -327,7 +384,15 @@ func TestBuildCacheKey(t *testing.T) {
 				sections:  []string{"test", "test2"},
 			},
 			"test",
-			"test-en-01-testtest2-true-2-true-true",
+			expectedCacheKey(t, "test", queryValues{
+				lang:      "en",
+				tables:    []int{0, 1},
+				cleanRef:  true,
+				keyRows:   2,
+				verbose:   true,
+				brNewLine: true,
+				sections:  []string{"test", "test2"},
+			}),
 		},
 		{
 			"test-en-all-nil-true-2-true-true",
@@ -339,7 +404,13 @@ func TestBuildCacheKey(t *testing.T) {
 				brNewLine: true,
 			},
 			"test",
-			"test-en-all-nil-true-2-true-true",
+			expectedCacheKey(t, "test", queryValues{
+				lang:      "en",
+				cleanRef:  true,
+				keyRows:   2,
+				verbose:   true,
+				brNewLine: true,
+			}),
 		},
 		{
 			"test-en-all-nil-true-0-true-true",
@@ -351,13 +422,22 @@ func TestBuildCacheKey(t *testing.T) {
 				brNewLine: true,
 			},
 			"test",
-			"test-en-all-nil-true-0-true-true",
+			expectedCacheKey(t, "test", queryValues{
+				lang:      "en",
+				cleanRef:  true,
+				keyRows:   0,
+				verbose:   true,
+				brNewLine: true,
+			}),
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got := buildCacheKey(tc.page, tc.qv)
+			got, err := buildCacheKey(tc.page, tc.qv)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
 			if got != tc.want {
 				t.Errorf("want %v, got %v", tc.want, got)
 			}
@@ -485,7 +565,6 @@ type mockTableGetter struct {
 	getKeyValueCalled        bool
 	getKeyValueVerbose       [][]map[string]client.Verbose
 	getKeyValueVerboseCalled bool
-	userAgent                string
 	err                      error
 }
 
@@ -519,8 +598,4 @@ func (m *mockTableGetter) GetKeyValueVerbose(ctx context.Context, page string, l
 		return nil, m.err
 	}
 	return m.getKeyValueVerbose, nil
-}
-
-func (m mockTableGetter) SetUserAgent(userAgent string) {
-	m.userAgent = userAgent
 }
