@@ -75,7 +75,7 @@ func TestClient(t *testing.T) {
 		getApiURLFn = originalgetApiURLFn
 	}()
 
-	sut := NewClient("test@email.com", WithHTTPClient(&http.Client{Timeout: 1 * time.Second}))
+	sut := NewClient("test@email.com", WithHTTPClient(&http.Client{Timeout: 1 * time.Second}), WithRateLimit(20))
 
 	t.Run("Matrix", func(t *testing.T) {
 		tests := []struct {

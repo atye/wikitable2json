@@ -10,7 +10,6 @@ import (
 
 	"github.com/atye/wikitable2json/pkg/client"
 	"github.com/atye/wikitable2json/pkg/client/status"
-	"golang.org/x/time/rate"
 )
 
 const (
@@ -25,12 +24,11 @@ type TableGetter interface {
 }
 
 type Server struct {
-	client  TableGetter
-	cache   *Cache
-	limiter *rate.Limiter
+	client TableGetter
+	cache  *Cache
 }
 
-func NewServer(client TableGetter, cache *Cache, limit int) (*Server, error) {
+func NewServer(client TableGetter, cache *Cache) (*Server, error) {
 	if client == nil {
 		return nil, fmt.Errorf("client not set")
 	}
@@ -39,21 +37,13 @@ func NewServer(client TableGetter, cache *Cache, limit int) (*Server, error) {
 		return nil, fmt.Errorf("cache not set")
 	}
 	return &Server{
-		client:  client,
-		cache:   cache,
-		limiter: rate.NewLimiter(rate.Limit(limit), 1),
+		client: client,
+		cache:  cache,
 	}, nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
-	// Apply rate limiting before any expensive operation
-	err := s.limiter.Wait(ctx)
-	if err != nil {
-		writeError(w, status.NewStatus(err.Error(), http.StatusTooManyRequests))
-		return
-	}
 
 	page, ok := ctx.Value(pageKey).(string)
 	if !ok {
@@ -132,27 +122,6 @@ type queryValues struct {
 	keyRows   int
 	verbose   bool
 	brNewLine bool
-}
-
-func (q queryValues) string() string {
-	tables := "all"
-	if len(q.tables) > 0 {
-		tmp := ""
-		for _, v := range q.tables {
-			tmp = tmp + strconv.Itoa(v)
-		}
-		tables = tmp
-	}
-
-	sections := "nil"
-	if len(q.sections) > 0 {
-		tmp := ""
-		for _, v := range q.sections {
-			tmp = tmp + v
-		}
-		sections = tmp
-	}
-	return fmt.Sprintf("%s-%s-%s-%t-%d-%t-%t", q.lang, tables, sections, q.cleanRef, q.keyRows, q.verbose, q.brNewLine)
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
