@@ -22,7 +22,7 @@ func TestServeHTTP_CacheMissGetMatrix(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrix: wantData}
-	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second))
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestServeHTTP_CacheMissGetMatrixVerbose(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrixVerbose: wantData}
-	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second))
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestServeHTTP_CacheMissGetKeyValue(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getKeyValue: wantData}
-	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second))
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestServeHTTP_CacheMissGetKeyValueVerbose(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getKeyValueVerbose: wantData}
-	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second))
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}
@@ -208,7 +208,7 @@ func TestServeHTTP_CacheHit(t *testing.T) {
 	}
 
 	tg := &mockTableGetter{getMatrix: wantData}
-	sut, err := NewServer(tg, NewCache(10, 10*time.Second), 200)
+	sut, err := NewServer(tg, NewCache(10, 10*time.Second))
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestServeHTTP_EmptyPage(t *testing.T) {
 		Code:    http.StatusInternalServerError,
 	}
 
-	sut, err := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second), 200)
+	sut, err := NewServer(&mockTableGetter{}, NewCache(10, 10*time.Second))
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestServeHTTP_ClientError(t *testing.T) {
 
 	cache := NewCache(10, 10*time.Second)
 	tg := &mockTableGetter{getMatrix: nil, err: statusErr}
-	sut, err := NewServer(tg, cache, 200)
+	sut, err := NewServer(tg, cache)
 	if err != nil {
 		t.Fatalf("failed to create server: %v", err)
 	}

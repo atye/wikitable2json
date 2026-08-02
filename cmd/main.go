@@ -24,7 +24,7 @@ var swagger embed.FS
 var (
 	defaultCacheSize       = 20
 	defaultCacheExpiration = 60 * time.Second
-	defaultRateLimit       = 200
+	defaultRateLimit       = 180
 
 	defaultUserAgent = "github.com/atye/wikitable2json"
 )
@@ -47,9 +47,9 @@ func main() {
 		cacheExpiration = defaultCacheExpiration
 	}
 
-	rateLimit, err := strconv.Atoi(os.Getenv("RATE_LIMIT"))
+	rateLimit, err := strconv.Atoi(os.Getenv("WIKIPEDIA_RATE_LIMIT"))
 	if err != nil || rateLimit == 0 {
-		log.Printf("RATE_LIMIT env is empty or invalid with error: %v; using %d", err, 200)
+		log.Printf("WIKIPEDIA_RATE_LIMIT env is empty or invalid with error: %v; using %d", err, defaultRateLimit)
 		rateLimit = defaultRateLimit
 	}
 
@@ -76,7 +76,9 @@ func main() {
 		Timeout: 10 * time.Second,
 	}
 
-	app, err := server.NewServer(client.NewClient(userAgent, client.WithHTTPClient(httpClient)), server.NewCache(cacheSize, cacheExpiration), rateLimit)
+	app, err := server.NewServer(
+		client.NewClient(userAgent, client.WithHTTPClient(httpClient), client.WithRateLimit(rateLimit)),
+		server.NewCache(cacheSize, cacheExpiration))
 	if err != nil {
 		handleErr(err)
 	}

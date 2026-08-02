@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	tg := client.NewClient("user@email.com")
+	tg := client.NewClient("user@email.com", client.WithRateLimit(100))
 
 	matrix, err := tg.GetMatrix(context.Background(), "Arhaan_Khan", "en")
 	if err != nil {

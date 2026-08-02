@@ -15,6 +15,7 @@ import (
 	"github.com/atye/wikitable2json/pkg/client/status"
 	"golang.org/x/net/html"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -33,6 +34,7 @@ var (
 type Client struct {
 	http      *http.Client
 	userAgent string
+	limiter   *rate.Limiter
 }
 
 type ClientOption func(*Client)
@@ -40,6 +42,12 @@ type ClientOption func(*Client)
 func WithHTTPClient(c *http.Client) ClientOption {
 	return func(tg *Client) {
 		tg.http = c
+	}
+}
+
+func WithRateLimit(limit int) ClientOption {
+	return func(tg *Client) {
+		tg.limiter = rate.NewLimiter(rate.Limit(limit), 1)
 	}
 }
 
@@ -403,6 +411,13 @@ func (c *Client) getPageDocument(ctx context.Context, page string, lang string) 
 	}
 
 	req.Header.Add("User-Agent", c.userAgent)
+
+	if c.limiter != nil {
+		err = c.limiter.Wait(ctx)
+		if err != nil {
+			return nil, status.NewStatus(err.Error(), http.StatusTooManyRequests)
+		}
+	}
 
 	resp, err := c.http.Do(req)
 	if err != nil {
