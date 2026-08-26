@@ -5,6 +5,12 @@ info:
   description: |
     [https://github.com/atye/wikitable2json](https://github.com/atye/wikitable2json/)
 
+    ### The following WikiMedia domains have been tested:
+    - wikipedia.org
+    - wiktionary.org
+
+    Other sister-domains may work, but are not guaranteed to work. If you find a domain that doesn't work, please submit an issue on GitHub.
+
     <br>
 
     ### Get all tables on page [Arhaan_Khan](https://en.wikipedia.org/wiki/Arhaan_Khan) in the default matrix format:
@@ -49,6 +55,11 @@ info:
 
     ### Get all tables on page [Candidates_in_the_2024_Irish_general_election](https://en.wikipedia.org/wiki/Candidates_in_the_2024_Irish_general_election) with `br` elements replaced with new lines:
     [https://www.wikitable2json.com/api/Candidates_in_the_2024_Irish_general_election?brNewLine=true](https://www.wikitable2json.com/api/Candidates_in_the_2024_Irish_general_election?brNewLine=true)
+
+    <br>
+
+    ### Get all tables on page [Appendix:Malayalam_Swadesh_list](https://en.wiktionary.org/wiki/Appendix:Malayalam_Swadesh_list) on the wiktionary domain:
+    [https://www.wikitable2json.com/api/Appendix:Malayalam_Swadesh_list?wiki=wiktionary](https://www.wikitable2json.com/api/Appendix:Malayalam_Swadesh_list?wiki=wiktionary)
 paths:
   "/api/{page}":
     get:
@@ -120,6 +131,14 @@ paths:
           schema:
             type: string
             default: false
+        - name: wiki
+          description: |
+            WikiMedia domain (wikipedia, wiktionary, etc.)<br/>
+          in: query
+          required: false
+          schema:
+            type: string
+            default: wikipedia
       responses:
         "200":
           description: A successful response.
