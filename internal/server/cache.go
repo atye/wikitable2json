@@ -20,6 +20,7 @@ type cacheKey struct {
 	KeyRows   int
 	Verbose   bool
 	BrNewLine bool
+	Wiki      string
 }
 
 func NewCache(size int, expiration time.Duration) *Cache {

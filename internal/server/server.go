@@ -12,15 +12,11 @@ import (
 	"github.com/atye/wikitable2json/pkg/client/status"
 )
 
-const (
-	defaultLang = "en"
-)
-
 type TableGetter interface {
-	GetMatrix(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]string, error)
-	GetMatrixVerbose(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]client.Verbose, error)
-	GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]string, error)
-	GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]client.Verbose, error)
+	GetMatrix(ctx context.Context, page string, options ...client.TableOption) ([][][]string, error)
+	GetMatrixVerbose(ctx context.Context, page string, options ...client.TableOption) ([][][]client.Verbose, error)
+	GetKeyValue(ctx context.Context, page string, keyRows int, options ...client.TableOption) ([][]map[string]string, error)
+	GetKeyValueVerbose(ctx context.Context, page string, keyRows int, options ...client.TableOption) ([][]map[string]client.Verbose, error)
 }
 
 type Server struct {
@@ -74,6 +70,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	opts := []client.TableOption{
+		client.WithLang(qv.lang),
+		client.WithWiki(qv.wiki),
 		client.WithTables(qv.tables...),
 		client.WithSections(qv.sections...),
 	}
@@ -87,15 +85,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var resp interface{}
 	if qv.keyRows >= 1 {
 		if qv.verbose {
-			resp, err = s.client.GetKeyValueVerbose(ctx, page, qv.lang, qv.keyRows, opts...)
+			resp, err = s.client.GetKeyValueVerbose(ctx, page, qv.keyRows, opts...)
 		} else {
-			resp, err = s.client.GetKeyValue(ctx, page, qv.lang, qv.keyRows, opts...)
+			resp, err = s.client.GetKeyValue(ctx, page, qv.keyRows, opts...)
 		}
 	} else {
 		if qv.verbose {
-			resp, err = s.client.GetMatrixVerbose(ctx, page, qv.lang, opts...)
+			resp, err = s.client.GetMatrixVerbose(ctx, page, opts...)
 		} else {
-			resp, err = s.client.GetMatrix(ctx, page, qv.lang, opts...)
+			resp, err = s.client.GetMatrix(ctx, page, opts...)
 		}
 	}
 	if err != nil {
@@ -122,11 +120,13 @@ type queryValues struct {
 	keyRows   int
 	verbose   bool
 	brNewLine bool
+	wiki      string
 }
 
 func parseParameters(r *http.Request) (queryValues, error) {
 	var qv queryValues
-	qv.lang = defaultLang
+	qv.lang = client.DefaultLang
+	qv.wiki = client.DefaultWiki
 
 	params := r.URL.Query()
 
@@ -160,6 +160,10 @@ func parseParameters(r *http.Request) (queryValues, error) {
 		qv.brNewLine = true
 	}
 
+	if v := params.Get("wiki"); v != "" {
+		qv.wiki = v
+	}
+
 	if v := params.Get("keyRows"); v != "" {
 		n, err := strconv.Atoi(v)
 		if err != nil {
@@ -186,6 +190,7 @@ func buildCacheKey(page string, qv queryValues) (string, error) {
 		KeyRows:   qv.keyRows,
 		Verbose:   qv.verbose,
 		BrNewLine: qv.brNewLine,
+		Wiki:      qv.wiki,
 	}
 
 	b, err := json.Marshal(key)

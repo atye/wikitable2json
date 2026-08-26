@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -314,6 +315,7 @@ func expectedCacheKey(t *testing.T, page string, qv queryValues) string {
 		KeyRows:   qv.keyRows,
 		Verbose:   qv.verbose,
 		BrNewLine: qv.brNewLine,
+		Wiki:      qv.wiki,
 	}
 
 	b, err := json.Marshal(key)
@@ -325,13 +327,11 @@ func expectedCacheKey(t *testing.T, page string, qv queryValues) string {
 
 func TestBuildCacheKey(t *testing.T) {
 	tests := []struct {
-		name string
 		qv   queryValues
 		page string
 		want string
 	}{
 		{
-			"test-en-0-test-false-2-false-false",
 			queryValues{
 				lang:      "en",
 				tables:    []int{0},
@@ -353,7 +353,6 @@ func TestBuildCacheKey(t *testing.T) {
 			}),
 		},
 		{
-			"test-en-0-nil-true-2-true-true",
 			queryValues{
 				lang:      "en",
 				tables:    []int{0},
@@ -373,7 +372,6 @@ func TestBuildCacheKey(t *testing.T) {
 			}),
 		},
 		{
-			"test-en-01-testtest2-true-2-true-true",
 			queryValues{
 				lang:      "en",
 				tables:    []int{0, 1},
@@ -395,7 +393,6 @@ func TestBuildCacheKey(t *testing.T) {
 			}),
 		},
 		{
-			"test-en-all-nil-true-2-true-true",
 			queryValues{
 				lang:      "en",
 				cleanRef:  true,
@@ -413,13 +410,13 @@ func TestBuildCacheKey(t *testing.T) {
 			}),
 		},
 		{
-			"test-en-all-nil-true-0-true-true",
 			queryValues{
 				lang:      "en",
 				cleanRef:  true,
 				keyRows:   0,
 				verbose:   true,
 				brNewLine: true,
+				wiki:      "wikipedia",
 			},
 			"test",
 			expectedCacheKey(t, "test", queryValues{
@@ -428,12 +425,32 @@ func TestBuildCacheKey(t *testing.T) {
 				keyRows:   0,
 				verbose:   true,
 				brNewLine: true,
+				wiki:      "wikipedia",
+			}),
+		},
+		{
+			queryValues{
+				lang:      "en",
+				cleanRef:  true,
+				keyRows:   0,
+				verbose:   true,
+				brNewLine: true,
+				wiki:      "wiktionary",
+			},
+			"test",
+			expectedCacheKey(t, "test", queryValues{
+				lang:      "en",
+				cleanRef:  true,
+				keyRows:   0,
+				verbose:   true,
+				brNewLine: true,
+				wiki:      "wiktionary",
 			}),
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for i, tc := range tests {
+		t.Run(fmt.Sprintf("test-%d", i), func(t *testing.T) {
 			got, err := buildCacheKey(tc.page, tc.qv)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
@@ -456,6 +473,7 @@ func TestParseParameters(t *testing.T) {
 		params.Add("keyRows", "2")
 		params.Add("verbose", "true")
 		params.Add("section", "test")
+		params.Add("wiki", "wiktionary")
 		r.URL.RawQuery = params.Encode()
 
 		qv, err := parseParameters(r)
@@ -469,6 +487,7 @@ func TestParseParameters(t *testing.T) {
 		gotKeyRows := qv.keyRows
 		gotVerbose := qv.verbose
 		gotSections := qv.sections
+		gotWiki := qv.wiki
 
 		wantLang := "sp"
 		wantTables := []int{0}
@@ -476,6 +495,7 @@ func TestParseParameters(t *testing.T) {
 		wantKeyRows := 2
 		wantVerbose := true
 		wantSections := []string{"test"}
+		wantWiki := "wiktionary"
 
 		if wantLang != gotLang {
 			t.Errorf("want %v, got %v", wantLang, gotLang)
@@ -499,6 +519,33 @@ func TestParseParameters(t *testing.T) {
 
 		if !reflect.DeepEqual(wantSections, gotSections) {
 			t.Errorf("want %v, got %v", wantSections, gotSections)
+		}
+
+		if wantWiki != gotWiki {
+			t.Errorf("want %v, got %v", wantWiki, gotWiki)
+		}
+	})
+
+	t.Run("Default valules", func(t *testing.T) {
+		r := httptest.NewRequest(http.MethodGet, "/api", nil)
+
+		qv, err := parseParameters(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		gotLang := qv.lang
+		gotWiki := qv.wiki
+
+		wantLang := "en"
+		wantWiki := "wikipedia"
+
+		if wantLang != gotLang {
+			t.Errorf("want %v, got %v", wantLang, gotLang)
+		}
+
+		if wantWiki != gotWiki {
+			t.Errorf("want %v, got %v", wantWiki, gotWiki)
 		}
 	})
 
@@ -568,7 +615,7 @@ type mockTableGetter struct {
 	err                      error
 }
 
-func (m *mockTableGetter) GetMatrix(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]string, error) {
+func (m *mockTableGetter) GetMatrix(ctx context.Context, page string, options ...client.TableOption) ([][][]string, error) {
 	m.getMatrixCalled = true
 	if m.err != nil {
 		return nil, m.err
@@ -576,7 +623,7 @@ func (m *mockTableGetter) GetMatrix(ctx context.Context, page string, lang strin
 	return m.getMatrix, nil
 }
 
-func (m *mockTableGetter) GetMatrixVerbose(ctx context.Context, page string, lang string, options ...client.TableOption) ([][][]client.Verbose, error) {
+func (m *mockTableGetter) GetMatrixVerbose(ctx context.Context, page string, options ...client.TableOption) ([][][]client.Verbose, error) {
 	m.getMatrixVerboseCalled = true
 	if m.err != nil {
 		return nil, m.err
@@ -584,7 +631,7 @@ func (m *mockTableGetter) GetMatrixVerbose(ctx context.Context, page string, lan
 	return m.getMatrixVerbose, nil
 }
 
-func (m *mockTableGetter) GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]string, error) {
+func (m *mockTableGetter) GetKeyValue(ctx context.Context, page string, keyRows int, options ...client.TableOption) ([][]map[string]string, error) {
 	m.getKeyValueCalled = true
 	if m.err != nil {
 		return nil, m.err
@@ -592,7 +639,7 @@ func (m *mockTableGetter) GetKeyValue(ctx context.Context, page string, lang str
 	return m.getKeyValue, nil
 }
 
-func (m *mockTableGetter) GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...client.TableOption) ([][]map[string]client.Verbose, error) {
+func (m *mockTableGetter) GetKeyValueVerbose(ctx context.Context, page string, keyRows int, options ...client.TableOption) ([][]map[string]client.Verbose, error) {
 	m.getKeyValueVerboseCalled = true
 	if m.err != nil {
 		return nil, m.err

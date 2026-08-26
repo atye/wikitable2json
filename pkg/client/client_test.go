@@ -70,7 +70,7 @@ func TestClient(t *testing.T) {
 	defer ts.Close()
 
 	originalgetApiURLFn := getApiURLFn
-	getApiURLFn = func(_, page string) string { return fmt.Sprintf("%s/%s", ts.URL, page) }
+	getApiURLFn = func(_, _, page string) string { return fmt.Sprintf("%s/%s", ts.URL, page) }
 	defer func() {
 		getApiURLFn = originalgetApiURLFn
 	}()
@@ -256,7 +256,7 @@ func TestClient(t *testing.T) {
 
 		for _, tc := range tests {
 			t.Run(tc.page, func(t *testing.T) {
-				got, err := sut.GetMatrix(context.Background(), tc.page, "en", tc.options...)
+				got, err := sut.GetMatrix(context.Background(), tc.page, tc.options...)
 				if tc.wantErr {
 					if err == nil {
 						t.Fatal("expected error, got nil")
@@ -311,7 +311,7 @@ func TestClient(t *testing.T) {
 
 		for _, tc := range tests {
 			t.Run(tc.page, func(t *testing.T) {
-				got, err := sut.GetMatrixVerbose(context.Background(), tc.page, "en", tc.options...)
+				got, err := sut.GetMatrixVerbose(context.Background(), tc.page, tc.options...)
 				if tc.wantErr {
 					if err == nil {
 						t.Fatal("expected error, got nil")
@@ -384,7 +384,7 @@ func TestClient(t *testing.T) {
 
 		for _, tc := range tests {
 			t.Run(tc.page, func(t *testing.T) {
-				got, err := sut.GetKeyValue(context.Background(), tc.page, "en", tc.keyRows, tc.options...)
+				got, err := sut.GetKeyValue(context.Background(), tc.page, tc.keyRows, tc.options...)
 				if tc.wantErr {
 					if err == nil {
 						t.Fatal("expected error, got nil")
@@ -435,7 +435,7 @@ func TestClient(t *testing.T) {
 
 		for _, tc := range tests {
 			t.Run(tc.page, func(t *testing.T) {
-				got, err := sut.GetKeyValueVerbose(context.Background(), tc.page, "en", tc.keyRows, tc.options...)
+				got, err := sut.GetKeyValueVerbose(context.Background(), tc.page, tc.keyRows, tc.options...)
 				if tc.wantErr {
 					if err == nil {
 						t.Fatal("expected error, got nil")
@@ -458,9 +458,29 @@ func TestClient(t *testing.T) {
 	})
 
 	t.Run("UserAgent", func(t *testing.T) {
-		_, err := sut.GetMatrix(context.Background(), "UserAgent", "en")
+		_, err := sut.GetMatrix(context.Background(), "UserAgent")
 		if err != nil {
 			t.Fatal(err)
+		}
+	})
+
+	t.Run("API URL", func(t *testing.T) {
+		tests := []struct {
+			lang     string
+			wiki     string
+			page     string
+			expected string
+		}{
+			{"en", "wikipedia", "test", "https://en.wikipedia.org/api/rest_v1/page/html/test"},
+			{"fr", "wikipedia", "test2", "https://fr.wikipedia.org/api/rest_v1/page/html/test2"},
+			{"en", "wiktionary", "test3", "https://en.wiktionary.org/api/rest_v1/page/html/test3"},
+		}
+
+		for _, tc := range tests {
+			url := getApiURL(tc.lang, tc.wiki, tc.page)
+			if url != tc.expected {
+				t.Errorf("want %s\n got %s", tc.expected, url)
+			}
 		}
 	})
 }

@@ -25,10 +25,15 @@ var (
 		"table.toccolours",
 	}
 
-	apiURL      = "https://%s.wikipedia.org/api/rest_v1/page/html/%s"
+	apiURL      = "https://%s.%s.org/api/rest_v1/page/html/%s"
 	getApiURLFn = getApiURL
 
 	errNotEnoughRows = errors.New("table needs at least two rows")
+)
+
+const (
+	DefaultLang = "en"
+	DefaultWiki = "wikipedia"
 )
 
 type Client struct {
@@ -56,6 +61,8 @@ type tableOptions struct {
 	brNewLine bool
 	tables    []int
 	sections  []string
+	wiki      string
+	lang      string
 }
 
 type TableOption func(*tableOptions)
@@ -81,6 +88,18 @@ func WithTables(tables ...int) TableOption {
 func WithSections(sections ...string) TableOption {
 	return func(to *tableOptions) {
 		to.sections = sections
+	}
+}
+
+func WithWiki(wiki string) TableOption {
+	return func(to *tableOptions) {
+		to.wiki = wiki
+	}
+}
+
+func WithLang(lang string) TableOption {
+	return func(to *tableOptions) {
+		to.lang = lang
 	}
 }
 
@@ -114,13 +133,15 @@ type cell struct {
 
 type parsed map[int]map[int]cell
 
-func (c *Client) GetMatrix(ctx context.Context, page string, lang string, options ...TableOption) ([][][]string, error) {
+func (c *Client) GetMatrix(ctx context.Context, page string, options ...TableOption) ([][][]string, error) {
 	to := new(tableOptions)
+	to.wiki = DefaultWiki
+	to.lang = DefaultLang
 	for _, o := range options {
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, to.lang, to.tables, to.sections, to.wiki)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -163,13 +184,15 @@ func (c *Client) GetMatrix(ctx context.Context, page string, lang string, option
 	return ret, nil
 }
 
-func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string, options ...TableOption) ([][][]Verbose, error) {
+func (c *Client) GetMatrixVerbose(ctx context.Context, page string, options ...TableOption) ([][][]Verbose, error) {
 	to := new(tableOptions)
+	to.wiki = DefaultWiki
+	to.lang = DefaultLang
 	for _, o := range options {
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, to.lang, to.tables, to.sections, to.wiki)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -212,13 +235,15 @@ func (c *Client) GetMatrixVerbose(ctx context.Context, page string, lang string,
 	return ret, nil
 }
 
-func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]string, error) {
+func (c *Client) GetKeyValue(ctx context.Context, page string, keyRows int, options ...TableOption) ([][]map[string]string, error) {
 	to := new(tableOptions)
+	to.wiki = DefaultWiki
+	to.lang = DefaultLang
 	for _, o := range options {
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, to.lang, to.tables, to.sections, to.wiki)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -261,13 +286,15 @@ func (c *Client) GetKeyValue(ctx context.Context, page string, lang string, keyR
 	return ret, nil
 }
 
-func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang string, keyRows int, options ...TableOption) ([][]map[string]Verbose, error) {
+func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, keyRows int, options ...TableOption) ([][]map[string]Verbose, error) {
 	to := new(tableOptions)
+	to.wiki = DefaultWiki
+	to.lang = DefaultLang
 	for _, o := range options {
 		o(to)
 	}
 
-	tableSelections, err := c.getTableSelections(ctx, page, lang, to.tables, to.sections)
+	tableSelections, err := c.getTableSelections(ctx, page, to.lang, to.tables, to.sections, to.wiki)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -310,12 +337,8 @@ func (c *Client) GetKeyValueVerbose(ctx context.Context, page string, lang strin
 	return ret, nil
 }
 
-func (c *Client) SetUserAgent(userAgent string) {
-	c.userAgent = userAgent
-}
-
-func (c *Client) getTableSelections(ctx context.Context, page string, lang string, index []int, sections []string) ([]*goquery.Selection, error) {
-	doc, err := c.getPageDocument(ctx, page, lang)
+func (c *Client) getTableSelections(ctx context.Context, page string, lang string, index []int, sections []string, wiki string) ([]*goquery.Selection, error) {
+	doc, err := c.getPageDocument(ctx, page, lang, wiki)
 	if err != nil {
 		return nil, handleErr(err)
 	}
@@ -399,8 +422,8 @@ func (c *Client) getSectionTableSelections(doc *goquery.Document, sections ...st
 	return tables, nil
 }
 
-func (c *Client) getPageDocument(ctx context.Context, page string, lang string) (*goquery.Document, error) {
-	u, err := url.Parse(getApiURLFn(lang, url.QueryEscape(page)))
+func (c *Client) getPageDocument(ctx context.Context, page string, lang string, wiki string) (*goquery.Document, error) {
+	u, err := url.Parse(getApiURLFn(lang, wiki, url.QueryEscape(page)))
 	if err != nil {
 		return nil, status.NewStatus(err.Error(), http.StatusInternalServerError)
 	}
@@ -694,8 +717,8 @@ func handleErr(err error) status.Status {
 	return status.NewStatus(err.Error(), http.StatusInternalServerError)
 }
 
-func getApiURL(lang, page string) string {
-	return fmt.Sprintf(apiURL, lang, page)
+func getApiURL(lang, wiki, page string) string {
+	return fmt.Sprintf(apiURL, lang, wiki, page)
 }
 
 func formatMatrix(data parsed) [][]string {
