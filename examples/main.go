@@ -11,42 +11,42 @@ import (
 func main() {
 	tg := client.NewClient("user@email.com", client.WithRateLimit(100))
 
-	matrix, err := tg.GetMatrix(context.Background(), "Arhaan_Khan", "en")
+	matrix, err := tg.GetMatrix(context.Background(), "Arhaan_Khan")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(matrix)
 
-	matrix, err = tg.GetMatrix(context.Background(), "Arhaan_Khan", "en", client.WithTables(0))
+	matrix, err = tg.GetMatrix(context.Background(), "Arhaan_Khan", client.WithTables(0), client.WithLang("en"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(matrix)
 
-	matrix, err = tg.GetMatrix(context.Background(), "Arhaan_Khan", "en", client.WithSections("Film"))
+	matrix, err = tg.GetMatrix(context.Background(), "Arhaan_Khan", client.WithSections("Film"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(matrix)
 
-	matrixVerbose, err := tg.GetMatrixVerbose(context.Background(), "Arhaan_Khan", "en")
+	matrixVerbose, err := tg.GetMatrixVerbose(context.Background(), "Arhaan_Khan")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(matrixVerbose)
 
-	keyValue, err := tg.GetKeyValue(context.Background(), "Arhaan_Khan", "en", 1, client.WithTables(1))
+	keyValue, err := tg.GetKeyValue(context.Background(), "Arhaan_Khan", 1, client.WithTables(1))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(keyValue)
 
-	keyValueVerbose, err := tg.GetKeyValueVerbose(context.Background(), "Arhaan_Khan", "en", 1, client.WithTables(1))
+	keyValueVerbose, err := tg.GetKeyValueVerbose(context.Background(), "Arhaan_Khan", 1, client.WithTables(1))
 	if err != nil {
 		log.Fatal(err)
 	}
